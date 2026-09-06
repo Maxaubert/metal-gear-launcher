@@ -17,7 +17,9 @@ const api: HubApi = {
   },
   // `opts` threads through the `HubApi.launch` addition documented in `shared/ipc.ts`,
   // matching the plan's own Task 10 spec for the `hub:launch` payload (see that file's comment).
-  launch: (gameId, opts) => ipcRenderer.invoke("hub:launch", gameId, opts),
+  // Sent as a single `{ gameId, ...opts }` object, not two positional args - the main handler's
+  // zod schema (`z.object({ gameId, install })`) parses one payload object (see index.ts).
+  launch: (gameId, opts) => ipcRenderer.invoke("hub:launch", { gameId, ...opts }),
   quit: () => ipcRenderer.invoke("hub:quit"),
   getConfig: () => ipcRenderer.invoke("hub:config:get"),
   setConfig: (patch) => ipcRenderer.invoke("hub:config:set", patch),

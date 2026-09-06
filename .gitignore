@@ -3,6 +3,7 @@ dist/
 out/
 test-results/
 playwright-report/
+e2e/out/
 *.log
 .superpowers/
 resources/tools/*

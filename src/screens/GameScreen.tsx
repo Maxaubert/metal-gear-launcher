@@ -77,7 +77,12 @@ export default function GameScreen({
   }, [hasMainVisual, onRetryExtract]);
 
   return (
-    <div className="screen-root" style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr" }}>
+    <div
+      className="screen-root"
+      data-testid="game-screen"
+      data-game={pack.id}
+      style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr" }}
+    >
       <div style={{ position: "relative", height: "100%", overflow: "hidden" }}>
         <div className="dots" style={{ position: "absolute", inset: 0 }} />
         {assetUrls.bgEffect && (
@@ -150,6 +155,7 @@ export default function GameScreen({
           {pack.menu.map((key, index) => (
             <div
               key={key}
+              data-testid={`menu-item-${key}`}
               className={menuItem === index ? "focused" : undefined}
               onClick={() => onSelectMenuItem(index)}
               style={{

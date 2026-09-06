@@ -1,11 +1,20 @@
 import { spawn as nodeSpawn } from "node:child_process";
+import { mkdir, appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Pack } from "@shared/packs";
 import type { Install } from "../steam/resolve";
+import { dataDir } from "../paths";
 
 type Deps = { spawn: typeof nodeSpawn; openExternal: (url: string) => Promise<void> | void; waitMs?: number };
 
 export async function launchGame(pack: Pack, install: Install, deps: Deps): Promise<{ via: "exe" | "steam"; pid?: number }> {
+  // e2e tests run against fixture "installs" that aren't real executables, so `HUB_FAKE_LAUNCH=1`
+  // skips spawning entirely and just records which game would have launched.
+  if (process.env.HUB_FAKE_LAUNCH === "1") {
+    await mkdir(dataDir(), { recursive: true });
+    await appendFile(join(dataDir(), "launch.log"), `${pack.id}\n`);
+    return { via: "exe" };
+  }
   const steamUrl = `steam://rungameid/${pack.steam.appId}`;
   if (pack.launch.steamOnly) { await deps.openExternal(steamUrl); return { via: "steam" }; }
   const exe = join(install.installDir, pack.launch.exe);

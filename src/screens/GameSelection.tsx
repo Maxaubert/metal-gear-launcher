@@ -15,6 +15,7 @@ export default function GameSelection({ games, focusIndex, onSelect }: GameSelec
   return (
     <div
       className="selection-overlay screen-root"
+      data-testid="game-selection"
       style={{
         position: "absolute", inset: 0, background: "var(--paper)",
         display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem",
@@ -24,6 +25,7 @@ export default function GameSelection({ games, focusIndex, onSelect }: GameSelec
       {games.map((g, index) => (
         <div
           key={g.pack.id}
+          data-testid={`tile-${g.pack.id}`}
           onClick={() => onSelect(index)}
           className={index === focusIndex ? "focused" : undefined}
           style={{

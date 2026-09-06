@@ -37,7 +37,9 @@ export function installFromManifest(text: string): { installdir: string; buildid
 }
 
 export async function findSteamRoot(override?: string): Promise<string | null> {
-  const candidates = [override, await registrySteamPath(), "C:\\Program Files (x86)\\Steam"].filter(
+  // `HUB_STEAM_ROOT` outranks both the configured path and the registry lookup so e2e tests
+  // can point the hub at a fake Steam install regardless of what's on the machine running them.
+  const candidates = [process.env.HUB_STEAM_ROOT, override, await registrySteamPath(), "C:\\Program Files (x86)\\Steam"].filter(
     Boolean,
   ) as string[];
   for (const c of candidates) {
