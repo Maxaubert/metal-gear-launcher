@@ -39,10 +39,20 @@ export default function HubProvider() {
   useEffect(() => {
     let cancelled = false;
     void window.hub.getState().then((r) => {
-      if (!cancelled && r.ok) setHubState(r.value);
+      if (cancelled || !r.ok) return;
+      setHubState(r.value);
+      if (r.value.startGame) {
+        const index = PACK_ORDER.indexOf(r.value.startGame);
+        if (index >= 0) dispatch({ type: "selectGame", index });
+      }
     });
     void window.hub.getConfig().then((r) => {
       if (!cancelled && r.ok) setVolume(r.value.volume);
+    });
+    const offSelectGame = window.hub.onSelectGame((id) => {
+      if (cancelled) return;
+      const index = PACK_ORDER.indexOf(id);
+      if (index >= 0) dispatch({ type: "selectGame", index });
     });
     const off = window.hub.onExtractProgress((p: Progress) => {
       if (cancelled) return;
@@ -60,6 +70,7 @@ export default function HubProvider() {
     });
     return () => {
       cancelled = true;
+      offSelectGame();
       off();
     };
   }, []);
@@ -68,6 +79,13 @@ export default function HubProvider() {
   const currentGame: GameState | undefined = games[nav.game];
   const mgs3Game = games.find((g) => g.pack.id === "mgs3");
   const needsFirstRun = games.some((g) => g.installed && (!g.assets || g.stale));
+
+  // Remembers the current game so the next launch with no `--game` argument opens on it.
+  useEffect(() => {
+    const id = currentGame?.pack.id;
+    if (!id) return;
+    void window.hub.setConfig({ lastGame: id });
+  }, [currentGame?.pack.id]);
 
   const music = useMenuMusic(currentGame?.assetUrls.bgm, volume);
 

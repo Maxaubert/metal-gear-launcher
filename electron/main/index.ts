@@ -9,6 +9,7 @@ import { loadPacks, PACK_ORDER } from "@shared/packs";
 import { ASSET_PROTOCOL } from "@shared/ipc";
 import type { GameState, HubState, Result } from "@shared/ipc";
 import "./log";
+import { isGameId, parseCliGame } from "./cli";
 import { assetsDir, dataDir } from "./paths";
 import { configSchema, readConfig, writeConfig } from "./config";
 import { findSteamRoot, listLibraries } from "./steam/library";
@@ -70,7 +71,8 @@ async function buildState(): Promise<HubState> {
       stale: install !== null && isStale(manifest, install, tools),
     });
   }
-  return { steamPath: steamRoot, games };
+  const startGame = parseCliGame(process.argv) ?? (config.lastGame && isGameId(config.lastGame) ? config.lastGame : undefined);
+  return { steamPath: steamRoot, games, startGame };
 }
 
 // Polls `tasklist` for a process matching `filter` (a `/FI` clause such as `PID eq 1234` or
@@ -89,115 +91,139 @@ async function waitForExit(filter: string): Promise<void> {
   }
 }
 
-app.whenReady().then(() => {
-  protocol.handle(ASSET_PROTOCOL, (req) => {
-    const u = new URL(req.url); // hub-asset://mgs3/mainVisual.png
-    const file = join(assetsDir(u.hostname), decodeURIComponent(u.pathname.slice(1)));
-    if (!file.startsWith(join(dataDir(), "assets"))) return new Response("forbidden", { status: 403 });
-    return net.fetch(pathToFileURL(file).toString());
-  });
-
-  ipcMain.handle("hub:getState", async () => {
-    try {
-      return ok(await buildState());
-    } catch (e) {
-      return err(asError(e));
+// Only one hub window may run at a time: a second launch (e.g. from a Steam shortcut or a
+// second `--game` invocation) hands its argv to the running instance instead of opening its
+// own window. The real argv is sent as `additionalData` rather than relied on from the
+// `argv` parameter Electron reconstructs for `second-instance`: Electron's own docs warn that
+// reconstruction can reorder a space-separated `--game mgs3` away from its value (verified in
+// this repo - see the task-11 report), while `additionalData` is passed through unmodified.
+const gotSingleInstanceLock = app.requestSingleInstanceLock({ argv: process.argv });
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (_event, argv, _workingDirectory, additionalData) => {
+    const forwardedArgv = Array.isArray((additionalData as { argv?: unknown } | null)?.argv)
+      ? ((additionalData as { argv: string[] }).argv)
+      : argv;
+    const gameId = parseCliGame(forwardedArgv);
+    if (gameId) mainWindow?.webContents.send("hub:selectGame", gameId);
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
     }
   });
 
-  ipcMain.handle("hub:extract", async (_e, arg) => {
-    try {
-      const target = z.union([z.literal("all"), z.enum(PACK_ORDER)]).parse(arg);
-      const state = await buildState();
-      for (const g of state.games) {
-        if (target !== "all" && g.pack.id !== target) continue;
-        if (!g.installed || !g.installDir || !g.buildId) continue;
-        await extractGame(g.pack, { installDir: g.installDir, buildId: g.buildId }, (p) =>
-          mainWindow?.webContents.send("hub:extract:progress", p),
-        );
+  app.whenReady().then(() => {
+    protocol.handle(ASSET_PROTOCOL, (req) => {
+      const u = new URL(req.url); // hub-asset://mgs3/mainVisual.png
+      const file = join(assetsDir(u.hostname), decodeURIComponent(u.pathname.slice(1)));
+      if (!file.startsWith(join(dataDir(), "assets"))) return new Response("forbidden", { status: 403 });
+      return net.fetch(pathToFileURL(file).toString());
+    });
+
+    ipcMain.handle("hub:getState", async () => {
+      try {
+        return ok(await buildState());
+      } catch (e) {
+        return err(asError(e));
       }
-      return ok(await buildState());
-    } catch (e) {
-      return err(asError(e));
-    }
-  });
+    });
 
-  ipcMain.handle("hub:setSteamPath", async (_e, arg) => {
-    try {
-      const path = z.string().parse(arg);
-      await writeConfig({ steamPath: path });
-      return ok(await buildState());
-    } catch (e) {
-      return err(asError(e));
-    }
-  });
+    ipcMain.handle("hub:extract", async (_e, arg) => {
+      try {
+        const target = z.union([z.literal("all"), z.enum(PACK_ORDER)]).parse(arg);
+        const state = await buildState();
+        for (const g of state.games) {
+          if (target !== "all" && g.pack.id !== target) continue;
+          if (!g.installed || !g.installDir || !g.buildId) continue;
+          await extractGame(g.pack, { installDir: g.installDir, buildId: g.buildId }, (p) =>
+            mainWindow?.webContents.send("hub:extract:progress", p),
+          );
+        }
+        return ok(await buildState());
+      } catch (e) {
+        return err(asError(e));
+      }
+    });
 
-  ipcMain.handle("hub:config:get", async () => {
-    try {
-      return ok(await readConfig());
-    } catch (e) {
-      return err(asError(e));
-    }
-  });
+    ipcMain.handle("hub:setSteamPath", async (_e, arg) => {
+      try {
+        const path = z.string().parse(arg);
+        await writeConfig({ steamPath: path });
+        return ok(await buildState());
+      } catch (e) {
+        return err(asError(e));
+      }
+    });
 
-  ipcMain.handle("hub:config:set", async (_e, arg) => {
-    try {
-      const patch = configSchema.partial().parse(arg);
-      return ok(await writeConfig(patch));
-    } catch (e) {
-      return err(asError(e));
-    }
-  });
+    ipcMain.handle("hub:config:get", async () => {
+      try {
+        return ok(await readConfig());
+      } catch (e) {
+        return err(asError(e));
+      }
+    });
 
-  ipcMain.handle("hub:pickFolder", async () => {
-    try {
-      if (!mainWindow) return err("no window");
-      const result = await dialog.showOpenDialog(mainWindow, { properties: ["openDirectory"] });
-      if (result.canceled || !result.filePaths[0]) return err("cancelled");
-      return ok(result.filePaths[0]);
-    } catch (e) {
-      return err(asError(e));
-    }
-  });
+    ipcMain.handle("hub:config:set", async (_e, arg) => {
+      try {
+        const patch = configSchema.partial().parse(arg);
+        return ok(await writeConfig(patch));
+      } catch (e) {
+        return err(asError(e));
+      }
+    });
 
-  ipcMain.handle("hub:launch", async (_e, arg) => {
-    try {
-      const { gameId, install: installOnly } = z
-        .object({ gameId: z.enum(PACK_ORDER), install: z.boolean().optional() })
-        .parse(arg);
-      const pack = loadPacks().find((p) => p.id === gameId);
-      if (!pack) return err(`unknown game: ${gameId}`);
+    ipcMain.handle("hub:pickFolder", async () => {
+      try {
+        if (!mainWindow) return err("no window");
+        const result = await dialog.showOpenDialog(mainWindow, { properties: ["openDirectory"] });
+        if (result.canceled || !result.filePaths[0]) return err("cancelled");
+        return ok(result.filePaths[0]);
+      } catch (e) {
+        return err(asError(e));
+      }
+    });
 
-      if (installOnly) {
-        await shell.openExternal(`steam://install/${pack.steam.appId}`);
+    ipcMain.handle("hub:launch", async (_e, arg) => {
+      try {
+        const { gameId, install: installOnly } = z
+          .object({ gameId: z.enum(PACK_ORDER), install: z.boolean().optional() })
+          .parse(arg);
+        const pack = loadPacks().find((p) => p.id === gameId);
+        if (!pack) return err(`unknown game: ${gameId}`);
+
+        if (installOnly) {
+          await shell.openExternal(`steam://install/${pack.steam.appId}`);
+          return ok(undefined);
+        }
+
+        const config = await readConfig();
+        const steamRoot = await findSteamRoot(config.steamPath);
+        const libraries = steamRoot ? await listLibraries(steamRoot) : [];
+        const install = steamRoot ? await resolveInstall(pack, libraries) : null;
+        if (!install) return err("not installed");
+
+        const result = await launchGame(pack, install, { spawn, openExternal: shell.openExternal });
+        const wasFullScreen = mainWindow ? minimizeForLaunch(mainWindow) : false;
+        const filter = result.via === "exe" && result.pid
+          ? `PID eq ${result.pid}`
+          : `IMAGENAME eq ${basename(pack.launch.exe)}`;
+        void waitForExit(filter).then(() => {
+          if (mainWindow) restoreAfterLaunch(mainWindow, wasFullScreen);
+        });
         return ok(undefined);
+      } catch (e) {
+        return err(asError(e));
       }
+    });
 
-      const config = await readConfig();
-      const steamRoot = await findSteamRoot(config.steamPath);
-      const libraries = steamRoot ? await listLibraries(steamRoot) : [];
-      const install = steamRoot ? await resolveInstall(pack, libraries) : null;
-      if (!install) return err("not installed");
-
-      const result = await launchGame(pack, install, { spawn, openExternal: shell.openExternal });
-      const wasFullScreen = mainWindow ? minimizeForLaunch(mainWindow) : false;
-      const filter = result.via === "exe" && result.pid
-        ? `PID eq ${result.pid}`
-        : `IMAGENAME eq ${basename(pack.launch.exe)}`;
-      void waitForExit(filter).then(() => {
-        if (mainWindow) restoreAfterLaunch(mainWindow, wasFullScreen);
-      });
+    ipcMain.handle("hub:quit", async () => {
+      app.quit();
       return ok(undefined);
-    } catch (e) {
-      return err(asError(e));
-    }
-  });
+    });
 
-  ipcMain.handle("hub:quit", async () => {
-    app.quit();
-    return ok(undefined);
+    mainWindow = createWindow();
   });
-
-  mainWindow = createWindow();
-});
-app.on("window-all-closed", () => app.quit());
+  app.on("window-all-closed", () => app.quit());
+}

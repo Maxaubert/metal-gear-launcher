@@ -1,10 +1,11 @@
 import type { AssetRole, Pack } from "./packs";
 import type { Config } from "../electron/main/config";
 import type { AssetManifest, Progress } from "../electron/main/extract/extractor";
+import type { GameId } from "../electron/main/cli";
 
 export const ASSET_PROTOCOL = "hub-asset";
 
-export type { AssetManifest, Config, Progress };
+export type { AssetManifest, Config, GameId, Progress };
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -23,7 +24,13 @@ export type GameState = {
   stale: boolean;
 };
 
-export type HubState = { steamPath: string | null; games: GameState[] };
+export type HubState = {
+  steamPath: string | null;
+  games: GameState[];
+  // The game to show on first render: the `--game` CLI argument if one was given, else the
+  // last game the user was on (`Config.lastGame`), else undefined (defaults to index 0).
+  startGame?: GameId;
+};
 
 export type ExtractTarget = "all" | Pack["id"];
 
@@ -31,6 +38,9 @@ export interface HubApi {
   getState(): Promise<Result<HubState>>;
   extract(target: ExtractTarget): Promise<Result<HubState>>;
   onExtractProgress(cb: (p: Progress) => void): () => void;
+  // Pushed by main when a second app instance was launched with `--game <id>` while this one
+  // already owns the single-instance lock; the renderer switches to that game in place.
+  onSelectGame(cb: (id: GameId) => void): () => void;
   setSteamPath(path: string): Promise<Result<HubState>>;
   // Added by Task 9, which needed it for `HubProvider.tsx` and `NotInstalled.tsx` (both in
   // that task's own file list) to compile, even though `shared/ipc.ts` itself is not listed

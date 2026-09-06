@@ -10,6 +10,11 @@ const api: HubApi = {
     ipcRenderer.on("hub:extract:progress", h);
     return () => ipcRenderer.off("hub:extract:progress", h);
   },
+  onSelectGame: (cb) => {
+    const h = (_: unknown, id: unknown) => cb(id as never);
+    ipcRenderer.on("hub:selectGame", h);
+    return () => ipcRenderer.off("hub:selectGame", h);
+  },
   // `opts` threads through the `HubApi.launch` addition documented in `shared/ipc.ts`,
   // matching the plan's own Task 10 spec for the `hub:launch` payload (see that file's comment).
   launch: (gameId, opts) => ipcRenderer.invoke("hub:launch", gameId, opts),
