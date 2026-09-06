@@ -179,12 +179,19 @@ app.whenReady().then(() => {
       if (!install) return err("not installed");
 
       const result = await launchGame(pack, install, { spawn, openExternal: shell.openExternal });
+      // Minimising a window created with fullscreen:true is a known rough edge on Windows: Electron
+      // can leave a stuck black frame instead of behaving like a normal minimize. Drop out of
+      // fullscreen first so the compositor gets a clean transition, then minimize; restore the
+      // reverse way on exit.
+      const wasFullScreen = mainWindow?.isFullScreen() ?? false;
+      if (wasFullScreen) mainWindow?.setFullScreen(false);
       mainWindow?.minimize();
       const filter = result.via === "exe" && result.pid
         ? `PID eq ${result.pid}`
         : `IMAGENAME eq ${basename(pack.launch.exe)}`;
       void waitForExit(filter).then(() => {
         mainWindow?.restore();
+        if (wasFullScreen) mainWindow?.setFullScreen(true);
         mainWindow?.focus();
       });
       return ok(undefined);
