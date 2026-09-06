@@ -1,0 +1,81 @@
+/* Base sizing: 1rem = 28px at 1080p, 56px at 2160p (100vh / 38.6). Every screen is
+   built in rem so it scales with the window instead of being pinned to one resolution. */
+html {
+  font-size: calc(100vh / 38.6);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Rodin", "Segoe UI", sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+/* Faint dotted texture used behind hero art so a missing image doesn't leave a dead flat area. */
+.dots {
+  background-image: radial-gradient(var(--ink) 1px, transparent 1px);
+  background-size: 0.5rem 0.5rem;
+  opacity: 0.12;
+}
+
+/* Keyboard/gamepad focus ring for menu rows and grid tiles. Never the only cue: rows also
+   carry a static border so an unfocused list is still legible (contrast-independent shape). */
+.focused {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 0.15rem var(--accent);
+}
+
+.screen-root {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-fade {
+  animation: hub-fade-in 180ms ease both;
+}
+
+@keyframes hub-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.selection-overlay {
+  animation: hub-slide-up 200ms ease both;
+}
+
+@keyframes hub-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-fade,
+  .selection-overlay {
+    animation: none;
+  }
+}

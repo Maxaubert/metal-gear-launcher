@@ -32,7 +32,10 @@ export interface HubApi {
   extract(target: ExtractTarget): Promise<Result<HubState>>;
   onExtractProgress(cb: (p: Progress) => void): () => void;
   setSteamPath(path: string): Promise<Result<HubState>>;
-  launch(gameId: string): Promise<Result<void>>;
+  // `opts.install` is forwarded to the main-process handler so an uninstalled game's
+  // "Install on Steam" row can ask it to open `steam://install/<appId>` instead of
+  // launching the game exe; the handler itself is still Task 10's stub until then.
+  launch(gameId: string, opts?: { install?: boolean }): Promise<Result<void>>;
   quit(): Promise<Result<void>>;
   getConfig(): Promise<Result<Config>>;
   setConfig(patch: Partial<Config>): Promise<Result<Config>>;

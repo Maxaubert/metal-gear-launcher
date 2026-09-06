@@ -10,7 +10,7 @@ const api: HubApi = {
     ipcRenderer.on("hub:extract:progress", h);
     return () => ipcRenderer.off("hub:extract:progress", h);
   },
-  launch: (gameId) => ipcRenderer.invoke("hub:launch", gameId),
+  launch: (gameId, opts) => ipcRenderer.invoke("hub:launch", gameId, opts),
   quit: () => ipcRenderer.invoke("hub:quit"),
   getConfig: () => ipcRenderer.invoke("hub:config:get"),
   setConfig: (patch) => ipcRenderer.invoke("hub:config:set", patch),
