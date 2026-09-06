@@ -1,0 +1,17 @@
+{
+  "id": "mgs1", "title": "METAL GEAR SOLID", "shortTitle": "MGS1", "number": "1",
+  "yearLabel": "2005", "subtitle": "Shadow Moses Incident",
+  "description": "Solid Snake infiltrates a nuclear weapons disposal facility on Shadow Moses Island to stop a terrorist takeover by FOXHOUND, uncovering a conspiracy that reaches into his own past.",
+  "theme": { "accent": "#d81f26", "ink": "#111111", "paper": "#f4f4ee" },
+  "steam": { "appId": 2131630, "installDir": "MGS1" },
+  "launch": { "exe": "METAL GEAR SOLID.exe", "env": { "SteamAppId": "2131630" } },
+  "assets": [
+    { "role": "mainVisual", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0019" },
+    { "role": "logo",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0012" },
+    { "role": "numbering",  "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0000" },
+    { "role": "year",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0046" },
+    { "role": "bgEffect",   "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0045" },
+    { "role": "bgm",        "source": "m2", "file": "system/sound/bgm_title.psb" },
+    { "role": "fontMedium", "source": "m2", "file": "system/font/title_mgsrodin_db.psb.m" }
+  ]
+}
