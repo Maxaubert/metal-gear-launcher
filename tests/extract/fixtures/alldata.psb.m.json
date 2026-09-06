@@ -1,0 +1,10 @@
+{
+  "id": "ArchiveInfo",
+  "version": 1,
+  "expire_suffix_list": ["_JP", "_EN"],
+  "file_info": {
+    "system/motion/outgame_menu_main.psb.m": [123456, 81000000],
+    "system/sound/bgm_title.psb": [204636456, 53830852],
+    "system/font/title_mgsrodin_db.psb.m": [258467308, 538904]
+  }
+}

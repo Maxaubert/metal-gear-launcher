@@ -1,6 +1,6 @@
 import { app } from "electron";
 import { execFile } from "node:child_process";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 export const M2_SEED = "25G/xpvTbsb+6";
 export const M2_SEED_LENGTH = 64;
@@ -19,7 +19,9 @@ export function psbInfoArgs(manifest: string, body: string, outDir: string): str
   return ["info-psb", "-k", M2_SEED, "-l", String(M2_SEED_LENGTH), "-b", body, "-o", outDir, "-raw", manifest];
 }
 export function psbFileArgs(file: string, outDir: string): string[] {
-  return ["-s", M2_SEED, "-l", String(M2_SEED_LENGTH), "-o", outDir, file];
+  // FreeMote's MDF seed is Key+FileName concatenated into one string, not the key alone -
+  // verified against the real MGS1 archive (the key alone fails to decrypt any .psb.m file).
+  return ["-s", M2_SEED + basename(file), "-l", String(M2_SEED_LENGTH), "-o", outDir, file];
 }
 
 export function runTool(exe: string, args: string[], opts: { cwd?: string; timeoutMs?: number } = {}): Promise<{ code: number; stdout: string; stderr: string }> {
