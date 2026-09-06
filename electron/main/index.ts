@@ -1,6 +1,8 @@
-import { app, BrowserWindow, dialog, ipcMain, net, protocol } from "electron";
-import { join } from "node:path";
+import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from "electron";
+import { exec, spawn } from "node:child_process";
+import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import { z } from "zod";
 import type { AssetRole } from "@shared/packs";
 import { loadPacks, PACK_ORDER } from "@shared/packs";
@@ -12,6 +14,9 @@ import { configSchema, readConfig, writeConfig } from "./config";
 import { findSteamRoot, listLibraries } from "./steam/library";
 import { resolveInstall } from "./steam/resolve";
 import { extractGame, isStale, readManifest, readToolVersions } from "./extract/extractor";
+import { launchGame } from "./launch/launcher";
+
+const execAsync = promisify(exec);
 
 protocol.registerSchemesAsPrivileged([
   { scheme: ASSET_PROTOCOL, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
@@ -65,6 +70,22 @@ async function buildState(): Promise<HubState> {
     });
   }
   return { steamPath: steamRoot, games };
+}
+
+// Polls `tasklist` for a process matching `filter` (a `/FI` clause such as `PID eq 1234` or
+// `IMAGENAME eq mgs4.exe`) every 5s until it is gone, then resolves. `tasklist` prints
+// "INFO: No tasks are running..." on no match rather than failing, so absence of that line
+// means the process is still alive.
+async function waitForExit(filter: string): Promise<void> {
+  for (;;) {
+    try {
+      const { stdout } = await execAsync(`tasklist /FI "${filter}"`);
+      if (/no tasks are running/i.test(stdout)) return;
+    } catch {
+      return; // tasklist itself failing means we can't confirm the process is alive
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
 }
 
 app.whenReady().then(() => {
@@ -138,10 +159,44 @@ app.whenReady().then(() => {
     }
   });
 
-  // Registered here as stubs so the preload bridge always resolves to a Result rather than
-  // rejecting on a missing handler; Task 10 replaces both with the real launcher.
-  ipcMain.handle("hub:launch", async () => err("not implemented"));
-  ipcMain.handle("hub:quit", async () => err("not implemented"));
+  ipcMain.handle("hub:launch", async (_e, arg) => {
+    try {
+      const { gameId, install: installOnly } = z
+        .object({ gameId: z.enum(PACK_ORDER), install: z.boolean().optional() })
+        .parse(arg);
+      const pack = loadPacks().find((p) => p.id === gameId);
+      if (!pack) return err(`unknown game: ${gameId}`);
+
+      if (installOnly) {
+        await shell.openExternal(`steam://install/${pack.steam.appId}`);
+        return ok(undefined);
+      }
+
+      const config = await readConfig();
+      const steamRoot = await findSteamRoot(config.steamPath);
+      const libraries = steamRoot ? await listLibraries(steamRoot) : [];
+      const install = steamRoot ? await resolveInstall(pack, libraries) : null;
+      if (!install) return err("not installed");
+
+      const result = await launchGame(pack, install, { spawn, openExternal: shell.openExternal });
+      mainWindow?.minimize();
+      const filter = result.via === "exe" && result.pid
+        ? `PID eq ${result.pid}`
+        : `IMAGENAME eq ${basename(pack.launch.exe)}`;
+      void waitForExit(filter).then(() => {
+        mainWindow?.restore();
+        mainWindow?.focus();
+      });
+      return ok(undefined);
+    } catch (e) {
+      return err(asError(e));
+    }
+  });
+
+  ipcMain.handle("hub:quit", async () => {
+    app.quit();
+    return ok(undefined);
+  });
 
   mainWindow = createWindow();
 });
