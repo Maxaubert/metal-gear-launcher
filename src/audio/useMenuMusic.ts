@@ -62,7 +62,8 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number): { unlo
       audio.src = bgmUrl;
       if (unlockedRef.current) {
         audio.play().catch(() => {
-          // Autoplay can still be refused right after a src change; unlock() retries it.
+          // Autoplay can still be refused right after a src change; the next game switch
+          // re-enters this same branch and tries again, since `unlockedRef.current` stays true.
         });
         cancelFadeRef.current = fade(audio, 0, volumeRef.current);
       }
@@ -77,12 +78,18 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number): { unlo
 
   const unlock = () => {
     if (unlockedRef.current) return;
+    // Record the gesture even when `bgmUrl` has not resolved yet: hub state loads
+    // asynchronously (see `HubProvider`), and the caller unlocks exactly once, on the very
+    // first input, which can arrive before that load finishes and `audio.src` gets set. The
+    // effect above reads `unlockedRef.current` in `swapAndFadeIn` and plays as soon as it
+    // later sets a src, so recording the gesture here (rather than bailing out) is what makes
+    // that catch-up play happen instead of music never starting for the rest of the session.
+    unlockedRef.current = true;
     const audio = audioRef.current;
     if (!audio || !audio.src) return;
-    unlockedRef.current = true;
     audio.play().catch(() => {
-      // Still refused (e.g. no gesture reached the OS yet) - the next unlock() call retries.
-      unlockedRef.current = false;
+      // Autoplay can still be refused here; `unlockedRef.current` stays true, so the next
+      // `bgmUrl` change (game switch) retries via `swapAndFadeIn` above.
     });
     cancelFadeRef.current = fade(audio, 0, volumeRef.current);
   };

@@ -32,9 +32,14 @@ export interface HubApi {
   extract(target: ExtractTarget): Promise<Result<HubState>>;
   onExtractProgress(cb: (p: Progress) => void): () => void;
   setSteamPath(path: string): Promise<Result<HubState>>;
-  // `opts.install` is forwarded to the main-process handler so an uninstalled game's
-  // "Install on Steam" row can ask it to open `steam://install/<appId>` instead of
-  // launching the game exe; the handler itself is still Task 10's stub until then.
+  // Added by Task 9, which needed it for `HubProvider.tsx` and `NotInstalled.tsx` (both in
+  // that task's own file list) to compile, even though `shared/ipc.ts` itself is not listed
+  // under Task 9's Modify files - flagged in that task's report for controller/Task 10
+  // attention. `opts.install` is forwarded to the main-process handler so an uninstalled
+  // game's "Install on Steam" row can ask it to open `steam://install/<appId>` instead of
+  // launching the game exe; the handler itself is still Task 10's stub until then. The shape
+  // is additive and backward compatible - Task 10 should build its `hub:launch` handler on
+  // this exact `opts` shape rather than redefine it, unless the controller decides otherwise.
   launch(gameId: string, opts?: { install?: boolean }): Promise<Result<void>>;
   quit(): Promise<Result<void>>;
   getConfig(): Promise<Result<Config>>;
