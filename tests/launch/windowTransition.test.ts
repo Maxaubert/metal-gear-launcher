@@ -74,10 +74,15 @@ describe("restoreAfterLaunch", () => {
   it("re-enters fullscreen after restore, and only focuses once that transition finishes", async () => {
     const win = fakeWin(false);
     restoreAfterLaunch(win, true);
-    await vi.runOnlyPendingTimersAsync(); // "restore" fires, setFullScreen(true) starts
-    expect(win.focusCalls).toBe(0);
-    await vi.runOnlyPendingTimersAsync(); // "enter-full-screen" fires
+    // Advance one pending timer at a time (restore -> deferred setFullScreen(true) -> its
+    // internal transition timer -> deferred focus()) and assert focus never fires early,
+    // regardless of how many macrotask hops the deferral chain takes.
+    for (let i = 0; i < 10 && !win.isFullScreen(); i++) {
+      expect(win.focusCalls).toBe(0);
+      await vi.advanceTimersToNextTimerAsync();
+    }
     expect(win.isFullScreen()).toBe(true);
+    await vi.runAllTimersAsync();
     expect(win.focusCalls).toBe(1);
   });
 

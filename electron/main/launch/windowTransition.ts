@@ -3,6 +3,14 @@
 // without waiting for the transition to finish can leave a stuck black frame instead of behaving
 // like a normal minimize/restore. setFullScreen() and minimize()/restore() are asynchronous on
 // Windows, so each step here waits for the previous transition's event before firing the next.
+//
+// Confirmed on-machine (real BrowserWindow, not a mock, 2026-09-06): waiting for the event is
+// necessary but not sufficient. Calling the next native window method (minimize(), focus(),
+// setFullScreen()) *synchronously* from inside the previous event's handler is itself unreliable:
+// the OS is still mid-transition when the event fires, so the immediate follow-up call is silently
+// dropped (setFullScreen(false) took effect but the chained minimize() never actually minimized the
+// window in repeated trials). Deferring each follow-up call by one macrotask (setTimeout(fn, 0))
+// after the event fires reliably fixed it in the same repeated trials. Do not remove the deferral.
 export type WinLike = {
   isFullScreen(): boolean;
   setFullScreen(flag: boolean): void;
@@ -19,7 +27,7 @@ export type WinLike = {
 export function minimizeForLaunch(win: WinLike): boolean {
   const wasFullScreen = win.isFullScreen();
   if (wasFullScreen) {
-    win.once("leave-full-screen", () => win.minimize());
+    win.once("leave-full-screen", () => setTimeout(() => win.minimize(), 0));
     win.setFullScreen(false);
   } else {
     win.minimize();
@@ -31,10 +39,10 @@ export function minimizeForLaunch(win: WinLike): boolean {
 export function restoreAfterLaunch(win: WinLike, wasFullScreen: boolean): void {
   win.once("restore", () => {
     if (wasFullScreen) {
-      win.once("enter-full-screen", () => win.focus());
-      win.setFullScreen(true);
+      win.once("enter-full-screen", () => setTimeout(() => win.focus(), 0));
+      setTimeout(() => win.setFullScreen(true), 0);
     } else {
-      win.focus();
+      setTimeout(() => win.focus(), 0);
     }
   });
   win.restore();
