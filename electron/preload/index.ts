@@ -10,8 +10,8 @@ const api: HubApi = {
     ipcRenderer.on("hub:extract:progress", h);
     return () => ipcRenderer.off("hub:extract:progress", h);
   },
-  // `opts` threads through the `HubApi.launch` addition documented in `shared/ipc.ts`
-  // (Task 9, pending Task 10 confirmation of the shape).
+  // `opts` threads through the `HubApi.launch` addition documented in `shared/ipc.ts`,
+  // matching the plan's own Task 10 spec for the `hub:launch` payload (see that file's comment).
   launch: (gameId, opts) => ipcRenderer.invoke("hub:launch", gameId, opts),
   quit: () => ipcRenderer.invoke("hub:quit"),
   getConfig: () => ipcRenderer.invoke("hub:config:get"),
