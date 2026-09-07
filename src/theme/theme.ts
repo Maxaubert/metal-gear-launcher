@@ -1,5 +1,5 @@
-/** The three colours a pack defines (see `shared/packs/schema.ts`). */
-export type ThemeColors = { accent: string; ink: string; paper: string };
+/** The colours a pack defines (see `shared/packs/schema.ts`). `paperLeft` is optional. */
+export type ThemeColors = { accent: string; ink: string; paper: string; paperLeft?: string };
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const clean = hex.replace("#", "");
@@ -22,6 +22,7 @@ export function themeVars(theme: ThemeColors): Record<string, string> {
     "--accent": theme.accent,
     "--ink": theme.ink,
     "--paper": theme.paper,
+    "--paper-left": theme.paperLeft ?? theme.paper,
     "--accent-soft": `rgba(${r},${g},${b},0.18)`,
   };
 }

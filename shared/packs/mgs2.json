@@ -9,11 +9,11 @@
   "launch": { "exe": "METAL GEAR SOLID2.exe", "env": { "SteamAppId": "2131640" } },
   "visualFit": { "leftVw": 11, "widthVw": 48, "heightVh": 118, "anchor": "bottom" },
   "assets": [
-    { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "MGS2_MainVisual" },
+    { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "MGS2_MainVisual_gra" },
     { "role": "logo",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mgs2_logo" },
     { "role": "numbering",  "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mgs2_numbering" },
     { "role": "year",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_mgs2_year", "type": "Sprite" },
-    { "role": "bgEffect",   "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "MGS2_MainVisual_gra" },
+    { "role": "bgEffect",   "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mini" },
     { "role": "bgm",        "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/bgm/mgs2/mg35_mgs2_menu_lp.wav.bundle", "name": "MG35_mgs2_menu_lp", "type": "AudioClip" },
     { "role": "fontMedium", "source": "unity", "path": "launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-M", "type": "Font" },
     { "role": "fontBold",   "source": "unity", "path": "launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-B", "type": "Font" }

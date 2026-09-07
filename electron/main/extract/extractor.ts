@@ -13,7 +13,7 @@ export type ToolVersions = { assetStudio: string; freemote: string };
 export type AssetManifest = { gameId: string; buildId: string; toolVersions: ToolVersions; files: Partial<Record<AssetRole, string>>; failed: Partial<Record<AssetRole, string>> };
 export type Progress = { gameId: string; role: AssetRole; index: number; total: number; status: "start" | "done" | "failed"; error?: string };
 
-const EXT: Record<AssetRole, string> = { mainVisual: "png", logo: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf" };
+const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf" };
 
 export function isStale(m: AssetManifest | null, install: Install, tools: ToolVersions): boolean {
   return !m || m.buildId !== install.buildId || m.toolVersions.assetStudio !== tools.assetStudio || m.toolVersions.freemote !== tools.freemote;

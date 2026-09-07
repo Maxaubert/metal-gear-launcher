@@ -156,15 +156,20 @@ the update check against GitHub Releases.
 ## 4.7 Visual layout (normalized across every game)
 
 Reference screenshots (owner-supplied, not committed): `.superpowers/sdd/2026-09-06-mvp-hub/reference/ref-8.png`
-(Vol.1 Bonus Content menu), `ref-9.png` (MGS3 menu), `ref-10.png` (MGS1 menu), `ref-11.png` (HD Collection
-MGS3 title, a looser layout, for the "art floats into the background" feel), `ref-12.png` (MGS2 menu),
-`ref-13.png` (MGS1 Game Selection list).
+(Vol.1 Bonus Content menu), `ref-9.png`/`ref-mgs3-b.png` (MGS3 menu, the latter the newer, better
+capture), `ref-10.png`/`ref-mgs1-b.png` (MGS1 menu), `ref-11.png` (HD Collection MGS3 title, a looser
+layout, for the "art floats into the background" feel), `ref-12.png`/`ref-mgs2-b.png` (MGS2 menu),
+`ref-13.png` (MGS1 Game Selection list), `ref-mg12.png` (MG1&2 menu - the first reference for this
+screen; it is structurally different from the rest, see the MG1&2 delta below).
 
 Every game screen uses the same geometry. Units are percentages of viewport width (W) and height (H) so
 1080p and 2160p look identical. The window is true fullscreen (`BrowserWindow.fullscreen`), never maximized.
 
 **Ground.** Paper colour from the pack with a halftone dot pattern (radial-gradient dots, spacing 0.55 vh,
-ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and fades into it.
+ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and fades into it. A pack
+may set `theme.paperLeft` to tint the left zone only (a hard-stop gradient at the divider, behind the
+dots) while the right column stays paper-white - MGS3's reference shows a faint sage wash down the left
+that the plain shared `paper` colour can't express on its own.
 
 **Left zone (0 to 61 % W).**
 - Logo strip: the vertical logo texture at x = 0, height 100 % H, top aligned, `object-fit: contain`,
@@ -178,11 +183,33 @@ ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and 
   below it). Textures that are not pre-cut (rectangular launcher backgrounds for MGS4 and Peace
   Walker) get a soft edge: `mask-image` with a radial gradient (opaque to 70 %, transparent at
   100 %) plus a linear fade on the top 12 %. Pack flag `edge: "fade" | "cut"` per asset, default
-  `cut` - MGS1/MGS2/MGS3's cutout portraits use `cut` (their mask was painting a visible grey/red
-  halo behind the art), only MGS4/Peace Walker's uncut launcher backgrounds need `fade`.
+  `cut` - MGS1/MGS2/MGS3's cutout portraits are real alpha cutouts (MGS2's turned out to need the
+  bundle's `_gra` variant, not the flat `MainVisual` the pack originally pointed at - the latter is
+  fully opaque and was painting over the logo strip's right edge) and use `cut`; MGS4/Peace Walker's
+  uncut launcher backgrounds use `fade`, which also runs the extractor's aspect pre-crop
+  (`mainVisualFit.ts`) so the mask's top-edge fade actually reaches real pixels instead of empty
+  letterboxing.
 - Background effect: the bgEffect texture at 18 % opacity, width 58 % W, top left at (2 % W, 2 % H),
-  behind the main visual and the logo strip.
+  behind the main visual and the logo strip, by default. A pack may override this box with a
+  `bgEffectFit` field (`leftVw`, `topVh`, `widthVw`, `opacity`) - MGS3's reference shows a large
+  ghosted vehicle sketch bleeding across the header too, which needs a much wider, fainter box than
+  the shared default without changing MGS1/MGS2's already-correct layer.
 - Nothing in the left zone is interactive.
+
+**MG1&2 delta (structurally different from every other screen, spec `ref-mg12.png`).** A pack may
+declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exactly two). When set:
+- the left zone renders two stacked key-art panels, one per chapter, each 50 % H and the full 61 % W
+  wide (`mainVisual` on top, `mainVisual2` on the bottom) instead of one logo strip + floating main
+  visual; each panel carries its own rotated Rodin bold title (`chapter.gameTitle`, in the accent
+  colour) over its own art, the same "rotated text" treatment the single-chapter layout uses when a
+  pack has no vertical logo texture;
+- the right column renders one header + description block per chapter, stacked in a flex column
+  filling the same top-5%-to-menu-43% budget the single-chapter header+description normally has to
+  itself, so the menu still starts at the shared 43 % H line - each chapter header repeats the tick,
+  year, subtitle (the incident name, e.g. "Outer Heaven Uprising"), and the full serial/barcode/index
+  mark (scaled down to fit), all built from the one pack-level `indexLabel` and Steam app ID like the
+  single-chapter header;
+- the menu and footer hints below are unchanged.
 
 **Divider.** 1 px vertical rule at x = 61.5 % W, full height, ink at 25 % alpha.
 

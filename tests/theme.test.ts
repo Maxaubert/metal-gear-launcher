@@ -3,7 +3,14 @@ import { layoutVars, themeVars } from "../src/theme/theme";
 describe("themeVars", () => {
   it("emits css variables including a soft accent", () => {
     expect(themeVars({ accent: "#d81f26", ink: "#111111", paper: "#f4f4ee" })).toEqual({
-      "--accent": "#d81f26", "--ink": "#111111", "--paper": "#f4f4ee", "--accent-soft": "rgba(216,31,38,0.18)",
+      "--accent": "#d81f26", "--ink": "#111111", "--paper": "#f4f4ee", "--paper-left": "#f4f4ee",
+      "--accent-soft": "rgba(216,31,38,0.18)",
+    });
+  });
+
+  it("uses paperLeft for --paper-left when a pack sets it", () => {
+    expect(themeVars({ accent: "#d81f26", ink: "#111111", paper: "#f4f4ee", paperLeft: "#ecefdd" })).toMatchObject({
+      "--paper-left": "#ecefdd",
     });
   });
 });

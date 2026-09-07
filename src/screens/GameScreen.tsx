@@ -85,9 +85,13 @@ export default function GameScreen({
     >
       <ScreenBackdrop pack={pack} assetUrls={assetUrls} />
 
-      <div key={`${pack.id}-desc`} className="fade-in-fast">
-        <p className="description">{pack.description}</p>
-      </div>
+      {/* A `chapters` pack (defect 4: MG1&2) renders its own two descriptions inside
+          ScreenBackdrop, one per chapter, instead of this single pack-level one. */}
+      {!pack.chapters && (
+        <div key={`${pack.id}-desc`} className="fade-in-fast">
+          <p className="description">{pack.description}</p>
+        </div>
+      )}
 
       <ul className="menu">
         <li

@@ -4,14 +4,19 @@
   "indexLabel": "000",
   "yearLabel": "1995-1999", "subtitle": "Outer Heaven and Zanzibar Land",
   "description": "Before Shadow Moses, there was Outer Heaven, and after it, Zanzibar Land. These two missions forged the soldier who would become known as Solid Snake.",
-  "theme": { "accent": "#c8912a", "ink": "#111111", "paper": "#f4f4ee" },
+  "theme": { "accent": "#0d3d82", "ink": "#111111", "paper": "#f4f4ee" },
   "steam": { "appId": 2131680, "installDir": "MG and MG2" },
   "launch": { "exe": "METAL GEAR.exe", "env": { "SteamAppId": "2131680" } },
+  "chapters": [
+    { "yearLabel": "1995", "title": "Outer Heaven Uprising", "gameTitle": "METAL GEAR", "description": "After receiving orders from his commander, Big Boss, his orders are to infiltrate the hostile nation of Outer Heaven. The story covers what would later be referred to as the Outer Heaven Uprising." },
+    { "yearLabel": "1999", "title": "Zanzibar Land Disturbance", "gameTitle": "METAL GEAR 2 / SOLID SNAKE", "description": "Snake evens the score against his nemesis, Big Boss. The story covers what would later be known as the Zanzibar Land Disturbance, taking the drama of the series to all new heights as it depicts the reason for Big Boss's actions." }
+  ],
   "assets": [
-    { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "MG2_MainVisual" },
+    { "role": "mainVisual",  "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "MG1_MainVisual_gra" },
+    { "role": "mainVisual2", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "MG2_MainVisual" },
     { "role": "logo",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "mg12_grid_mask" },
     { "role": "year",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_mg12_year", "type": "Sprite" },
-    { "role": "bgEffect",   "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "MG1_MainVisual_gra" },
+    { "role": "bgEffect",   "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "mg12_grid_mask" },
     { "role": "bgm",        "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/bgm/mg12/mg35_mg_menu_lp.wav.bundle", "name": "MG35_mg_menu_lp", "type": "AudioClip" },
     { "role": "fontMedium", "source": "unity", "path": "launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-M", "type": "Font" },
     { "role": "fontBold",   "source": "unity", "path": "launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-B", "type": "Font" }

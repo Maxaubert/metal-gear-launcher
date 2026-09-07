@@ -82,8 +82,15 @@ body {
   position: absolute;
   inset: 0;
   background-color: var(--paper);
-  background-image: radial-gradient(color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 1.2px);
-  background-size: 0.55vh 0.55vh;
+  /* The halftone dots sit on top (first-listed = frontmost); the hard-stop wash sits behind,
+     tinting only the left zone with `--paper-left` (spec 4.7's MGS3 delta: "a soft tint down
+     the left" while the right column stays paper-white). `--paper-left` defaults to `--paper`
+     (see theme.ts) so this second layer is a no-op flat fill for every pack that doesn't set
+     `theme.paperLeft`, leaving MGS1/MGS2/etc. pixel-identical to before. */
+  background-image:
+    radial-gradient(color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 1.2px),
+    linear-gradient(to right, var(--paper-left) 0, var(--paper-left) var(--left-zone), var(--paper) var(--left-zone));
+  background-size: 0.55vh 0.55vh, 100% 100%;
 }
 
 .ghost-effect {
@@ -115,6 +122,46 @@ body {
   color: var(--ink);
   display: flex;
   align-items: center;
+}
+
+/* MG1&2's two-chapter variant (defect 4, spec 4.7 delta): two stacked key-art panels filling
+   the whole left zone edge to edge instead of one logo strip + floating main visual - each
+   panel carries its own rotated title lockup (spec 4.7's "rotated Rodin bold text" treatment,
+   scaled to the panel's own half-height rather than the full screen). */
+.chapter-panel {
+  position: absolute;
+  left: 0;
+  width: var(--left-zone);
+  height: 50vh;
+  overflow: hidden;
+}
+
+.chapter-panel-0 {
+  top: 0;
+}
+
+.chapter-panel-1 {
+  top: 50vh;
+}
+
+.chapter-visual {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chapter-logo {
+  position: absolute;
+  left: 1vw;
+  top: 0;
+  height: 100%;
+  writing-mode: vertical-rl;
+  font: 700 4.2vh/1 "Rodin", sans-serif;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  text-shadow: 0 0.2vh 0.8vh rgba(0, 0, 0, 0.4);
 }
 
 .main-visual {
@@ -363,6 +410,83 @@ body {
   -webkit-line-clamp: 7;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* MG1&2's two-chapter variant (defect 4, spec 4.7 delta): two year+title+description blocks
+   stacked above the menu instead of the single header+description every other pack renders.
+   Split the same header-top-to-menu-top budget the single-chapter layout uses, so the menu
+   still starts at the shared `--menu-top` line. `.head` is repositioned from absolute (its
+   normal, full-column placement) to relative so two copies can sit in this flex column instead
+   of stacking on top of each other. */
+.chapters {
+  position: absolute;
+  left: var(--col-x);
+  right: calc(100vw - var(--col-right));
+  top: var(--header-top);
+  bottom: calc(100vh - var(--menu-top) + 0.6vh);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.chapter-block {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chapter-block .head {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  padding-bottom: 0.6vh;
+  flex: none;
+}
+
+.chapter-block .head .year {
+  font-size: 5vh;
+}
+
+.chapter-block .head .subtitle {
+  font-size: 1.9vh;
+  margin-top: 0.3vh;
+}
+
+/* The mark block doesn't otherwise shrink with the rest of a chapter header (D7's serial/barcode
+   sizing is fixed in vh, tuned for the single, taller header) - at the chapter header's smaller
+   year/subtitle stack height, the unshrunk mark (bottom-aligned within `.head`'s own content
+   height) collided with the subtitle above it. Scaled down to match. */
+.chapter-block .head .mark-serial {
+  font-size: 0.85vh;
+}
+
+.chapter-block .head .barcode {
+  width: 9vw;
+  height: 1.2vh;
+}
+
+.chapter-block .head .index {
+  font-size: 1.4vh;
+}
+
+.chapter-block .head .mark-accent .rule {
+  height: 4vh;
+}
+
+.chapter-block .head .bang {
+  font-size: 4.4vh;
+}
+
+.chapter-block .chapter-description {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  max-height: none;
+  margin: 0.7vh 0 0 0;
+  font: 1.7vh/1.28 "Rodin", sans-serif;
+  -webkit-line-clamp: 4;
 }
 
 .menu {
