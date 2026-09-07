@@ -27,7 +27,7 @@ function reduceNav(state: NavState, action: Action | SelectGame): NavState {
 
 export default function HubProvider() {
   const [hubState, setHubState] = useState<HubState | null>(null);
-  const [nav, dispatch] = useReducer(reduceNav, INITIAL_NAV);
+  const [nav, rawDispatch] = useReducer(reduceNav, INITIAL_NAV);
   const [quitOpen, setQuitOpen] = useState(false);
   const [quitItem, setQuitItem] = useState(0);
   const [launching, setLaunching] = useState(false);
@@ -37,6 +37,16 @@ export default function HubProvider() {
   const [volume, setVolume] = useState(0.6);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const hasActedRef = useRef(false);
+
+  // The "Launching..." overlay (and the dimmed screen behind it) was otherwise only cleared by
+  // its own LAUNCH_MESSAGE_MS timeout, so navigating away - picking a different game, opening
+  // Game Selection, switching games with left/right - while it still showed left it stuck over
+  // every screen after, regardless of which game triggered it. Clearing it here, ahead of every
+  // nav dispatch, means it never survives past the input that moved on from it.
+  function dispatch(action: Action | SelectGame): void {
+    setLaunching(false);
+    rawDispatch(action);
+  }
 
   useEffect(() => {
     let cancelled = false;

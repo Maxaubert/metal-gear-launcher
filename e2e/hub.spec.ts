@@ -73,12 +73,30 @@ test.describe("hub", () => {
       .toContain("mgs3");
   });
 
+  test("selecting a game clears a leftover launching overlay", async () => {
+    // Regression coverage: the previous test's "Start Game" left `launching` true, which used
+    // to persist across every screen after it (see HubProvider's wrapped `dispatch`) - so a
+    // screenshot taken right after picking a new game showed the whole screen still dimmed
+    // behind "Launching...". Picking mgs1 here must land on a clean, fully opaque screen. A
+    // short assertion timeout matters here: `launching`'s own 3000ms timeout would otherwise
+    // clear the overlay mid-retry and mask a broken fix, since it fires well inside Playwright's
+    // default 5000ms assertion poll and this test runs only tens of ms after the previous one
+    // set `launching = true`.
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs1").click();
+    await expect(page.locator(".overlay")).toHaveCount(0, { timeout: 200 });
+  });
+
   test("screenshots every game at 4k", async () => {
     await page.setViewportSize({ width: 3840, height: 2160 });
     for (const id of ["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]) {
       await page.keyboard.press("Tab");
       await page.getByTestId(`tile-${id}`).click();
       await expect(page.getByTestId("game-screen")).toHaveAttribute("data-layout", "v2");
+      await expect(page.locator(".overlay")).toHaveCount(0);
+      // Let the 250ms left-zone crossfade and 180ms screen fade finish so the capture shows
+      // the resting-state screen, not a mid-transition frame.
+      await page.waitForTimeout(400);
       await page.screenshot({ path: `e2e/out/${id}.png` });
     }
   });
