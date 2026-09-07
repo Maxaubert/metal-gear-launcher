@@ -7,45 +7,52 @@ export type GameSelectionProps = {
 };
 
 /**
- * Full-screen overlay grid (3 columns) for jumping straight to a game. Tiles for a game
- * that isn't installed are greyed out but still selectable - picking one just lands on
- * that game's `NotInstalled` screen.
+ * Full-screen dark overlay (spec 4.7) for jumping straight to a game: the right column
+ * becomes a vertically centred list of banner tiles, one per game, while the left zone shows
+ * the focused game's own logo strip and main visual dimmed to 60% with a release-year info
+ * block. A tile for a game that isn't installed is still selectable - picking one just lands
+ * on that game's `NotInstalled` screen.
  */
 export default function GameSelection({ games, focusIndex, onSelect }: GameSelectionProps) {
+  const focused = games[focusIndex];
+  const hasLogo = focused && Boolean(focused.assetUrls.logo) && focused.pack.id !== "mg12";
+
   return (
-    <div
-      className="selection-overlay screen-root"
-      data-testid="game-selection"
-      style={{
-        position: "absolute", inset: 0, background: "var(--paper)",
-        display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem",
-        padding: "3rem", alignContent: "center",
-      }}
-    >
-      {games.map((g, index) => (
-        <div
-          key={g.pack.id}
-          data-testid={`tile-${g.pack.id}`}
-          onClick={() => onSelect(index)}
-          className={index === focusIndex ? "focused" : undefined}
-          style={{
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.5rem",
-            padding: "1.5rem", cursor: "pointer",
-            border: g.installed ? "1px solid color-mix(in srgb, var(--ink) 30%, transparent)" : "1px dashed color-mix(in srgb, var(--ink) 30%, transparent)",
-          }}
-        >
-          {/* Dim only the artwork, not the title text below it, so a not-installed tile stays
-              legible instead of dropping under the 4.5:1 contrast floor. */}
-          <div style={{ opacity: g.installed ? 1 : 0.4 }}>
-            {g.assetUrls.numbering ? (
-              <img src={g.assetUrls.numbering} alt="" style={{ height: "4rem", objectFit: "contain" }} />
-            ) : (
-              <span style={{ fontSize: "2.5rem", fontWeight: 700 }}>{g.pack.number}</span>
-            )}
+    <div className="screen-root selection-overlay" data-testid="game-selection" style={{ position: "fixed", inset: 0 }}>
+      <div className="selection-scrim" />
+      {focused && (
+        <div className="selection-left">
+          {hasLogo ? (
+            <img className="logo-strip" src={focused.assetUrls.logo} alt={focused.pack.title} />
+          ) : (
+            <div className="logo-text">{focused.pack.shortTitle}</div>
+          )}
+          {focused.assetUrls.mainVisual && (
+            <img className="main-visual" src={focused.assetUrls.mainVisual} alt={focused.pack.title} />
+          )}
+          <div className="selection-info">
+            <span className="title">{focused.pack.title}</span>
+            <span className="released">Originally released in {focused.pack.releaseYear}</span>
           </div>
-          <span style={{ fontSize: "1.1rem" }}>{g.pack.shortTitle}</span>
         </div>
-      ))}
+      )}
+      <ul className="selection-list">
+        {games.map((g, index) => (
+          <li
+            key={g.pack.id}
+            data-testid={`tile-${g.pack.id}`}
+            className={`tile${index === focusIndex ? " focused" : ""}`}
+            onClick={() => onSelect(index)}
+          >
+            {g.assetUrls.mainVisual && <img className="tile-cover" src={g.assetUrls.mainVisual} alt="" />}
+            <span className="tile-bar" aria-hidden />
+            <span className="tile-title">{g.pack.shortTitle}</span>
+            <span className="tile-number" style={{ color: g.pack.theme.accent }}>
+              {g.pack.number}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

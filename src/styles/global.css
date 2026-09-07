@@ -1,5 +1,7 @@
 /* Base sizing: 1rem = 28px at 1080p, 56px at 2160p (100vh / 38.6). Every screen is
-   built in rem so it scales with the window instead of being pinned to one resolution. */
+   built in rem so it scales with the window instead of being pinned to one resolution.
+   The normalized game/selection screens (spec 4.7) below use viewport units (vw/vh)
+   directly instead, since their geometry is defined as percentages of the window. */
 html {
   font-size: calc(100vh / 38.6);
 }
@@ -25,7 +27,8 @@ body {
   position: relative;
 }
 
-/* Faint dotted texture used behind hero art so a missing image doesn't leave a dead flat area. */
+/* Faint dotted texture used behind hero art so a missing image doesn't leave a dead flat area.
+   Used by FirstRun/NotInstalled; the game screen has its own `.ground` halftone below. */
 .dots {
   background-image: radial-gradient(var(--ink) 1px, transparent 1px);
   background-size: 0.5rem 0.5rem;
@@ -73,9 +76,456 @@ body {
   }
 }
 
+/* ---------------------------------------------------------------------------------------
+   Normalized game screen (spec 4.7). Every position below is a percentage of the viewport
+   (vw/vh), fed in part by `layoutVars()` (src/theme/theme.ts) as CSS custom properties, so
+   1080p and 2160p line up identically. `.screen` is the fixed, full-window root every game
+   uses; nothing inside the left zone (0 to 61% W) is interactive.
+   --------------------------------------------------------------------------------------- */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: "Rodin", "Segoe UI", sans-serif;
+  color: var(--ink);
+}
+
+.ground {
+  position: absolute;
+  inset: 0;
+  background-color: var(--paper);
+  background-image: radial-gradient(color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 1.2px);
+  background-size: 0.55vh 0.55vh;
+}
+
+.ghost-effect {
+  position: absolute;
+  left: 2vw;
+  top: 2vh;
+  width: 58vw;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.logo-strip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-text {
+  position: absolute;
+  left: 1vw;
+  top: 0;
+  height: 100vh;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font: 700 9vh/1 "Rodin", sans-serif;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+}
+
+.main-visual {
+  position: absolute;
+  bottom: 0;
+  left: 11vw;
+  width: 50vw;
+  height: 94vh;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.main-visual.edge-fade {
+  mask-image: radial-gradient(ellipse at 50% 60%, #000 70%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 12%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+.main-visual-fallback {
+  position: absolute;
+  bottom: 0;
+  left: 11vw;
+  width: 50vw;
+  height: 94vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5vh;
+  text-align: center;
+  padding: 0 1vw;
+}
+
+.fallback-number {
+  font: 700 14vh/1 "Rodin", sans-serif;
+  color: var(--accent);
+}
+
+.fallback-hint {
+  font: 2vh/1.4 "Rodin", sans-serif;
+  color: var(--ink);
+}
+
+.divider {
+  position: absolute;
+  left: var(--divider-x);
+  top: 0;
+  width: 1px;
+  height: 100vh;
+  background: color-mix(in srgb, var(--ink) 25%, transparent);
+}
+
+.ghost-timeline {
+  position: absolute;
+  left: var(--col-x);
+  top: 0;
+  height: 100vh;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.ghost-number {
+  position: absolute;
+  right: calc(100vw - var(--col-right));
+  top: 3vh;
+  height: 46vh;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.head {
+  position: absolute;
+  left: var(--col-x);
+  right: calc(100vw - var(--col-right));
+  top: var(--header-top);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  padding-bottom: 1.5vh;
+}
+
+.head .tick {
+  position: absolute;
+  left: 0;
+  top: 1vh;
+  width: 0.35vw;
+  height: 2.5vh;
+  background: var(--ink);
+}
+
+.head .tick::after {
+  content: "";
+  position: absolute;
+  left: 0.35vw;
+  top: 1.2vh;
+  width: 2vw;
+  height: 1px;
+  background: var(--ink);
+}
+
+.head .year {
+  margin: 0 0 0 3vw;
+  font: 700 8vh/1 "Rodin", sans-serif;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.head .subtitle {
+  margin: 0.6vh 0 0 3vw;
+  font: 700 2.2vh/1.35 "Rodin", sans-serif;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  display: flex;
+  flex-direction: column;
+}
+
+.head .mark {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: grid;
+  justify-items: end;
+}
+
+.head .bang {
+  font: 700 6vh/1 "Rodin", sans-serif;
+  color: var(--accent);
+}
+
+.head .barcode {
+  width: 9vw;
+  height: 1.6vh;
+  background: repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 3px, var(--ink) 3px 6px, transparent 6px 8px);
+}
+
+.head .index {
+  font: 2vh/1 ui-monospace, monospace;
+  color: var(--ink);
+  margin-top: 0.4vh;
+}
+
+.description {
+  position: absolute;
+  left: var(--col-x);
+  right: calc(100vw - var(--col-right));
+  top: var(--desc-top);
+  margin: 0;
+  font: 2.35vh/1.5 "Rodin", sans-serif;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.menu {
+  position: absolute;
+  left: var(--col-x);
+  right: calc(100vw - var(--col-right));
+  bottom: calc(100vh - var(--menu-bottom));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--row-gap);
+}
+
+.menu li {
+  position: relative;
+  height: var(--row-h);
+  line-height: var(--row-h);
+  padding-left: 1.4vw;
+  border: 1px solid var(--ink);
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  font: 2.9vh/var(--row-h) "Rodin", sans-serif;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.menu li.focused {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.menu li.quit {
+  text-transform: uppercase;
+}
+
+.menu li.disabled {
+  color: color-mix(in srgb, var(--ink) 35%, transparent);
+  cursor: default;
+}
+
+/* The accent bar next to the focused row. A single element that slides between rows
+   (spec 4.7: "the accent bar slides, 120ms") rather than one `::before` per row, so the
+   motion is a continuous translate instead of a disappear/reappear. Selector is `.menu
+   .menu-bar`, not just `.menu-bar`, so its background/border win over `.menu li`'s (both
+   match this element, since it's an `<li>` inside `.menu`; `.menu li` is more specific than
+   a bare `.menu-bar` and would otherwise paint it as a plain row instead of a filled bar). */
+.menu .menu-bar {
+  /* Pinned to the same cell as row 1 instead of relying on auto-placement to skip an
+     absolutely-positioned item - it visibly did not: the bar rendered one row above "Start
+     Game" with an extra implicit row's worth of grid gap above the real rows. */
+  grid-row: 1;
+  grid-column: 1;
+  position: absolute;
+  left: -1.05vw;
+  top: 0;
+  width: 0.45vw;
+  height: var(--row-h);
+  background: var(--accent);
+  border: none;
+  padding: 0;
+  transition: transform 120ms ease;
+  pointer-events: none;
+}
+
+.hints {
+  position: absolute;
+  right: calc(100vw - var(--col-right));
+  bottom: calc(100vh - var(--hint-baseline));
+  display: flex;
+  gap: 2.5vw;
+  font: 2.1vh/1 "Rodin", sans-serif;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.hints .glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 2.6vh;
+  height: 2.6vh;
+  margin-right: 0.6vw;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-style: normal;
+  font-size: 1.6vh;
+  font-weight: 700;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3vh;
+}
+
+.overlay-panel {
+  background: var(--paper);
+  color: var(--ink);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 16rem;
+  font-size: 1.2rem;
+}
+
+/* Game change: crossfade 250ms of the whole left zone and the ghosts. Menu focus/description
+   text fades in faster (150ms) since it changes with every game switch too. */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade 250ms ease both;
+}
+
+.fade-in-fast {
+  animation: fade 150ms ease both;
+}
+
+/* ---------------------------------------------------------------------------------------
+   Game Selection, dark variant (spec 4.7). Overlays the current game screen; the right
+   column becomes a vertically centred list of banner tiles, one per game.
+   --------------------------------------------------------------------------------------- */
+
+.selection-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.selection-left {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.selection-left .logo-strip,
+.selection-left .logo-text {
+  filter: brightness(60%);
+}
+
+.selection-left .main-visual {
+  filter: brightness(60%);
+}
+
+.selection-info {
+  position: absolute;
+  left: 12vw;
+  top: 90vh;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vh;
+}
+
+.selection-info .title {
+  font: 700 2.6vh/1.2 "Rodin", sans-serif;
+}
+
+.selection-info .released {
+  font: 2.1vh/1.2 "Rodin", sans-serif;
+}
+
+.selection-list {
+  position: absolute;
+  left: var(--col-x);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34vw;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1vh;
+}
+
+.tile {
+  position: relative;
+  height: 8.5vh;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.tile-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(45%) blur(1px);
+}
+
+.tile.focused .tile-cover {
+  filter: brightness(100%) blur(0);
+}
+
+.tile-title {
+  position: absolute;
+  left: 1.2vw;
+  bottom: 1vh;
+  font: 700 2.6vh/1 "Rodin", sans-serif;
+  color: #fff;
+}
+
+.tile-number {
+  position: absolute;
+  right: 1.2vw;
+  bottom: 1vh;
+  font: 700 2.6vh/1 "Rodin", sans-serif;
+}
+
+.tile-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0.45vw;
+  height: 100%;
+  background: var(--accent);
+  opacity: 0;
+}
+
+.tile.focused .tile-bar {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .game-fade,
-  .selection-overlay {
+  .selection-overlay,
+  .fade-in,
+  .fade-in-fast {
     animation: none;
+  }
+  .menu-bar {
+    transition: none;
   }
 }

@@ -47,6 +47,10 @@ export default function HubProvider() {
         const index = PACK_ORDER.indexOf(r.value.startGame);
         if (index >= 0) dispatch({ type: "selectGame", index });
       }
+      // Tells main it is safe to start the HUB_SHOOT screenshot sequence, if one was
+      // requested - packs and asset state are loaded, so a `hub:selectGame` push would land
+      // on a fully rendered screen. A no-op outside shoot mode.
+      void window.hub.ready();
     });
     void window.hub.getConfig().then((r) => {
       if (!cancelled && r.ok) setVolume(r.value.volume);
@@ -58,6 +62,9 @@ export default function HubProvider() {
       if (cancelled) return;
       const index = PACK_ORDER.indexOf(id);
       if (index >= 0) dispatch({ type: "selectGame", index });
+    });
+    const offSelectionOpen = window.hub.onSelectionOpen(() => {
+      if (!cancelled) dispatch("menu");
     });
     const off = window.hub.onExtractProgress((p: Progress) => {
       if (cancelled) return;
@@ -76,6 +83,7 @@ export default function HubProvider() {
     return () => {
       cancelled = true;
       offSelectGame();
+      offSelectionOpen();
       off();
     };
   }, []);
@@ -237,7 +245,10 @@ export default function HubProvider() {
     dispatch(action);
   };
 
-  useNavigation(onAction);
+  // `lastInputKind` (Task 14) is threaded down to `GameScreen`'s footer hints - `useNavigation`
+  // must stay a single call site (it owns the keydown/gamepad listeners), so this is the only
+  // place a consumer can read it.
+  const { lastInputKind } = useNavigation(onAction);
 
   const updateBanner = updateInfo && (
     <div
@@ -283,6 +294,7 @@ export default function HubProvider() {
             launching={launching}
             quitOpen={quitOpen}
             quitItem={quitItem}
+            lastInputKind={lastInputKind}
             onSelectMenuItem={(index) => void handleMenuChoice(currentGame.pack.menu[index] ?? "start")}
             onQuitSelect={handleQuitChoice}
             onRetryExtract={() => void handleRetryExtract()}

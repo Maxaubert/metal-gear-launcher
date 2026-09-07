@@ -26,5 +26,11 @@ const api: HubApi = {
   getConfig: () => ipcRenderer.invoke("hub:config:get"),
   setConfig: (patch) => ipcRenderer.invoke("hub:config:set", patch),
   pickFolder: () => ipcRenderer.invoke("hub:pickFolder"),
+  ready: () => ipcRenderer.invoke("hub:ready"),
+  onSelectionOpen: (cb) => {
+    const h = () => cb();
+    ipcRenderer.on("hub:selectionOpen", h);
+    return () => ipcRenderer.off("hub:selectionOpen", h);
+  },
 };
 contextBridge.exposeInMainWorld("hub", api);

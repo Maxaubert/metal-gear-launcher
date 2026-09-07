@@ -25,3 +25,23 @@ export function themeVars(theme: ThemeColors): Record<string, string> {
     "--accent-soft": `rgba(${r},${g},${b},0.18)`,
   };
 }
+
+/**
+ * The normalized geometry every game screen shares (spec 4.7): percentages of viewport
+ * width/height so 1080p and 2160p line up identically. Fixed values, not derived from the
+ * pack, so this takes no arguments.
+ */
+export function layoutVars(): Record<string, string> {
+  return {
+    "--left-zone": "61vw",
+    "--divider-x": "61.5vw",
+    "--col-x": "63vw",
+    "--col-right": "97.5vw",
+    "--row-h": "5.6vh",
+    "--row-gap": "1.1vh",
+    "--menu-bottom": "91vh",
+    "--header-top": "7vh",
+    "--desc-top": "29vh",
+    "--hint-baseline": "96vh",
+  };
+}

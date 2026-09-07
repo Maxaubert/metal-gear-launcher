@@ -16,4 +16,11 @@ describe("packs", () => {
     const bad = { ...loadPacks()[0], assets: [{ role: "poster", source: "unity", path: "x", name: "y" }] };
     expect(packSchema.safeParse(bad).success).toBe(false);
   });
+  it("every pack has a release year and main visuals declare an edge mode", () => {
+    for (const p of loadPacks()) {
+      expect(p.releaseYear, p.id).toBeGreaterThan(1986);
+      const mv = p.assets.find((a) => a.role === "mainVisual")!;
+      expect(["fade", "cut"]).toContain(mv.edge);
+    }
+  });
 });

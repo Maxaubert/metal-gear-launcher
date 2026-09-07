@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from "electron";
 import { exec, spawn } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -38,15 +39,40 @@ function asError(e: unknown): string {
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): BrowserWindow {
+  // HUB_SHOOT (Task 14 step 9): a fixed 4K window instead of real fullscreen, so
+  // `capturePage()` produces a stable, reproducible size independent of the display driving
+  // this machine.
+  const shootMode = Boolean(process.env.HUB_SHOOT);
   const win = new BrowserWindow({
-    width: 1920, height: 1080, show: false, backgroundColor: "#000000",
-    fullscreen: !process.env.HUB_WINDOWED, autoHideMenuBar: true,
+    width: shootMode ? 3840 : 1920, height: shootMode ? 2160 : 1080,
+    show: false, backgroundColor: "#000000",
+    fullscreen: shootMode ? false : !process.env.HUB_WINDOWED,
+    frame: shootMode ? false : true,
+    useContentSize: shootMode,
+    autoHideMenuBar: true,
     webPreferences: { preload: join(__dirname, "../preload/index.js"), sandbox: true, contextIsolation: true },
   });
   win.once("ready-to-show", () => win.show());
   if (process.env.ELECTRON_RENDERER_URL) win.loadURL(process.env.ELECTRON_RENDERER_URL);
   else win.loadFile(join(__dirname, "../renderer/index.html"));
   return win;
+}
+
+// HUB_SHOOT (Task 14 step 9): drives the hub through every game and Game Selection, capturing
+// a screenshot of each for visual iteration against the reference art. Runs once, then quits.
+async function runShootSequence(win: BrowserWindow, outDir: string): Promise<void> {
+  await mkdir(outDir, { recursive: true });
+  for (const id of PACK_ORDER) {
+    win.webContents.send("hub:selectGame", id);
+    await new Promise((resolve) => setTimeout(resolve, 900)); // let the 250ms crossfade settle
+    const image = await win.webContents.capturePage();
+    await writeFile(join(outDir, `${id}.png`), image.toPNG());
+  }
+  win.webContents.send("hub:selectionOpen");
+  await new Promise((resolve) => setTimeout(resolve, 900));
+  const selectionImage = await win.webContents.capturePage();
+  await writeFile(join(outDir, "selection.png"), selectionImage.toPNG());
+  app.quit();
 }
 
 async function buildState(): Promise<HubState> {
@@ -217,6 +243,16 @@ if (!gotSingleInstanceLock) {
         void waitForExit(filter).then(() => {
           if (mainWindow) restoreAfterLaunch(mainWindow, wasFullScreen);
         });
+        return ok(undefined);
+      } catch (e) {
+        return err(asError(e));
+      }
+    });
+
+    ipcMain.handle("hub:ready", async () => {
+      try {
+        const shootDir = process.env.HUB_SHOOT;
+        if (shootDir && mainWindow) void runShootSequence(mainWindow, shootDir);
         return ok(undefined);
       } catch (e) {
         return err(asError(e));

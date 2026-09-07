@@ -1,5 +1,6 @@
 {
   "id": "mgs2", "title": "METAL GEAR SOLID 2: SONS OF LIBERTY", "shortTitle": "MGS2", "number": "2",
+  "releaseYear": 2001,
   "yearLabel": "2007-2009", "subtitle": "Tanker and Big Shell Incidents",
   "description": "A routine tanker mission spirals into a conspiracy that spans a Big Shell decontamination facility, testing the line between truth, memory and the Patriots' hidden design.",
   "theme": { "accent": "#2b5ea8", "ink": "#111111", "paper": "#f4f4ee" },

@@ -63,4 +63,11 @@ export interface HubApi {
   getConfig(): Promise<Result<Config>>;
   setConfig(patch: Partial<Config>): Promise<Result<Config>>;
   pickFolder(): Promise<Result<string>>;
+  // Task 14's `HUB_SHOOT` real-asset screenshot mode: the renderer calls this once packs and
+  // asset state have loaded, so main knows it is safe to start driving the game-by-game
+  // screenshot sequence (main is otherwise blind to renderer readiness).
+  ready(): Promise<Result<void>>;
+  // Pushed by main (shoot mode only) once every game has been screenshotted, asking the
+  // renderer to open Game Selection so its own screenshot can be taken.
+  onSelectionOpen(cb: () => void): () => void;
 }

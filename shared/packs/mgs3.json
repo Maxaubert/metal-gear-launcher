@@ -1,5 +1,6 @@
 {
   "id": "mgs3", "title": "METAL GEAR SOLID 3: SNAKE EATER", "shortTitle": "MGS3", "number": "3",
+  "releaseYear": 2004,
   "yearLabel": "1964", "subtitle": "Operation Snake Eater",
   "description": "In 1964, at the height of the Cold War, a lone FOX operative infiltrates the Soviet jungle to rescue a defecting scientist and stop the Shagohod. This is the story of how Naked Snake became Big Boss.",
   "theme": { "accent": "#3f8a2f", "ink": "#101410", "paper": "#f4f4ee" },

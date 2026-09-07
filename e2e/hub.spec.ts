@@ -76,6 +76,7 @@ test.describe("hub", () => {
     for (const id of ["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]) {
       await page.keyboard.press("Tab");
       await page.getByTestId(`tile-${id}`).click();
+      await expect(page.getByTestId("game-screen")).toHaveAttribute("data-layout", "v2");
       await page.screenshot({ path: `e2e/out/${id}.png` });
     }
   });

@@ -14,14 +14,14 @@ describe("extractUnityAsset", () => {
       return { code: 0, stdout: "", stderr: "" };
     });
     const dest = join(tmp, "logo.png");
-    await extractUnityAsset("C:\\game", { role: "logo", source: "unity", path: "a.bundle", name: "mgs3_logo", type: "Texture2D" }, dest,
+    await extractUnityAsset("C:\\game", { role: "logo", source: "unity", path: "a.bundle", name: "mgs3_logo", type: "Texture2D", edge: "cut" }, dest,
       { run, tools: () => ({ assetStudio: "as.exe", psbDecompile: "psb.exe" }) });
     expect(await readFile(dest, "utf8")).toBe("png");
     expect(run.mock.calls[0]![1]![0]).toBe("C:\\game\\a.bundle");
   });
   it("throws with stderr when the tool fails", async () => {
     const run = vi.fn(async () => ({ code: 1, stdout: "", stderr: "boom" }));
-    await expect(extractUnityAsset("C:\\g", { role: "logo", source: "unity", path: "a", name: "n", type: "Texture2D" }, "C:\\x.png",
+    await expect(extractUnityAsset("C:\\g", { role: "logo", source: "unity", path: "a", name: "n", type: "Texture2D", edge: "cut" }, "C:\\x.png",
       { run, tools: () => ({ assetStudio: "a", psbDecompile: "b" }) })).rejects.toThrow(/boom/);
   });
 });

@@ -1,22 +1,30 @@
 import { useEffect } from "react";
 import type { GameState } from "@shared/ipc";
-import type { Pack } from "@shared/packs";
+import { PACK_ORDER, type Pack } from "@shared/packs";
+import type { InputKind } from "../input/useNavigation";
+import { themeVars, layoutVars } from "../theme/theme";
 
 export type MenuKey = Pack["menu"][number];
 
 export const MENU_LABELS: Record<MenuKey, string> = {
   start: "Start Game",
   gameSelection: "Game Selection",
-  quit: "Quit",
+  quit: "QUIT GAME",
 };
 
-const HINTS: readonly [string, string][] = [
-  ["LB/RB", "Previous / Next game"],
-  ["A", "Confirm"],
-  ["Start", "Game Selection"],
+type Hint = { glyph: string; label: string };
+
+const HINTS_GAMEPAD: readonly Hint[] = [
+  { glyph: "L", label: "Move cursor" },
+  { glyph: "A", label: "Confirm" },
+  { glyph: "B", label: "Back" },
+];
+const HINTS_OTHER: readonly Hint[] = [
+  { glyph: "↕", label: "Arrows" },
+  { glyph: "⏎", label: "Enter" },
+  { glyph: "Esc", label: "Back" },
 ];
 
-const ROW_BORDER = "1px solid color-mix(in srgb, var(--ink) 40%, transparent)";
 const MAX_PADS = 4;
 
 export type GameScreenProps = {
@@ -25,15 +33,17 @@ export type GameScreenProps = {
   launching: boolean;
   quitOpen: boolean;
   quitItem: number;
+  lastInputKind: InputKind;
   onSelectMenuItem: (index: number) => void;
   onQuitSelect: (index: number) => void;
   onRetryExtract: () => void;
 };
 
 /**
- * The per-game screen: logo strip and main visual on the left, numbering/year/description
- * and the start/selection/quit menu on the right. Renders text fallbacks for any of the
- * five art roles that failed to extract instead of leaving a blank frame.
+ * The per-game screen (spec 4.7): a vertical logo strip and floating main visual on the
+ * paper-textured left zone, a normalized header/description/menu column on the right, sized
+ * entirely in viewport units so 1080p and 2160p read identically. Renders text fallbacks for
+ * any of the five art roles that failed to extract instead of leaving a blank frame.
  */
 export default function GameScreen({
   game,
@@ -41,6 +51,7 @@ export default function GameScreen({
   launching,
   quitOpen,
   quitItem,
+  lastInputKind,
   onSelectMenuItem,
   onQuitSelect,
   onRetryExtract,
@@ -48,6 +59,13 @@ export default function GameScreen({
   const { pack, assetUrls } = game;
   const hasLogo = Boolean(assetUrls.logo) && pack.id !== "mg12";
   const hasMainVisual = Boolean(assetUrls.mainVisual);
+  // Every pack's assets array is required (min 1) to contain a mainVisual entry (tests/packs.test.ts);
+  // the `!` mirrors that guarantee rather than re-checking it at render time.
+  const mainVisualAsset = pack.assets.find((a) => a.role === "mainVisual")!;
+  // `pack.number` is a display label ("MG", "PW", ...), not a count - the `[ 00N ]` index in the
+  // header is the pack's 1-based position in PACK_ORDER (spec 4.7: "N = pack position").
+  const positionIndex = PACK_ORDER.indexOf(pack.id) + 1;
+  const hints = lastInputKind === "gamepad" ? HINTS_GAMEPAD : HINTS_OTHER;
 
   // Y (gamepad button 3) and the R key retry a failed extraction while the hero art is missing.
   useEffect(() => {
@@ -78,129 +96,98 @@ export default function GameScreen({
 
   return (
     <div
-      className="screen-root"
+      className="screen"
       data-testid="game-screen"
       data-game={pack.id}
-      style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr" }}
+      data-layout="v2"
+      style={{ ...themeVars(pack.theme), ...layoutVars() }}
     >
-      <div style={{ position: "relative", height: "100%", overflow: "hidden" }}>
-        <div className="dots" style={{ position: "absolute", inset: 0 }} />
-        {assetUrls.bgEffect && (
-          <img
-            src={assetUrls.bgEffect}
-            alt=""
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.25 }}
-          />
-        )}
-        <div
-          style={{
-            position: "absolute", left: 0, top: 0, height: "100%", width: "10rem",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          {hasLogo ? (
-            <img src={assetUrls.logo} alt={pack.title} style={{ maxHeight: "90%", maxWidth: "100%", objectFit: "contain" }} />
-          ) : (
-            <span
-              style={{
-                writingMode: "vertical-rl", transform: "rotate(180deg)",
-                color: "var(--accent)", fontSize: "2rem", letterSpacing: "0.15em", fontWeight: 700,
-              }}
-            >
-              {pack.shortTitle}
-            </span>
-          )}
-        </div>
-        {hasMainVisual ? (
-          <img
-            src={assetUrls.mainVisual}
-            alt={pack.title}
-            style={{
-              position: "absolute", bottom: 0, left: "10rem", right: 0, margin: "0 auto",
-              maxHeight: "92vh", maxWidth: "calc(100% - 10rem)", height: "auto", width: "auto", objectFit: "contain",
-            }}
-          />
+      <div className="ground" />
+
+      <div key={pack.id} className="left-zone fade-in">
+        {assetUrls.bgEffect && <img className="ghost-effect" src={assetUrls.bgEffect} alt="" />}
+        {hasLogo ? (
+          <img className="logo-strip" src={assetUrls.logo} alt={pack.title} />
         ) : (
-          <div
-            style={{
-              position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: "1rem", textAlign: "center", padding: "0 1rem",
-            }}
-          >
-            <span style={{ fontSize: "12rem", fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>{pack.number}</span>
-            <span style={{ fontSize: "1rem" }}>assets incomplete, press Y to retry extraction</span>
+          <div className="logo-text">{pack.shortTitle}</div>
+        )}
+        {hasMainVisual ? (
+          <img className={`main-visual edge-${mainVisualAsset.edge}`} src={assetUrls.mainVisual} alt={pack.title} />
+        ) : (
+          <div className="main-visual-fallback">
+            <span className="fallback-number">{pack.number}</span>
+            <span className="fallback-hint">assets incomplete, press Y to retry extraction</span>
           </div>
         )}
       </div>
 
-      <div style={{ padding: "3rem", position: "relative", display: "flex", flexDirection: "column", height: "100%" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          {assetUrls.numbering && (
-            <img src={assetUrls.numbering} alt="" style={{ height: "9rem", objectFit: "contain" }} />
-          )}
-        </div>
-        <div style={{ marginTop: "1rem" }}>
-          {assetUrls.year && <img src={assetUrls.year} alt={pack.yearLabel} style={{ height: "5rem", objectFit: "contain" }} />}
-          <div style={{ fontSize: "1.2rem", letterSpacing: "0.1em", marginTop: "0.5rem" }}>{pack.subtitle}</div>
-        </div>
-        <p
-          style={{
-            fontSize: "1rem", marginTop: "1rem", lineHeight: 1.4,
-            display: "-webkit-box", WebkitLineClamp: 7, WebkitBoxOrient: "vertical", overflow: "hidden",
-          }}
-        >
-          {pack.description}
-        </p>
-        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          {pack.menu.map((key, index) => (
-            <div
-              key={key}
-              data-testid={`menu-item-${key}`}
-              className={menuItem === index ? "focused" : undefined}
-              onClick={() => onSelectMenuItem(index)}
-              style={{
-                height: "3rem", display: "flex", alignItems: "center", paddingLeft: "1rem",
-                border: ROW_BORDER, cursor: "pointer", fontSize: "1.1rem",
-              }}
-            >
-              {MENU_LABELS[key]}
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: "1rem", display: "flex", gap: "2rem", fontSize: "0.8rem", opacity: 0.8 }}>
-          {HINTS.map(([button, label]) => (
-            <span key={button}>
-              <strong>{button}</strong>&nbsp;&nbsp;{label}
-            </span>
-          ))}
-        </div>
+      <div className="divider" />
+
+      <div key={`${pack.id}-ghosts`} className="fade-in">
+        {assetUrls.year && <img className="ghost-timeline" src={assetUrls.year} alt="" />}
+        {assetUrls.numbering && <img className="ghost-number" src={assetUrls.numbering} alt="" />}
       </div>
 
+      <div key={`${pack.id}-text`} className="fade-in-fast">
+        <header className="head">
+          <span className="tick" />
+          <h1 className="year">{pack.yearLabel}</h1>
+          <p className="subtitle">
+            {pack.subtitle.split(" / ").map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </p>
+          <div className="mark">
+            <span className="bang">!</span>
+            <span className="barcode" aria-hidden />
+            <span className="index">[ {String(positionIndex).padStart(3, "0")} ]</span>
+          </div>
+        </header>
+        <p className="description">{pack.description}</p>
+      </div>
+
+      <ul className="menu">
+        <li
+          className="menu-bar"
+          aria-hidden
+          style={{ transform: `translateY(calc(${menuItem} * (var(--row-h) + var(--row-gap))))` }}
+        />
+        {pack.menu.map((key, index) => (
+          <li
+            key={key}
+            data-testid={`menu-item-${key}`}
+            className={[index === menuItem ? "focused" : "", key === "quit" ? "quit" : ""].filter(Boolean).join(" ")}
+            onClick={() => onSelectMenuItem(index)}
+          >
+            {MENU_LABELS[key]}
+          </li>
+        ))}
+      </ul>
+
+      <footer className="hints">
+        {hints.map((h) => (
+          <span key={h.label}>
+            <i className="glyph">{h.glyph}</i>
+            {h.label}
+          </span>
+        ))}
+      </footer>
+
       {launching && (
-        <div
-          style={{
-            position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", color: "#fff",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem",
-          }}
-        >
-          Launching...
+        <div className="overlay">
+          <span>Launching...</span>
         </div>
       )}
 
       {quitOpen && (
-        <div
-          style={{
-            position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <div style={{ background: "var(--paper)", padding: "2rem", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: "16rem" }}>
+        <div className="overlay">
+          <div className="overlay-panel">
             {(["Quit", "Cancel"] as const).map((label, index) => (
               <div
                 key={label}
                 className={quitItem === index ? "focused" : undefined}
                 onClick={() => onQuitSelect(index)}
-                style={{ height: "3rem", display: "flex", alignItems: "center", justifyContent: "center", border: ROW_BORDER, cursor: "pointer" }}
+                style={{ height: "3rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--ink)", cursor: "pointer" }}
               >
                 {label}
               </div>
