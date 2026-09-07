@@ -8,7 +8,7 @@
   "steam": { "appId": 2492660, "installDir": "MGS_PW" },
   "launch": { "exe": "mgspw/METAL GEAR SOLID PEACE WALKER.exe", "cwd": "mgspw", "env": { "SteamAppId": "2492660" } },
   "assets": [
-    { "role": "mainVisual", "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_bg_main_mgspw", "edge": "fade" },
+    { "role": "mainVisual", "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_bg_main_mgspw" },
     { "role": "logo",       "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_logo_mgspw" },
     { "role": "year",       "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_menu_txt_year_mgspw" },
     { "role": "bgEffect",   "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_eff_circle_1_mgspw" },

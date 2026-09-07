@@ -110,7 +110,6 @@ body {
   top: 0;
   height: 100vh;
   writing-mode: vertical-rl;
-  transform: rotate(180deg);
   font: 700 9vh/1 "Rodin", sans-serif;
   letter-spacing: 0.02em;
   color: var(--ink);

@@ -8,7 +8,7 @@
   "steam": { "appId": 2492670, "installDir": "METAL GEAR SOLID 4" },
   "launch": { "exe": "MGS4/mgs4.exe", "cwd": "MGS4", "env": { "SteamAppId": "2492670" } },
   "assets": [
-    { "role": "mainVisual", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_bg_main_mgs4", "edge": "fade" },
+    { "role": "mainVisual", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_bg_main_mgs4" },
     { "role": "logo",       "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_logo_mgs4" },
     { "role": "numbering",  "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_menu_dc_number_mgs4" },
     { "role": "year",       "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_menu_txt_year_mgs4" },
