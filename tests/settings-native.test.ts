@@ -96,6 +96,9 @@ describe("native settings adapter", () => {
     await writeFile(join(dir, "launcher_sv"), '{"keyList":["WallAlign","opaque"],"valueList":["1","keep"]}');
     await writeFile(join(dir, "usersv"), usersv({ 0: 1, 1: 0, 2: 2, 3: 10 }).encrypted);
     const result = await readNativeSettings("mg12", root);
+    const screenFields = result.sections.flatMap(section => section.fields).filter(field => field.category === "Screen");
+    expect(screenFields.map(field => field.label)).toEqual(["Display Area", "Wallpaper", "Windowed Mode"]);
+    expect(screenFields.find(field => field.id === "WallType")?.options?.[1]?.label).toBe("Wallpaper 1");
     const edits = prepareNativeEdits(result.sources, [{ sectionId: "native-game", fieldId: "WallAlign", value: 1 }]);
     expect(edits).toHaveLength(2);
     expect(decodeUsersv(edits.find(edit => edit.path.endsWith("usersv"))!.updated).readInt32LE(20)).toBe(1);

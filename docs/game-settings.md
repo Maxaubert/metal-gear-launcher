@@ -13,6 +13,8 @@ patches separately, with their version and configuration status.
 | Keyboard, mouse and controller navigation | Playwright at HD and 4K |
 
 Opening Options never changes game configuration. Edits remain pending until Save Changes.
+MG/MG2 Screen settings show the original wallpaper and display-area preview, including
+pending changes. Its preview assets are extracted from the installed game into the hub cache.
 Leaving with pending changes offers Keep Editing or Discard and Leave. Multiple Steam
 accounts require an explicit account choice. The renderer sends identifiers and typed values;
 the main process resolves all paths and accepts only supported fields.

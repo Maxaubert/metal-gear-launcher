@@ -4,9 +4,11 @@ import type { GameSettings, SettingField, SettingsChange, SettingsSection, Setti
 import type { Action } from "../input/navigationReducer";
 import type { InputKind } from "../input/useNavigation";
 import { layoutVars, themeVars } from "../theme/theme";
-import ScreenBackdrop from "../screens/ScreenBackdrop";
+import SettingsOverviewBackdrop from "./SettingsOverviewBackdrop";
 import ControllerPreview from "./ControllerPreview";
 import NumberSetting from "./NumberSetting";
+import Mg12ScreenPreview from "./Mg12ScreenPreview";
+import { mgs2ScreenHelp } from "./mgs2ScreenHelp";
 
 type Props = {
   game: GameState;
@@ -175,6 +177,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
       }));
     if (!selectedPatch && category === "Screen") {
       const fieldOrder = game.pack.id === "mgs1" ? ["resolution", "smoothing", "screenSize", "screenPosition", "wallpaper", "scanlines", "BOOT_FULLSCREEN"]
+        : game.pack.id === "mg12" ? ["WallAlign", "WallType", "WindowMode"]
         : game.pack.id === "mgs4" ? ["WindowMode", "ScreenResolution", "MonitorIndex"]
         : ["HiresoPreset", "HiresoRender", "CustomResolution", "HiresoUpScale", "CustomUpscale", "HiresoMovie", "CustomMovie", "WindowMode"];
       const priority = (row: Row) => { const index = fieldOrder.indexOf(row.field?.id ?? ""); return index < 0 ? 100 : index; };
@@ -277,12 +280,20 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     return () => { actionRef.current = null; };
   });
 
+  function previewValue(fieldId: string) {
+    const row = rows.find((item) => item.field?.id === fieldId);
+    return row?.section && row.field ? Number(currentValue(row.section, row.field)) : 0;
+  }
+  const focusedFieldId = rows[focus]?.field?.id;
+  const screenHelp = category === "Screen" && game.pack.id === "mgs2"
+    ? mgs2ScreenHelp(focusedFieldId, previewValue("HiresoPreset"), focusedFieldId ? previewValue(focusedFieldId) : undefined) : undefined;
+
   return <div className="screen settings-screen" data-testid="settings-screen" data-game={game.pack.id}
     data-layout="v2" data-detail={detail ? "true" : undefined} data-category={category} style={{ ...themeVars(game.pack.theme), ...layoutVars(game.pack.id),
       ...(game.pack.id === "mgs1" ? { "--divider-x": "62.2vw", "--col-x": "63.5vw", "--col-right": "99.4vw" } : {}),
       ...(detail ? { "--ink": "#080808", "--paper": "#dcdcda" } : {}),
     } as CSSProperties}>
-    {!detail && <ScreenBackdrop pack={game.pack} assetUrls={game.assetUrls} />}
+    {!detail && <SettingsOverviewBackdrop game={game} />}
     {!detail && game.pack.id === "mgs1" && game.assetUrls.settingsHeader && <div className="settings-native-mgs1-header" aria-hidden="true">
       <img className="settings-timeline" src={game.assetUrls.settingsTimeline} alt="" />
       <img className="settings-year-subtitle" src={game.assetUrls.settingsHeader} alt="" />
@@ -325,8 +336,10 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
       {!busy && !rows.length && <p className="settings-notice">{category === "Community Fixes"
         ? "No supported community fixes detected for this game." : contextMessage ?? "No settings are available in this category."}</p>}
     </div>
-    {detail && category === "Screen" && ["mgs2", "mgs3", "mgspw"].includes(game.pack.id) && <aside className="settings-side-help">{game.pack.id === "mgspw" ? "This setting can be changed prior to starting the game." : fieldDescription || "This setting can be changed prior to starting the game.\n\nDepending on your setup, game performance may suffer when not set to Original Mode.\n\nConsider switching to Custom and adjusting the settings such as the Internal Resolution, or reverting to Original Mode if you experience any instability."}</aside>}
-    <div className="settings-help" aria-live="polite">{message || (category === "Screen" ? categoryHelp : fieldDescription || contextMessage || categoryHelp)}</div>
+    {detail && category === "Screen" && ["mgs2", "mgs3", "mgspw"].includes(game.pack.id) && <aside className="settings-side-help">{screenHelp ? screenHelp.side : game.pack.id === "mgspw" ? "This setting can be changed prior to starting the game." : fieldDescription || "This setting can be changed prior to starting the game.\n\nDepending on your setup, game performance may suffer when not set to Original Mode.\n\nConsider switching to Custom and adjusting the settings such as the Internal Resolution, or reverting to Original Mode if you experience any instability."}</aside>}
+    {detail && category === "Screen" && game.pack.id === "mg12" && !busy && <Mg12ScreenPreview assetUrls={game.assetUrls}
+      wallpaper={previewValue("WallType")} alignment={previewValue("WallAlign")} />}
+    <div className="settings-help" aria-live="polite">{message || (screenHelp ? screenHelp.footer : category === "Screen" && game.pack.id === "mg12" ? "" : category === "Screen" ? categoryHelp : fieldDescription || contextMessage || categoryHelp)}</div>
     <div className="settings-actions">
       {actions.map((action, index) => <button key={action.id} disabled={busy}
         className={focus === rows.length + index ? "focused" : ""}

@@ -150,4 +150,30 @@ test.describe("hub", () => {
     await page.getByTestId("tile-mgs1").click();
     await expect(page.locator(".pw-motion")).toHaveCount(0);
   });
+
+  test("MGS2 settings animation plays, pauses for reduced motion, and leaves with the overview", async () => {
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs2").click();
+    await page.getByTestId("menu-item-options").click();
+    const pattern = page.getByTestId("mgs2-settings-pattern");
+    await expect(pattern).toHaveAttribute("data-motion", "running");
+    await expect(pattern).not.toHaveAttribute("data-cycle", "0", { timeout: 10_000 });
+    await page.keyboard.press("ArrowDown");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(pattern).toHaveAttribute("data-motion", "paused");
+    const still = await pattern.evaluate(element => [element.getAttribute("style"), element.getAttribute("src")]);
+    await page.waitForTimeout(250);
+    expect(await pattern.evaluate(element => [element.getAttribute("style"), element.getAttribute("src")])).toEqual(still);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(pattern).toHaveAttribute("data-cycle", "0");
+    await expect(pattern).toHaveCSS("opacity", "0");
+    await expect(pattern).not.toHaveAttribute("data-cycle", "0", { timeout: 10_000 });
+    await page.getByRole("button", { name: "Community Fixes", exact: true }).click();
+    await expect(pattern).toHaveCount(0);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(pattern).toHaveCount(0);
+  });
 });

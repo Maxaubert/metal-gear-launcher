@@ -34,6 +34,10 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
   await mkdir(launcher, { recursive: true });
   await writeFile(join(launcher, "usersv"), syntheticSettings());
   await writeFile(join(launcher, "launcher_sv"), JSON.stringify({ keyList: ["languageLauncher", "opaque"], valueList: ["1", "keep"] }));
+  const mg12Launcher = join(steam, "steamapps", "common", "MG and MG2", "mg12_savedata_win", account, "launcher");
+  await mkdir(mg12Launcher, { recursive: true });
+  await writeFile(join(mg12Launcher, "usersv"), syntheticSettings());
+  await writeFile(join(mg12Launcher, "launcher_sv"), JSON.stringify({ keyList: ["languageLauncher"], valueList: ["1"] }));
   const app = await electron.launch({ args: [join(__dirname, "..", "out", "main", "index.js")], env: {
     ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
   } });
@@ -92,6 +96,20 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mg12").click();
+    await page.getByTestId("menu-item-options").click();
+    await page.getByRole("button", { name: "Screen", exact: true }).click();
+    const preview = page.getByRole("img", { name: /Display area/ });
+    await expect(preview).toHaveAccessibleName("Display area center, wallpaper off");
+    await page.getByRole("button", { name: "Increase Display Area", exact: true }).click();
+    await page.getByRole("button", { name: "Increase Wallpaper", exact: true }).click();
+    await expect(preview).toHaveAccessibleName("Display area right, wallpaper 1");
+    await expect(preview.locator(".mg12-screen-preview-wallpaper")).toHaveJSProperty("complete", true);
+    await expect(preview.locator(".mg12-screen-preview-wallpaper")).not.toHaveJSProperty("naturalWidth", 0);
+    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
+    await expect(preview).toHaveAccessibleName("Display area center, wallpaper off");
+    expect(decodeUsersv(await readFile(join(mg12Launcher, "usersv"))).readInt32LE(16)).toBe(0);
   } finally {
     await app.close();
     if (dirname(resolve(root)) !== resolve(tmpdir())) throw new Error("Unexpected test directory");

@@ -1,0 +1,21 @@
+/* Native 1920 x 1080 canvas: wallpaper 736 x 414, display area 552 x 414. */
+.mg12-screen-preview {
+  position: absolute;
+  left: 17.7864583333vw;
+  top: 38.6111111111vh;
+  width: 38.3333333333vw;
+  height: 38.3333333333vh;
+  overflow: hidden;
+  background: #000;
+  pointer-events: none;
+}
+.mg12-screen-preview img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  object-fit: fill;
+}
+.mg12-screen-preview-wallpaper { left: 0; width: 100%; }
+.mg12-screen-preview-area { left: 12.5%; width: 75%; }
+.mg12-screen-preview[data-alignment="left"] .mg12-screen-preview-area { left: 0; }
+.mg12-screen-preview[data-alignment="right"] .mg12-screen-preview-area { left: 25%; }

@@ -1,7 +1,7 @@
 {
   "gameId": "mgs2",
   "buildId": "100003",
-  "assetRevision": 1,
+  "assetRevision": 3,
   "toolVersions": {
     "assetStudio": "v0.19.0",
     "freemote": "v4.7.0"
@@ -14,7 +14,13 @@
     "bgEffect": "bgEffect.png",
     "headerYear": "headerYear.png",
     "headerSubtitle": "headerSubtitle.png",
-    "bgm": "bgm.wav"
+    "bgm": "bgm.wav",
+    "settingsOverlay": "settingsOverlay.png",
+    "settingsPattern2": "settingsPattern2.png",
+    "settingsPattern3": "settingsPattern3.png",
+    "settingsPattern4": "settingsPattern4.png",
+    "settingsPattern5": "settingsPattern5.png",
+    "settingsPattern6": "settingsPattern6.png"
   },
   "failed": {}
 }

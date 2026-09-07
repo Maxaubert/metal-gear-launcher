@@ -66,8 +66,10 @@ export function usersvFields(gameId: NativeGameId): NativeFieldSpec[] {
     raw("WindowSizeW", "Window width", "Screen", 6), raw("WindowSizeH", "Window height", "Screen", 7),
   ];
   if (gameId === "mg12") fields.push(
-    choice("WallType", "Wallpaper", "Screen", ["Off", "Type 1", "Type 2", "Type 3", "Type 4", "Type 5", "Type 6"], 1, 0),
-    choice("WallAlign", "Screen position", "Screen", ["Center", "Align Left", "Align Right"], 0, 1),
+    { ...choice("WallAlign", "Display Area", "Screen", [], 0, 1),
+      options: [{ value: 1, label: "Align Left" }, { value: 0, label: "Center" }, { value: 2, label: "Align Right" }],
+    },
+    choice("WallType", "Wallpaper", "Screen", ["Off", "Wallpaper 1", "Wallpaper 2", "Wallpaper 3", "Wallpaper 4", "Wallpaper 5", "Wallpaper 6"], 1, 0),
   );
   if (gameId === "mgs2" || gameId === "mgs3") fields.push(
     { ...choice("HiresoRender", "Internal Resolution", "Screen", ["Original", "FHD", "WQHD", "4K"], 0, 11),
@@ -77,6 +79,13 @@ export function usersvFields(gameId: NativeGameId): NativeFieldSpec[] {
     { ...choice("HiresoTexture", "Texture resolution", "Screen", ["Original", "High Resolution"], 0, 14),
       readOnly: true, description: "Requires the native launcher's DLC availability check." },
   );
+  if (gameId === "mg12") {
+    const order = ["WallAlign", "WallType", "WindowMode"];
+    fields.sort((a, b) => {
+      const rank = (id: string) => order.includes(id) ? order.indexOf(id) : order.length;
+      return rank(a.id) - rank(b.id);
+    });
+  }
   return fields;
 }
 
