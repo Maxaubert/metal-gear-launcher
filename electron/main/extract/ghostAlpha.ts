@@ -2,14 +2,15 @@ import sharp from "sharp";
 import type { AssetRole } from "@shared/packs";
 
 // The `year`/`numbering` roles (spec 4.7's right-column "ghost" layer) are meant to read as one
-// faint, evenly legible watermark once GameScreen applies its 14-15% CSS opacity on top. The raw
-// M2/Unity textures do not cooperate, and they fail in two different ways verified against the
-// real extracted assets:
+// faint, evenly legible watermark on their own - the normalized alpha band below IS the final
+// on-screen density (`.ghost-timeline`/`.ghost-number` in global.css render at full CSS opacity,
+// not a second dimming pass on top). The raw M2/Unity textures do not cooperate on their own,
+// and they fail in two different ways verified against the real extracted assets:
 //
 // 1. Nearly everywhere, the genuine timeline/number art bakes in at single-digit mean alpha (a
 //    histogram of the non-transparent pixels is cleanly bimodal - a large low cluster under 50
-//    and, only for `year`, a second cluster at 255). Invisible once the extra CSS opacity
-//    multiplies it down further, which is why MGS1, MGS4 and Peace Walker read as flat paper.
+//    and, only for `year`, a second cluster at 255). Invisible without this lift, which is why
+//    MGS1, MGS4 and Peace Walker read as flat paper.
 // 2. MGS3's (and MGS1's) `year` sprite additionally bakes in a fully-opaque (255) copy of the
 //    pack's own current header - a leftover frame from the source UI's own "current entry"
 //    highlight - sitting in the same texture as the genuinely faint timeline dates. Once anything

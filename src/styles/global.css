@@ -150,6 +150,19 @@ body {
   mask-composite: intersect;
 }
 
+/* MGS2's extracted key art (unlike MGS1's and MGS3's) bakes in roughly a 2% band of opaque
+   near-white canvas below the character's feet - not a transparent margin sharp's trim() can
+   remove (the file has no transparency at all: alpha is 255 throughout), and colour-based
+   auto-trim was verified against every pack's cached asset to be unsafe as a general rule (it
+   would slice ~17% off MGS3's width, cutting into art that already bleeds correctly). Per spec
+   4.7 note on this delta, the safe fix is this scoped compensation instead of a shared rule:
+   nudge the whole bottom-anchored image down by that band's height so the baked-in margin
+   slides below the visible frame (`.screen` clips overflow) while the real art shifts down to
+   fill the gap - no pixels are cropped, so nothing is lost at the image's own top edge either. */
+.screen[data-game="mgs2"] .main-visual {
+  transform: translateY(2.4vh);
+}
+
 .main-visual-fallback {
   position: absolute;
   bottom: 0;
@@ -189,7 +202,11 @@ body {
   left: var(--col-x);
   top: 0;
   height: 100vh;
-  opacity: 0.15;
+  /* The extracted PNG's alpha channel is already normalized into a legible 45-170/255 band
+     (electron/main/extract/ghostAlpha.ts) - that IS the intended on-screen density, so this
+     stays at full opacity instead of multiplying a second dimming pass on top of it (which
+     compounded to ~9% visible alpha and read as flat paper). */
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -198,7 +215,8 @@ body {
   right: calc(100vw - var(--col-right));
   top: 3vh;
   height: 46vh;
-  opacity: 0.14;
+  /* Same reasoning as .ghost-timeline above: the pre-baked alpha band is the final density. */
+  opacity: 1;
   pointer-events: none;
 }
 

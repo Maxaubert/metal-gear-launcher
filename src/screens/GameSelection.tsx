@@ -1,4 +1,5 @@
 import type { GameState } from "@shared/ipc";
+import { layoutVars } from "../theme/theme";
 
 export type GameSelectionProps = {
   games: GameState[];
@@ -18,7 +19,11 @@ export default function GameSelection({ games, focusIndex, onSelect }: GameSelec
   const hasLogo = focused && Boolean(focused.assetUrls.logo) && focused.pack.id !== "mg12";
 
   return (
-    <div className="screen-root selection-overlay" data-testid="game-selection" style={{ position: "fixed", inset: 0 }}>
+    <div
+      className="screen-root selection-overlay"
+      data-testid="game-selection"
+      style={{ position: "fixed", inset: 0, ...layoutVars() }}
+    >
       <div className="selection-scrim" />
       {focused && (
         <div className="selection-left">
