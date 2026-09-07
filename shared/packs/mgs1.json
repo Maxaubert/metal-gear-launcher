@@ -2,7 +2,7 @@
   "id": "mgs1", "title": "METAL GEAR SOLID", "shortTitle": "MGS1", "number": "1",
   "releaseYear": 1998,
   "indexLabel": "001",
-  "yearLabel": "1998", "subtitle": "Shadow Moses Incident",
+  "yearLabel": "2005", "subtitle": "Shadow Moses Incident",
   "description": "In this game, Solid Snake comes out of retirement after living in seclusion in Alaska in order to take on a mission regarding Big Boss's corpse. It tells the tale of the infiltration mission that would later be known as the Shadow Moses Incident. The game featured many new ideas, such as the use of the controller's vibration function and various secrets hidden within the game's packaging.",
   "theme": { "accent": "#d81f26", "ink": "#111111", "paper": "#fbfbf9" },
   "steam": { "appId": 2131630, "installDir": "MGS1" },

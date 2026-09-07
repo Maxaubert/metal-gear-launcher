@@ -2,7 +2,7 @@
   "id": "mg12", "title": "METAL GEAR & METAL GEAR 2: SOLID SNAKE", "shortTitle": "MG1&2", "number": "MG",
   "releaseYear": 1987,
   "indexLabel": "000",
-  "yearLabel": "1987", "subtitle": "Outer Heaven and Zanzibar Land",
+  "yearLabel": "1995-1999", "subtitle": "Outer Heaven and Zanzibar Land",
   "description": "Before Shadow Moses, there was Outer Heaven, and after it, Zanzibar Land. These two missions forged the soldier who would become known as Solid Snake.",
   "theme": { "accent": "#c8912a", "ink": "#111111", "paper": "#f4f4ee" },
   "steam": { "appId": 2131680, "installDir": "MG and MG2" },

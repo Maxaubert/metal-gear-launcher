@@ -28,9 +28,17 @@ describe("packs", () => {
     }
   });
 
-  it("shows the release year in the header, not the year the story is set in", () => {
+  it("labels each game with the mission year the collection's own menus use", () => {
+    const MISSION_YEARS: Record<string, string> = {
+      mg12: "1995-1999",
+      mgs1: "2005",
+      mgs2: "2007-2009",
+      mgs3: "1964",
+      mgs4: "2014",
+      mgspw: "1974",
+    };
     for (const p of loadPacks()) {
-      expect(p.yearLabel, p.id).toBe(String(p.releaseYear));
+      expect(p.yearLabel, p.id).toBe(MISSION_YEARS[p.id]);
     }
   });
 });
