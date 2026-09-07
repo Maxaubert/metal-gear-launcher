@@ -208,8 +208,8 @@ declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exa
   to `chapter.gameTitle` as plain rotated Rodin bold text (the same treatment the single-chapter
   layout uses when a pack has no vertical logo texture) only if a chapter's logo asset is missing;
 - the right column renders one header + description block per chapter, stacked in a flex column
-  filling the same top-5%-to-menu-43% budget the single-chapter header+description normally has to
-  itself, so the menu still starts at the shared 43 % H line - each chapter header repeats the tick,
+  filling the same top-5%-to-menu-46% budget the single-chapter header+description normally has to
+  itself, so the menu still starts at the shared 46 % H line - each chapter header repeats the tick,
   year, subtitle (the incident name, e.g. "Outer Heaven Uprising"), and the full serial/barcode/index
   mark (scaled down to fit), all built from the one pack-level `indexLabel` and Steam app ID like the
   single-chapter header;
@@ -222,15 +222,21 @@ declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exa
   height 88 % H starting at top 12 % H, left aligned at 63 % W - shifted down and shrunk from a
   full-height 15 % layer so it sits beside the description/menu rather than rising into the
   header and colliding with the subtitle; the ghost number (`numbering` role), when the pack has a
-  real numeral asset for it, at 34 % opacity, height 58 % H, right aligned at 97.5 % W (clips at
-  the column's right edge), top 3 % H. `numbering` is optional - MG1/2 and Peace Walker's launcher
-  bundles have no dedicated numeral texture, only the timeline, so those packs omit the asset
-  entirely rather than press an unrelated decorative texture into service. These CSS opacity
-  figures (round 8) are a second, multiplicative dimming pass on top of the extracted PNG's own
-  alpha, already normalized into a legible band by `ghostAlpha.ts` - at the earlier 10/14 % the
-  combined result read as invisible (critique finding 2: "the right column reads as a flat white
-  field"), so they were raised until the ghost layers are visible but still clearly secondary,
-  matching the reference.
+  real numeral asset for it, at 34 % opacity, right aligned at 97.5 % W, top 2 % H, capped to a
+  16 % H by 10 % W box with `object-fit: contain` (round 9 - see below) rather than a bare
+  `height`. `numbering` is optional - MG1/2 and Peace Walker's launcher bundles have no dedicated
+  numeral texture, only the timeline, so those packs omit the asset entirely rather than press an
+  unrelated decorative texture into service. These CSS opacity figures (round 8) are a second,
+  multiplicative dimming pass on top of the extracted PNG's own alpha, already normalized into a
+  legible band by `ghostAlpha.ts` - at the earlier 10/14 % the combined result read as invisible
+  (critique finding 2: "the right column reads as a flat white field"), so they were raised until
+  the ghost layers are visible but still clearly secondary, matching the reference. Round 9: the
+  numbering role's own box also had to change, separately from opacity - the generic content-bbox
+  trim (round 8, section on extraction below) removed each numeral's transparent padding along
+  with everything else, so a bare `height` that used to render mostly empty space now rendered a
+  glyph large enough to run past the middle of the description and off the column's right edge.
+  Capping both dimensions with `object-fit: contain` keeps it a modest corner watermark regardless
+  of how tightly a given pack's numeral happens to be trimmed.
 - Header block, top 5 % H:
   - a 0.35 vw wide, 2.5 vh tall ink tick at 63 % W followed by a 1 px rule 2 vw long (the bracket),
   - the year: `pack.yearLabel` in Rodin bold, 8 vh tall, tight letter spacing, ink colour.
@@ -244,11 +250,16 @@ declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exa
     in a 1.9 vh monospace line immediately to its right on the same baseline, then an accent "!"
     glyph (Rodin bold, 7 vh) flanked by two 2 px, 6 vh tall ink rules,
   - a 1 px rule under the block from 63 % W to 97.5 % W, ink at 45 %.
-- Description: top 22 % H, Rodin regular 2.2 vh, line-height 1.45, ink at 85 %, max 7 lines
-  (the longest real description, MGS1's, fits in 7 lines at that size), no scroll, capped to the
-  space above the menu so a full-length description clips inside its own box rather than
-  touching the menu rows.
-- Menu list: top anchored at 43 % H, directly under the description, rows growing downward; rows
+- Description: top 22 % H, Rodin regular 2.2 vh, line-height 1.32, ink at 85 %, max 8 lines (round
+  9: the longest real description, MGS1's, needs a full 8 lines at the true 16:9 canvas fixed in
+  round 8 - the same `vh`-sized font is larger in absolute pixels there than against the shorter-
+  than-requested capture the 7-line figure was originally tuned against, while the `vw`-sized
+  column width is unchanged, so it now wraps one line longer), no scroll, capped to the space
+  above the menu so a full-length description clips inside its own box rather than touching the
+  menu rows - a `-webkit-line-clamp` value is a hard cap independent of that box's `max-height`,
+  so both had to move together or the clamp alone would keep truncating regardless of headroom.
+- Menu list: top anchored at 46 % H (round 9, up from 43 % - reclaimed for the description above
+  rather than shrinking its font), directly under the description, rows growing downward; rows
   7.84 vh tall with 1.54 vh gaps; each row is a 1 px ink border on paper at 70 % alpha, text Rodin
   regular 2.9 vh, padding-left 1.4 vw; the focused row is filled with the accent colour, white
   text, and a 0.45 vw accent bar flush against the row's left border (outside the box); the quit
