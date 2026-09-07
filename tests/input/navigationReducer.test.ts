@@ -18,4 +18,18 @@ describe("navigate", () => {
     expect(navigate(sel, "back").screen).toBe("hub");
     expect(navigate({ ...sel, item: 4 }, "confirm")).toMatchObject({ screen: "hub", game: 4, item: 0 });
   });
+  it("selection up/down step by one tile through the single-column list (regression)", () => {
+    const sel = navigate(base, "menu"); // item = game = 2
+    expect(navigate(sel, "down").item).toBe(3);
+    expect(navigate(sel, "up").item).toBe(1);
+    // Every one of the six tiles must be reachable via repeated "down" presses; the old
+    // cols=3 wrap made up/down land on only two of the six tiles for a 6-game list.
+    let s = { ...sel, item: 0 };
+    const visited = new Set<number>();
+    for (let i = 0; i < s.gameCount; i++) {
+      visited.add(s.item);
+      s = navigate(s, "down");
+    }
+    expect(visited.size).toBe(s.gameCount);
+  });
 });

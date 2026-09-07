@@ -23,7 +23,12 @@ const wrap = (n: number, len: number) => ((n % len) + len) % len;
 
 export function navigate(s: NavState, a: Action): NavState {
   if (s.screen === "selection") {
-    const cols = 3;
+    // GameSelection (spec 4.7) is a single-column vertical list of tiles (one game per row),
+    // so up/down step by one tile just like left/right - there is no grid to wrap across
+    // columns of. (Was hardcoded to 3 from an earlier 3-column grid layout; with 6 games that
+    // made wrap(item-3,6) === wrap(item+3,6) for every item, so up and down produced the same
+    // result and only toggled between two of the six tiles.)
+    const cols = 1;
     switch (a) {
       case "left":
         return { ...s, item: wrap(s.item - 1, s.gameCount) };
