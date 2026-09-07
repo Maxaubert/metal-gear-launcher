@@ -200,9 +200,13 @@ that the plain shared `paper` colour can't express on its own.
 declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exactly two). When set:
 - the left zone renders two stacked key-art panels, one per chapter, each 50 % H and the full 61 % W
   wide (`mainVisual` on top, `mainVisual2` on the bottom) instead of one logo strip + floating main
-  visual; each panel carries its own rotated Rodin bold title (`chapter.gameTitle`, in the accent
-  colour) over its own art, the same "rotated text" treatment the single-chapter layout uses when a
-  pack has no vertical logo texture;
+  visual; each panel carries its own bevelled logo wordmark (`logo` for the top panel, `logo2` for
+  the bottom - real launcher assets, e.g. MG1&2's `mg12logo.spriteatlas.bundle`, not rendered
+  text), rotated 90deg and left-aligned on its own art via the standard "translate to centre, then
+  rotate" transform idiom (round 8: a hand-chained translate/rotate/translate got the composition
+  order wrong and clipped the logo against the screen's top edge with zero headroom). Falls back
+  to `chapter.gameTitle` as plain rotated Rodin bold text (the same treatment the single-chapter
+  layout uses when a pack has no vertical logo texture) only if a chapter's logo asset is missing;
 - the right column renders one header + description block per chapter, stacked in a flex column
   filling the same top-5%-to-menu-43% budget the single-chapter header+description normally has to
   itself, so the menu still starts at the shared 43 % H line - each chapter header repeats the tick,
