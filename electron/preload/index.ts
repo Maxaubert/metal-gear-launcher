@@ -21,6 +21,8 @@ const api: HubApi = {
   // zod schema (`z.object({ gameId, install })`) parses one payload object (see index.ts).
   launch: (gameId, opts) => ipcRenderer.invoke("hub:launch", { gameId, ...opts }),
   quit: () => ipcRenderer.invoke("hub:quit"),
+  getUpdate: () => ipcRenderer.invoke("hub:getUpdate"),
+  openUpdate: () => ipcRenderer.invoke("hub:openUpdate"),
   getConfig: () => ipcRenderer.invoke("hub:config:get"),
   setConfig: (patch) => ipcRenderer.invoke("hub:config:set", patch),
   pickFolder: () => ipcRenderer.invoke("hub:pickFolder"),

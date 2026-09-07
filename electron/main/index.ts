@@ -17,6 +17,7 @@ import { resolveInstall } from "./steam/resolve";
 import { extractGame, isStale, readManifest, readToolVersions } from "./extract/extractor";
 import { launchGame } from "./launch/launcher";
 import { minimizeForLaunch, restoreAfterLaunch } from "./launch/windowTransition";
+import { checkForUpdate } from "./update";
 
 const execAsync = promisify(exec);
 
@@ -115,6 +116,10 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
+    // Fired once at boot, not per-window: the renderer reads the result via `hub:getUpdate`
+    // (already resolved or resolving by the time it asks, so no push/race to worry about).
+    const updateCheck = checkForUpdate(app.getVersion());
+
     protocol.handle(ASSET_PROTOCOL, (req) => {
       const u = new URL(req.url); // hub-asset://mgs3/mainVisual.png
       const file = join(assetsDir(u.hostname), decodeURIComponent(u.pathname.slice(1)));
@@ -221,6 +226,25 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("hub:quit", async () => {
       app.quit();
       return ok(undefined);
+    });
+
+    ipcMain.handle("hub:getUpdate", async () => {
+      try {
+        return ok(await updateCheck);
+      } catch (e) {
+        return err(asError(e));
+      }
+    });
+
+    ipcMain.handle("hub:openUpdate", async () => {
+      try {
+        const info = await updateCheck;
+        if (!info) return err("no update available");
+        await shell.openExternal(info.url);
+        return ok(undefined);
+      } catch (e) {
+        return err(asError(e));
+      }
     });
 
     mainWindow = createWindow();

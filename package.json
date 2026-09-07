@@ -2,6 +2,8 @@
   "name": "mgs-master-hub",
   "productName": "MGS Master Hub",
   "version": "0.1.0",
+  "description": "Fullscreen launcher for the Metal Gear Solid Master Collection",
+  "author": "Max",
   "private": true,
   "main": "./out/main/index.js",
   "scripts": {

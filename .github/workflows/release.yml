@@ -1,0 +1,69 @@
+# Auto-release on every push to main.
+# - Reads the version from package.json.
+# - REFUSES to run if release v<version> already exists: bump the version in the PR.
+# - Fetches the two MIT extraction tools, builds, packages the NSIS installer via
+#   electron-builder, and publishes v<version> with GitHub-generated notes.
+# - Signing is a no-op until this repo is enrolled with SignPath (see CLAUDE.md).
+name: release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = node -p "require('./package.json').version"
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Refuse to overwrite an existing release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v${{ steps.ver.outputs.version }}"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Error "Release $tag already exists. Bump the version in package.json (patch for a fix, minor for a feature) and push again."
+            exit 1
+          }
+          # gh exiting 1 (release absent) is the pass case, but the pwsh step
+          # wrapper propagates a lingering $LASTEXITCODE as the step result.
+          exit 0
+
+      - run: npm ci
+
+      - name: Fetch extraction tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npm run fetch-tools
+
+      - run: npm run build
+
+      - name: Package installer
+        run: npx electron-builder --win nsis --publish never
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v${{ steps.ver.outputs.version }}"
+          gh release create $tag dist/*.exe --generate-notes

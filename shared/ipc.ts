@@ -2,10 +2,11 @@ import type { AssetRole, Pack } from "./packs";
 import type { Config } from "../electron/main/config";
 import type { AssetManifest, Progress } from "../electron/main/extract/extractor";
 import type { GameId } from "../electron/main/cli";
+import type { UpdateInfo } from "../electron/main/update";
 
 export const ASSET_PROTOCOL = "hub-asset";
 
-export type { AssetManifest, Config, GameId, Progress };
+export type { AssetManifest, Config, GameId, Progress, UpdateInfo };
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -54,6 +55,11 @@ export interface HubApi {
   // Task 10 builds its `hub:launch` handler on this exact `opts` shape.
   launch(gameId: string, opts?: { install?: boolean }): Promise<Result<void>>;
   quit(): Promise<Result<void>>;
+  // The result of the one-time boot check against GitHub Releases (electron/main/update.ts).
+  // `null` means either the check failed (best-effort, ignored) or the hub is already current.
+  getUpdate(): Promise<Result<UpdateInfo | null>>;
+  // Opens the release page for the update `getUpdate` reported, in the system browser.
+  openUpdate(): Promise<Result<void>>;
   getConfig(): Promise<Result<Config>>;
   setConfig(patch: Partial<Config>): Promise<Result<Config>>;
   pickFolder(): Promise<Result<string>>;

@@ -5,11 +5,12 @@
 - Unit: `npm test`
 - E2E (headless): `npm run e2e`
 - Dev: `npm run dev` (fullscreen; set `HUB_WINDOWED=1` to run windowed)
-- Build / package: `npm run dist`   Artifact: `MGS-Master-Hub-Setup-x64-<version>.exe`
+- Build / package: `npm run dist`   Artifact: `MGSMasterHub-Setup-x64-<version>.exe`
 - First dist on a machine: `npm run fetch-tools`
 - Known failures to tolerate: none
 - Version source: `package.json`   Release: release.yml on push to main
 - Deploy: installer via GitHub Releases
+- Install locally after merge: `dist\MGSMasterHub-Setup-x64-<version>.exe`   Confirm version: hub footer (shown on an update prompt) or Windows Apps & features
 - Signing: unsigned until the repo is enrolled with SignPath
 
 ## Notes

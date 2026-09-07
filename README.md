@@ -1,14 +1,82 @@
 # MGS Master Hub
 
 A fullscreen launcher for the Metal Gear Solid Master Collection, styled after the collection's
-own menus. It extracts each game's archive to a per-game folder, shows a screen per game and
-launches the title from there.
+own in-game menus. It extracts each game's own menu art and music from its install, shows one
+screen per game, and launches the title from there, with a gamepad, keyboard or mouse.
 
-## Status
+## Screenshots
 
-Early scaffold. Per-game screens, extraction and launch are being built out task by task; see
-`docs/superpowers/specs/2026-09-06-mgs-master-hub-design.md` for the design and
-`docs/superpowers/plans/2026-09-06-mvp-hub.md` for the implementation plan.
+No real game art ships in this repository or in any screenshot here (see **Legal** below): the
+hub's own end-to-end tests render the same layout against hand-made placeholder art instead of
+extracted Konami assets. Run `npm run e2e` and check `e2e/out/*.png` for that placeholder
+preview, or install the hub for the real thing.
+
+## Requirements
+
+- Windows 10 or 11, x64
+- Steam, with MGS Master Collection Vol.1 and/or Vol.2 installed (the hub works with either
+  volume alone; games it can't find in Steam show a "not installed" tile instead of failing)
+- A gamepad is recommended but not required; keyboard and mouse both work
+
+## Install
+
+Download the installer from the
+[latest release](https://github.com/Maxaubert/mgs-master-hub/releases/latest)
+(`MGSMasterHub-Setup-x64-<version>.exe`) and run it. The hub checks GitHub Releases once at
+boot and shows a footer prompt when a newer version is out.
+
+## First run and extraction
+
+On first launch (or after Steam updates a game), the hub asks for your Steam library folder if
+it can't find it automatically, then extracts each installed game's menu art and music into its
+own folder under `%LOCALAPPDATA%\MGSMasterHub\assets\<game>\`. Extraction never writes anywhere
+else, and never touches your game install. Files are cached and re-extraction is skipped unless
+a game updates or the bundled extraction tools change.
+
+## Controls
+
+| Input | Action |
+|---|---|
+| Left stick / D-pad, arrow keys | Move focus |
+| A, Enter / Space, or click | Confirm |
+| B, Escape / Backspace | Back, or open the quit prompt from the hub |
+| LB / RB, Page Up / Page Down | Previous / next game |
+| Start, Tab | Open game selection |
+| Y, R key | Retry a failed extraction (shown only when a game's art is missing) |
+| Y, Y key (when shown) | Open the release page for an available update |
+
+## `--game` flag
+
+Launch straight into one game, skipping the hub's own selection screen:
+
+```
+MGSMasterHub.exe --game mgs3
+```
+
+Valid ids: `mg12`, `mgs1`, `mgs2`, `mgs3`, `mgs4`, `mgspw`. If the hub is already running, a
+second launch with `--game` switches the running window to that game instead of opening a
+second copy. This is what per-game Playnite entries use; see below.
+
+## Playnite
+
+See [`docs/playnite.md`](docs/playnite.md) for adding the hub as a single Playnite tile (or one
+tile per game via `--game`), and for hiding the Master Collection's several separate Steam
+entries so they don't clutter your library alongside it.
+
+## Legal
+
+No Metal Gear Solid / Konami assets are ever committed to this repository or bundled with the
+installer. The hub only reads menu art and music out of your own legitimately purchased Steam
+install, at runtime, on your own machine. The two extraction tools it bundles
+(AssetStudioModCLI, FreeMote) are MIT-licensed and unaffiliated with Konami; their licenses ship
+alongside them under `resources/tools/LICENSES/`.
+
+## Roadmap
+
+- Per-game settings screen (Konami launcher options and community fix-mod settings), see
+  `docs/superpowers/specs/2026-09-06-mgs-master-hub-design.md` section 4.5
+- In-hub book/comic viewer for the Master Book, Screenplay Book and MGS4 Database content
+- More launch options (borderless, monitor selection) surfaced from the hub itself
 
 ## Development
 
@@ -30,8 +98,7 @@ development.
 | `npm run lint` | Lint the codebase |
 | `npm run test` | Run the unit test suite (Vitest) |
 | `npm run e2e` | Build and run end-to-end tests (Playwright) |
+| `npm run fetch-tools` | Download the two MIT extraction tools (first `dist` on a machine) |
 | `npm run dist` | Build and package a Windows installer |
 
-## Requirements
-
-Windows x64, Node 24, npm 11. No game assets are ever committed to this repository.
+Windows x64, Node 24, npm 11.
