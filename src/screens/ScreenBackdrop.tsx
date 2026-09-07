@@ -45,12 +45,16 @@ export type ScreenBackdropProps = {
   assetUrls: GameState["assetUrls"];
 };
 
-type HeaderMarkProps = { serialLines: string[]; indexLabel: string };
+type HeaderMarkProps = { serialLines: string[]; indexLabel: string; src?: string };
 
 // The header's serial-lines + barcode + index + accent "!" block (spec 4.7) - shared by the
 // single header and each of a `chapters` pack's two headers (defect 4: MG1&2 repeats this mark
 // once per chapter, both carrying the same pack-level `indexLabel`).
-function HeaderMark({ serialLines, indexLabel }: HeaderMarkProps) {
+function HeaderMark({ serialLines, indexLabel, src }: HeaderMarkProps) {
+  if (src) return <div className="header-mark-art" aria-hidden="true">
+    <img src={src} alt="" />
+    <span className="header-bang">!</span>
+  </div>;
   return (
     <div className="mark">
       <div className="mark-text">
@@ -103,6 +107,7 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
       <div className="ground" />
 
       <div key={pack.id} className="left-zone fade-in">
+        {assetUrls.backgroundArt && <img className="background-art" src={assetUrls.backgroundArt} alt="" />}
         {assetUrls.bgEffect && <img className="ghost-effect" src={assetUrls.bgEffect} alt="" style={bgEffectStyle} />}
         {hasChapters ? (
           <>
@@ -110,7 +115,8 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
               const src = i === 0 ? assetUrls.mainVisual : assetUrls.mainVisual2;
               const logoSrc = i === 0 ? assetUrls.logo : assetUrls.logo2;
               return (
-                <div className={`chapter-panel chapter-panel-${i}`} key={chapter.gameTitle}>
+                <div className={`chapter-panel chapter-panel-${i}`} key={chapter.gameTitle}
+                  style={src ? { "--chapter-art": `url("${src}")` } as CSSProperties : undefined}>
                   {src && <img className="chapter-visual" src={src} alt={chapter.gameTitle} />}
                   {logoSrc ? (
                     <div className="chapter-logo-wrap">
@@ -156,15 +162,17 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
 
       {hasChapters ? (
         <div key={`${pack.id}-chapters`} className="chapters fade-in-fast">
-          {pack.chapters!.map((chapter) => (
+          {pack.chapters!.map((chapter, i) => (
             <div className="chapter-block" key={chapter.gameTitle}>
               <header className="head">
                 <span className="tick" />
-                <h1 className="year">{chapter.yearLabel}</h1>
+                <h1 className="year">{(i === 0 ? assetUrls.headerYear : assetUrls.headerYear2) ?
+                  <img className="header-year-art" src={i === 0 ? assetUrls.headerYear : assetUrls.headerYear2} alt={chapter.yearLabel} /> : chapter.yearLabel}</h1>
                 <p className="subtitle">
-                  <span>{chapter.title}</span>
+                  {(i === 0 ? assetUrls.headerSubtitle : assetUrls.headerSubtitle2) ?
+                    <img className="header-subtitle-art" src={i === 0 ? assetUrls.headerSubtitle : assetUrls.headerSubtitle2} alt={chapter.title} /> : <span>{chapter.title}</span>}
                 </p>
-                <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} />
+                <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} src={assetUrls.headerMark} />
               </header>
               <p className="description chapter-description">{chapter.description}</p>
             </div>
@@ -174,13 +182,13 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
         <div key={`${pack.id}-head`} className="fade-in-fast">
           <header className="head">
             <span className="tick" />
-            <h1 className="year">{pack.yearLabel}</h1>
+            <h1 className="year">{assetUrls.headerYear ? <img className="header-year-art" src={assetUrls.headerYear} alt={pack.yearLabel} /> : pack.yearLabel}</h1>
             <p className="subtitle">
-              {pack.subtitle.split(" / ").map((line) => (
+              {assetUrls.headerSubtitle ? <img className="header-subtitle-art" src={assetUrls.headerSubtitle} alt={pack.subtitle} /> : pack.subtitle.split(" / ").map((line) => (
                 <span key={line}>{line}</span>
               ))}
             </p>
-            <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} />
+            <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} src={assetUrls.headerMark} />
           </header>
         </div>
       )}

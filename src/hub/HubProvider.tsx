@@ -130,10 +130,12 @@ export default function HubProvider() {
       document.head.appendChild(styleEl);
     }
     const rules: string[] = [];
+    const fontUiUrl = currentGame?.assetUrls.fontUi ?? mgs3Game?.assetUrls.fontUi;
+    if (fontUiUrl) rules.push(`@font-face { font-family: "MenuEnglish"; font-weight: 400; font-display: block; src: url("${fontUiUrl}"); }`);
     if (fontMediumUrl) rules.push(`@font-face { font-family: "Rodin"; font-weight: 400; font-display: block; src: url("${fontMediumUrl}"); }`);
     if (fontBoldUrl) rules.push(`@font-face { font-family: "Rodin"; font-weight: 700; font-display: block; src: url("${fontBoldUrl}"); }`);
     styleEl.textContent = rules.join("\n");
-  }, [currentGame?.assetUrls.fontMedium, currentGame?.assetUrls.fontBold, mgs3Game?.assetUrls.fontMedium, mgs3Game?.assetUrls.fontBold]);
+  }, [currentGame?.assetUrls.fontMedium, currentGame?.assetUrls.fontBold, currentGame?.assetUrls.fontUi, mgs3Game?.assetUrls.fontMedium, mgs3Game?.assetUrls.fontBold, mgs3Game?.assetUrls.fontUi]);
 
   // Theme: the current game's colours become CSS custom properties on <html>.
   useEffect(() => {

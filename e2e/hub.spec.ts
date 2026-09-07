@@ -103,4 +103,23 @@ test.describe("hub", () => {
       await page.screenshot({ path: `e2e/out/${id}.png` });
     }
   });
+
+  test("reference menus keep descriptions clear and all selection entries reachable at HD and 4K", async () => {
+    for (const width of [1920, 3840]) {
+      await page.setViewportSize({ width, height: width * 9 / 16 });
+      for (const id of ["mg12", "mgs2", "mgs3"]) {
+        await page.keyboard.press("Tab");
+        await page.getByTestId(`tile-${id}`).click();
+        await expect(page.locator(".header-year-art").first()).toBeVisible();
+        const lastDescription = await page.locator(".description").last().boundingBox();
+        const menu = await page.locator(".menu").boundingBox();
+        expect(lastDescription!.y + lastDescription!.height).toBeLessThan(menu!.y);
+        await page.keyboard.press("Tab");
+        await expect(page.getByTestId("tile-mg12").locator(".tile-number")).toHaveCount(0);
+        await expect(page.getByTestId("tile-mgs2").locator(".tile-number")).toHaveText("2");
+        await expect(page.getByTestId("tile-mgspw")).toBeInViewport({ ratio: 1 });
+        await page.keyboard.press("Escape");
+      }
+    }
+  });
 });

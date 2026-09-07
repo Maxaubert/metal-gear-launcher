@@ -32,7 +32,16 @@ export function themeVars(theme: ThemeColors): Record<string, string> {
  * width/height so 1080p and 2160p line up identically. Fixed values, not derived from the
  * pack, so this takes no arguments.
  */
-export function layoutVars(): Record<string, string> {
+export function layoutVars(gameId?: string): Record<string, string> {
+  if (gameId === "mg12" || gameId === "mgs2" || gameId === "mgs3") {
+    return {
+      "--left-zone": "62.2vw", "--divider-x": "62.2vw",
+      "--col-x": "63.5vw", "--col-right": "99.4vw",
+      "--header-top": gameId === "mg12" ? "3vh" : "8vh",
+      "--desc-top": "25vh", "--menu-top": gameId === "mg12" ? "55vh" : "48.6vh",
+      "--row-h": "5.5vh", "--row-gap": "1vh", "--hint-baseline": "96vh",
+    };
+  }
   return {
     "--left-zone": "61vw",
     "--divider-x": "61.5vw",

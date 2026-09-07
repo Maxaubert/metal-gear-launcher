@@ -9,6 +9,8 @@ describe("extractor", () => {
     expect(isStale(m, { installDir: "x", buildId: "1" }, { assetStudio: "a", freemote: "b" })).toBe(false);
     expect(isStale(m, { installDir: "x", buildId: "2" }, { assetStudio: "a", freemote: "b" })).toBe(true);
     expect(isStale(m, { installDir: "x", buildId: "1" }, { assetStudio: "a2", freemote: "b" })).toBe(true);
+    expect(isStale(m, { installDir: "x", buildId: "1" }, { assetStudio: "a", freemote: "b" }, 1)).toBe(true);
+    expect(isStale({ ...m, assetRevision: 1 }, { installDir: "x", buildId: "1" }, { assetStudio: "a", freemote: "b" }, 1)).toBe(false);
   });
   it("records failures per role and keeps going", async () => {
     const pack = loadPacks().find((p) => p.id === "mgs3")!;

@@ -1,6 +1,6 @@
 import { mkdtemp, readdir, rename, rm, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, dirname, extname } from "node:path";
+import { join, dirname, extname, basename } from "node:path";
 import type { UnityAsset } from "@shared/packs";
 import { assetStudioArgs, runTool, toolPaths } from "./tools";
 
@@ -33,7 +33,8 @@ async function findFile(dir: string, name: string, ext: string): Promise<string 
   for (const e of await readdir(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
     if (e.isDirectory()) { const r = await findFile(p, name, ext); if (r) return r; }
-    else if (extname(e.name).toLowerCase() === ext && e.name.toLowerCase().startsWith(name.toLowerCase())) return p;
+    else if (extname(e.name).toLowerCase() === ext &&
+      basename(e.name, extname(e.name)).replace(/_#\d+$/, "").toLowerCase() === name.toLowerCase()) return p;
   }
   return null;
 }

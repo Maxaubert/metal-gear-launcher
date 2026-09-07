@@ -4,7 +4,7 @@ import { z } from "zod";
 // key-art panel, paired with `chapters[1]` the way `mainVisual` pairs with `chapters[0]`.
 // `logo2` exists only for a `chapters` pack: the second panel's own logo lockup, paired with
 // `chapters[1]` the way `logo` pairs with `chapters[0]`.
-export const assetRole = z.enum(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect", "bgm", "fontMedium", "fontBold"]);
+export const assetRole = z.enum(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect", "bgm", "fontMedium", "fontBold", "headerYear", "headerSubtitle", "headerYear2", "headerSubtitle2", "fontUi", "headerMark", "backgroundArt"]);
 export type AssetRole = z.infer<typeof assetRole>;
 
 // Whether the texture is already cut to its subject ("cut", the default) or needs the soft
@@ -89,6 +89,7 @@ export const packSchema = z.object({
   steam: z.object({ appId: z.number().int(), installDir: z.string() }),
   launch: z.object({ exe: z.string(), cwd: z.string().default("."), env: z.record(z.string()).default({}), steamOnly: z.boolean().default(false) }),
   assets: z.array(assetEntry).min(1),
+  assetRevision: z.number().int().nonnegative().default(0),
   menu: z.array(z.enum(["start", "gameSelection", "quit"])).default(["start", "gameSelection", "quit"]),
   visualFit: visualFitSchema.optional(),
   bgEffectFit: bgEffectFitSchema.optional(),

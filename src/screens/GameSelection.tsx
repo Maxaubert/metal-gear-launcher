@@ -31,7 +31,7 @@ export default function GameSelection({ games, focusIndex, lastInputKind, onSele
       data-testid="game-selection"
       data-game={focused.pack.id}
       data-layout="v2"
-      style={{ ...themeVars(focused.pack.theme), ...layoutVars() }}
+      style={{ ...themeVars(focused.pack.theme), ...layoutVars(focused.pack.id) }}
     >
       <ScreenBackdrop pack={focused.pack} assetUrls={focused.assetUrls} />
 
@@ -58,9 +58,9 @@ export default function GameSelection({ games, focusIndex, lastInputKind, onSele
             <span className="tile-scrim" aria-hidden="true" />
             <span className="tile-bar" aria-hidden="true" />
             <span className="tile-title">{g.pack.shortTitle}</span>
-            <span className="tile-number" style={{ color: g.pack.theme.accent }}>
+            {!g.pack.chapters && <span className="tile-number" style={{ color: g.pack.theme.accent }}>
               {g.pack.number}
-            </span>
+            </span>}
           </li>
         ))}
       </ul>

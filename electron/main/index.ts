@@ -107,7 +107,7 @@ async function buildState(): Promise<HubState> {
       buildId: install?.buildId,
       assets: manifest ?? undefined,
       assetUrls,
-      stale: install !== null && isStale(manifest, install, tools),
+      stale: install !== null && isStale(manifest, install, tools, pack.assetRevision),
     });
   }
   const startGame = parseCliGame(process.argv) ?? (config.lastGame && isGameId(config.lastGame) ? config.lastGame : undefined);

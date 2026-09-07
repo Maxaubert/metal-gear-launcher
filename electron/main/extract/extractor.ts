@@ -11,16 +11,16 @@ import { assetsDir as defaultAssetsDir } from "../paths";
 import { toolPaths } from "./tools";
 
 export type ToolVersions = { assetStudio: string; freemote: string };
-export type AssetManifest = { gameId: string; buildId: string; toolVersions: ToolVersions; files: Partial<Record<AssetRole, string>>; failed: Partial<Record<AssetRole, string>> };
+export type AssetManifest = { gameId: string; buildId: string; assetRevision?: number; toolVersions: ToolVersions; files: Partial<Record<AssetRole, string>>; failed: Partial<Record<AssetRole, string>> };
 export type Progress = { gameId: string; role: AssetRole; index: number; total: number; status: "start" | "done" | "failed"; error?: string };
 
-const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", logo2: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf" };
+const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", logo2: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf", headerYear: "png", headerSubtitle: "png", headerYear2: "png", headerSubtitle2: "png", fontUi: "ttf", headerMark: "png", backgroundArt: "png" };
 // Every raster role gets trimmed to its content bounding box (trim.ts) - everything except the
 // two roles that aren't images at all.
-const IMAGE_ROLES = new Set<AssetRole>(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect"]);
+const IMAGE_ROLES = new Set<AssetRole>(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect", "headerYear", "headerSubtitle", "headerYear2", "headerSubtitle2", "headerMark", "backgroundArt"]);
 
-export function isStale(m: AssetManifest | null, install: Install, tools: ToolVersions): boolean {
-  return !m || m.buildId !== install.buildId || m.toolVersions.assetStudio !== tools.assetStudio || m.toolVersions.freemote !== tools.freemote;
+export function isStale(m: AssetManifest | null, install: Install, tools: ToolVersions, assetRevision = 0): boolean {
+  return !m || (m.assetRevision ?? 0) !== assetRevision || m.buildId !== install.buildId || m.toolVersions.assetStudio !== tools.assetStudio || m.toolVersions.freemote !== tools.freemote;
 }
 
 export async function readManifest(gameId: string, assetsDir = defaultAssetsDir): Promise<AssetManifest | null> {
@@ -41,7 +41,7 @@ const defaults: Deps = {
 
 export async function extractGame(pack: Pack, install: Install, onProgress: (p: Progress) => void, deps: Deps = defaults): Promise<AssetManifest> {
   const dir = deps.assetsDir(pack.id);
-  const manifest: AssetManifest = { gameId: pack.id, buildId: install.buildId, toolVersions: await deps.toolVersions(), files: {}, failed: {} };
+  const manifest: AssetManifest = { gameId: pack.id, buildId: install.buildId, assetRevision: pack.assetRevision, toolVersions: await deps.toolVersions(), files: {}, failed: {} };
   let table: Awaited<ReturnType<typeof decodeManifest>> | undefined;
   const total = pack.assets.length;
   for (const [index, asset] of pack.assets.entries()) {

@@ -81,7 +81,7 @@ export default function GameScreen({
       data-testid="game-screen"
       data-game={pack.id}
       data-layout="v2"
-      style={{ ...themeVars(pack.theme), ...layoutVars() }}
+      style={{ ...themeVars(pack.theme), ...layoutVars(pack.id) }}
     >
       <ScreenBackdrop pack={pack} assetUrls={assetUrls} />
 
