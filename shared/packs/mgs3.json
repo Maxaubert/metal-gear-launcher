@@ -7,7 +7,7 @@
   "theme": { "accent": "#3f8a2f", "ink": "#101410", "paper": "#f7f8f3", "paperLeft": "#ecefdd" },
   "steam": { "appId": 2131650, "installDir": "MGS3" },
   "launch": { "exe": "METAL GEAR SOLID3.exe", "env": { "SteamAppId": "2131650" } },
-  "visualFit": { "leftVw": 14, "widthVw": 46, "heightVh": 100, "anchor": "bottom" },
+  "visualFit": { "leftVw": 12, "widthVw": 55, "heightVh": 120, "anchor": "bottom" },
   "bgEffectFit": { "leftVw": 0, "topVh": 0, "widthVw": 97.5, "opacity": 0.22 },
   "assets": [
     { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/prefabs/mgs3/animator.prefab.bundle", "name": "mgs3_mainvisual" },

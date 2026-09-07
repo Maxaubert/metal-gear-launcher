@@ -177,7 +177,14 @@ body {
   position: absolute;
   left: 4.5vw;
   top: 50%;
-  width: 38vh;
+  /* Round 9 critique finding 3: even after the round-8 centring fix, the glyph's own ink wasn't
+     centred inside its source canvas (MG1_logo.png's bounding box isn't symmetric top-to-bottom),
+     so a geometrically-centred 38vh strip still measured about 14px of headroom at one edge
+     against ~130px at the other - close enough to the reference's own top corner that the critic
+     read it as "about 10px, still cramped". Shrunk instead of re-centring around the ink (which
+     would need per-asset tuning): smaller margins scale down proportionally on both edges, so the
+     tight edge gets meaningfully more room without a bespoke offset for this one asset. */
+  width: 32vh;
   height: auto;
   transform: translate(-50%, -50%) rotate(90deg);
   filter: drop-shadow(0 0.2vh 0.8vh rgba(0, 0, 0, 0.35));
@@ -289,12 +296,25 @@ body {
 }
 
 .ghost-number {
+  /* Round 9 critique finding 1 (a regression this pass introduced): this used to be a plain
+     `height: 58vh` with auto width. That was tuned against an *untrimmed* numbering asset, whose
+     transparent padding meant most of that 58vh box was empty and only a modest portion actually
+     carried ink. Round 8's generic content-bbox trim (trim.ts) removed that padding from every
+     pack's numeral - the same `height: 58vh` then rendered a glyph that filled the whole box with
+     ink, large enough to run from the header down past the middle of the description and off the
+     column's right edge, opaque enough to read as sitting on top of the text (measured on MGS1;
+     every pack's numeral asset is now equally tightly trimmed, so all were oversized the same
+     way, not just this one). Fixed at the box level rather than by tuning opacity again: both
+     `height` and `width` now cap the box, with `object-fit: contain` sizing the trimmed glyph
+     down to fit - stays a modest, corner-confined watermark regardless of how tightly any given
+     pack's numeral happens to be trimmed. */
   position: absolute;
   right: calc(100vw - var(--col-right));
-  top: 3vh;
-  /* D10 (round 6): raised from 46vh so the numeral reads at the size it does in the original;
-     allowed to clip at the column's right edge. */
-  height: 58vh;
+  top: 2vh;
+  height: 16vh;
+  width: 10vw;
+  object-fit: contain;
+  object-position: top right;
   /* Unlike .ghost-timeline (whose pre-baked alpha band IS the final on-screen density per
      round 3), the numbering role's real extracted assets are not all numeral-shaped cutouts -
      MG1/2's bound texture (`mg12_grid_mask`, see round 2's report: no dedicated numeral/timeline
@@ -425,18 +445,25 @@ body {
   top: var(--desc-top);
   /* The menu is top-anchored right under the description (D3/D8); this caps the description at
      the space actually available above it (minus a small safety gap for descenders) so a long
-     description (MGS1's real text needs the full 7-line clamp - D8) is clipped by its own box
-     instead of visually touching the menu rows. */
+     description is clipped by its own box instead of visually touching the menu rows. */
   max-height: calc(var(--menu-top) - var(--desc-top) - 0.3vh);
   margin: 0;
   /* D8 asks for 2.2vh/1.45, but MGS1's and MGS2's real descriptions both wrap to exactly 7 lines
      at that size in this column width, and 7 * 2.2 * 1.45 = 22.33vh overshoots the 21vh gap
      (43 - 22vh) by just over a line's worth of descenders, touching the menu - tightened the
-     line-height slightly further (1.45 to 1.32) so the full 7-line block actually fits. */
+     line-height slightly further (1.45 to 1.32) so the full 7-line block actually fits.
+     Round 9 critique finding 1: at the true 16:9 canvas fixed in round 8, this same 2.2vh font is
+     larger in absolute pixels than it was against the old, shorter-than-requested capture, while
+     the column's `vw`-based width is unchanged - so MGS1's description (the longest real one) now
+     wraps to 8 lines, and the hard `-webkit-line-clamp: 7` below truncated it mid-word
+     ("...within the game's...") regardless of how much `max-height` was actually available.
+     Raised the clamp to 8 and `--menu-top` (theme.ts) by 3vh so both the clamp and the box have
+     room for the extra line - a line-clamp is a hard cap independent of max-height, so bumping one
+     without the other would have kept truncating. */
   font: 2.2vh/1.32 "Rodin", sans-serif;
   color: color-mix(in srgb, var(--ink) 85%, transparent);
   display: -webkit-box;
-  -webkit-line-clamp: 7;
+  -webkit-line-clamp: 8;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -661,6 +688,12 @@ body {
   left: 12vw;
   bottom: 2vh;
   color: color-mix(in srgb, var(--ink) 70%, transparent);
+  /* Round 9 critique finding 5: over Peace Walker's dark key art (mostly black/near-black), this
+     ink-coloured caption had no contrast to fall back on and read as blended into the art. A
+     paper-coloured glow keeps it legible over any art brightness without needing a background
+     chip that would compete with the art itself; it's invisible in its usual place on the paper
+     ground, since paper-on-paper has no edge to show. */
+  text-shadow: 0 0 0.6vh var(--paper), 0 0 1.2vh var(--paper);
   display: flex;
   flex-direction: column;
   gap: 0.4vh;

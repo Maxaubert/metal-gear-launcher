@@ -44,7 +44,15 @@ export function layoutVars(): Record<string, string> {
     // estimate rather than inventing extra rows a launcher has no use for.
     "--row-h": "7.84vh",
     "--row-gap": "1.54vh",
-    "--menu-top": "43vh",
+    // Round 9 critique finding 1: MGS1's description (the longest real one) was clamping mid-
+    // word ("...within the game's...") where it used to render in full. The true 16:9 canvas
+    // fixed in round 8 made every `vh`-sized value (including the description's own 2.2vh font)
+    // larger in absolute pixels without changing the `vw`-sized column width, so the same text
+    // now wraps one line longer than before. Reclaimed 3vh from the menu's own start rather than
+    // shrinking the font (menu rows already grew taller this round; starting 3vh later still
+    // leaves them well clear of the footer hints, and happens to help the separate "menu block
+    // stops too early" finding rather than fight it).
+    "--menu-top": "46vh",
     "--header-top": "5vh",
     "--desc-top": "22vh",
     "--hint-baseline": "96vh",
