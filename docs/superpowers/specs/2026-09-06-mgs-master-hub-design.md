@@ -158,7 +158,7 @@ the update check against GitHub Releases.
 Reference screenshots (owner-supplied, not committed): `.superpowers/sdd/2026-09-06-mvp-hub/reference/ref-8.png`
 (Vol.1 Bonus Content menu), `ref-9.png` (MGS3 menu), `ref-10.png` (MGS1 menu), `ref-11.png` (HD Collection
 MGS3 title, a looser layout, for the "art floats into the background" feel), `ref-12.png` (MGS2 menu),
-`ref-13.png` (MGS1 Game Selection list, dark variant).
+`ref-13.png` (MGS1 Game Selection list).
 
 Every game screen uses the same geometry. Units are percentages of viewport width (W) and height (H) so
 1080p and 2160p look identical. The window is true fullscreen (`BrowserWindow.fullscreen`), never maximized.
@@ -187,13 +187,15 @@ ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and 
 **Divider.** 1 px vertical rule at x = 61.5 % W, full height, ink at 25 % alpha.
 
 **Right column (63 % W to 97.5 % W).**
-- Ghosts (behind everything, non-interactive): the timeline texture (`year` role) at 15 % opacity,
-  height 100 % H, left aligned at 63 % W; the ghost number (`numbering` role), when the pack has a
-  real numeral asset for it, at 14 % opacity, height 46 % H, right aligned at 97.5 % W, top 3 % H.
-  `numbering` is optional - MG1/2 and Peace Walker's launcher bundles have no dedicated numeral
-  texture, only the timeline, so those packs omit the asset entirely rather than press an
-  unrelated decorative texture into service.
-- Header block, top 7 % H:
+- Ghosts (behind everything, non-interactive): the timeline texture (`year` role) at 10 % opacity,
+  height 88 % H starting at top 12 % H, left aligned at 63 % W - shifted down and shrunk from a
+  full-height 15 % layer so it sits beside the description/menu rather than rising into the
+  header and colliding with the subtitle; the ghost number (`numbering` role), when the pack has a
+  real numeral asset for it, at 14 % opacity, height 58 % H, right aligned at 97.5 % W (clips at
+  the column's right edge), top 3 % H. `numbering` is optional - MG1/2 and Peace Walker's launcher
+  bundles have no dedicated numeral texture, only the timeline, so those packs omit the asset
+  entirely rather than press an unrelated decorative texture into service.
+- Header block, top 5 % H:
   - a 0.35 vw wide, 2.5 vh tall ink tick at 63 % W followed by a 1 px rule 2 vw long (the bracket),
   - the year: `pack.yearLabel` in Rodin bold, 8 vh tall, tight letter spacing, ink colour,
   - the subtitle under it: `pack.subtitle` split on ` / ` into one or two lines, Rodin bold 2.2 vh,
@@ -204,8 +206,11 @@ ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and 
     in a 1.9 vh monospace line immediately to its right on the same baseline, then an accent "!"
     glyph (Rodin bold, 7 vh) flanked by two 2 px, 6 vh tall ink rules,
   - a 1 px rule under the block from 63 % W to 97.5 % W, ink at 45 %.
-- Description: top 29 % H, Rodin regular 2.35 vh, line-height 1.5, ink at 85 %, max 9 lines, no scroll.
-- Menu list: top anchored at 46 % H, directly under the description, rows growing downward; rows
+- Description: top 22 % H, Rodin regular 2.2 vh, line-height 1.45, ink at 85 %, max 7 lines
+  (the longest real description, MGS1's, fits in 7 lines at that size), no scroll, capped to the
+  space above the menu so a full-length description clips inside its own box rather than
+  touching the menu rows.
+- Menu list: top anchored at 43 % H, directly under the description, rows growing downward; rows
   5.6 vh tall with 1.1 vh gaps; each row is a 1 px ink border on paper at 70 % alpha, text Rodin
   regular 2.9 vh, padding-left 1.4 vw; the focused row is filled with the accent colour, white
   text, and a 0.45 vw accent bar flush against the row's left border (outside the box); the quit
@@ -215,13 +220,24 @@ ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and 
   (L, A, B) then the label ("Move cursor", "Confirm", "Back"); mouse and keyboard users see
   "Arrows", "Enter", "Esc" instead when the last input was not a gamepad.
 
-**Game Selection (dark variant).** Full-screen overlay: the current screen stays underneath dimmed to 25 %
-brightness; the right column turns into a list of banner tiles, one per game, 34 % W by 8.5 % H, 1 vh gap,
-vertically centred. Each banner shows the game's main visual as a blurred, darkened cover
-(`object-fit: cover`, brightness 45 %) with the title in Rodin bold 2.6 vh white on top, and the pack
-number in the accent colour. Focused banner: accent left bar and full brightness. Left zone shows the
-focused game's logo strip and portrait at 60 % brightness with a small info block bottom left:
-title, "Originally released in <first year>" (new pack field `releaseYear`), 2.1 vh. Transition 200 ms.
+**Game Selection.** Not a dark overlay (round 6 correction, matching `ref-13.png`): it is the same
+light game screen, sharing its ground/logo strip/main visual/header block with the live game
+screen via a `ScreenBackdrop` component, driven by the focused entry rather than the current
+game - moving the cursor swaps the left zone's art and the header to match. The description and
+menu are replaced by:
+- a small header row at top 22 % H: a short ink tick, "Game Selection" in Rodin bold 2.6 vh, a
+  1 px rule to the right edge of the column;
+- below it, a vertical list of banner tiles, one per game, filling the column down to the footer
+  hints: height 9.5 vh, 1 vh gap. Each tile shows the game's main visual as a `cover` background
+  (`object-position: center 30 %` to keep a face in frame) under a left-to-right paper-to-
+  transparent gradient so the label stays legible, the `shortTitle` in Rodin bold 2.8 vh ink on
+  the left, and the pack `number` in the entry's own accent colour at 3.2 vh on the right.
+  Focused: full brightness plus a 0.45 vw accent bar flush to the left edge; unfocused tiles are
+  only slightly desaturated (nothing dims). Not installed: 45 % opacity artwork, a dashed 1 px
+  border, and the label at 35 % ink.
+- the same small info block bottom left of the left zone as before: `title`, "Originally released
+  in <first year>" (pack field `releaseYear`), both 2.1 vh, ink at 70 %.
+- the same footer hints as the live game screen, with "Back" included.
 
 **Transitions.** Game change: crossfade 250 ms of the whole left zone and the ghosts; the right column
 text fades 150 ms. Menu focus change: the accent bar slides (120 ms). Music crossfades 300 ms.

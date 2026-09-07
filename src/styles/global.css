@@ -63,19 +63,6 @@ body {
   }
 }
 
-.selection-overlay {
-  animation: hub-slide-up 200ms ease both;
-}
-
-@keyframes hub-slide-up {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
 /* ---------------------------------------------------------------------------------------
    Normalized game screen (spec 4.7). Every position below is a percentage of the viewport
    (vw/vh), fed in part by `layoutVars()` (src/theme/theme.ts) as CSS custom properties, so
@@ -214,13 +201,15 @@ body {
 .ghost-timeline {
   position: absolute;
   left: var(--col-x);
-  top: 0;
-  height: 100vh;
+  /* D10 (round 6): shifted down and shrunk so it sits beside the description/menu instead of
+     rising into the header - at the old `top: 0; height: 100vh` it collided with the subtitle. */
+  top: 12vh;
+  height: 88vh;
   /* The extracted PNG's alpha channel is already normalized into a legible 45-170/255 band
-     (electron/main/extract/ghostAlpha.ts) - that IS the intended on-screen density, so this
-     stays at full opacity instead of multiplying a second dimming pass on top of it (which
-     compounded to ~9% visible alpha and read as flat paper). */
-  opacity: 1;
+     (electron/main/extract/ghostAlpha.ts) - that IS the intended on-screen density; this CSS
+     opacity is a second, deliberate dimming pass on top of it (D10: 0.15 read too dark/large
+     next to the reference). */
+  opacity: 0.1;
   pointer-events: none;
 }
 
@@ -228,7 +217,9 @@ body {
   position: absolute;
   right: calc(100vw - var(--col-right));
   top: 3vh;
-  height: 46vh;
+  /* D10 (round 6): raised from 46vh so the numeral reads at the size it does in the original;
+     allowed to clip at the column's right edge. */
+  height: 58vh;
   /* Unlike .ghost-timeline (whose pre-baked alpha band IS the final on-screen density per
      round 3), the numbering role's real extracted assets are not all numeral-shaped cutouts -
      MG1/2's bound texture (`mg12_grid_mask`, see round 2's report: no dedicated numeral/timeline
@@ -357,16 +348,20 @@ body {
   left: var(--col-x);
   right: calc(100vw - var(--col-right));
   top: var(--desc-top);
-  /* The menu is now top-anchored right under the description (D3); this caps the description at
+  /* The menu is top-anchored right under the description (D3/D8); this caps the description at
      the space actually available above it (minus a small safety gap for descenders) so a long
-     description (MGS1's real text needs the full 9-line clamp) is clipped by its own box instead
-     of visually touching the menu rows. */
-  max-height: calc(var(--menu-top) - var(--desc-top) - 1vh);
+     description (MGS1's real text needs the full 7-line clamp - D8) is clipped by its own box
+     instead of visually touching the menu rows. */
+  max-height: calc(var(--menu-top) - var(--desc-top) - 0.3vh);
   margin: 0;
-  font: 1.9vh/1.35 "Rodin", sans-serif;
+  /* D8 asks for 2.2vh/1.45, but MGS1's and MGS2's real descriptions both wrap to exactly 7 lines
+     at that size in this column width, and 7 * 2.2 * 1.45 = 22.33vh overshoots the 21vh gap
+     (43 - 22vh) by just over a line's worth of descenders, touching the menu - tightened the
+     line-height slightly further (1.45 to 1.32) so the full 7-line block actually fits. */
+  font: 2.2vh/1.32 "Rodin", sans-serif;
   color: color-mix(in srgb, var(--ink) 85%, transparent);
   display: -webkit-box;
-  -webkit-line-clamp: 9;
+  -webkit-line-clamp: 7;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -503,81 +498,73 @@ body {
 }
 
 /* ---------------------------------------------------------------------------------------
-   Game Selection, dark variant (spec 4.7). Overlays the current game screen; the right
-   column becomes a vertically centred list of banner tiles, one per game.
+   Game Selection (round 6, matching ref-13): NOT a dark overlay - the same light game screen
+   (`ScreenBackdrop` renders its ground/logo/main-visual/header for the focused entry), with the
+   description and menu replaced by a small header row and a banner list. Nothing dims here;
+   unfocused tiles are only slightly desaturated, per the reference.
    --------------------------------------------------------------------------------------- */
-
-.selection-scrim {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-}
-
-.selection-left {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-/* Spec 4.7: "the right column turns into a list of banner tiles" - the previous game screen's
-   header/description text (still mounted underneath so its own crossfade doesn't restart)
-   otherwise bleeds through the scrim's 75% black at legible contrast around and between the
-   tiles (visual fix round 4, finding 6). This opaque panel spans the full right column so
-   nothing from the screen below shows through it, independent of the 25% brightness dimming
-   `HubProvider` applies to that whole screen (finding 5) - belt and suspenders, since a real
-   screenshot's residual contrast at 25% brightness was still enough to read as ghost text. */
-.selection-right {
-  position: absolute;
-  left: var(--col-x);
-  right: calc(100vw - var(--col-right));
-  top: 0;
-  bottom: 0;
-  background: rgba(8, 8, 10, 0.92);
-}
-
-.selection-left .logo-strip,
-.selection-left .logo-text {
-  filter: brightness(60%);
-}
-
-.selection-left .main-visual {
-  filter: brightness(60%);
-}
 
 .selection-info {
   position: absolute;
   left: 12vw;
-  top: 90vh;
-  color: #fff;
+  bottom: 2vh;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
   display: flex;
   flex-direction: column;
-  gap: 0.6vh;
+  gap: 0.4vh;
 }
 
 .selection-info .title {
-  font: 700 2.6vh/1.2 "Rodin", sans-serif;
+  font: 700 2.1vh/1.2 "Rodin", sans-serif;
 }
 
 .selection-info .released {
   font: 2.1vh/1.2 "Rodin", sans-serif;
 }
 
+.selection-header {
+  position: absolute;
+  left: var(--col-x);
+  right: calc(100vw - var(--col-right));
+  top: var(--desc-top);
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  padding-bottom: 1vh;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
+}
+
+.selection-header .tick {
+  width: 0.35vw;
+  height: 2vh;
+  background: var(--ink);
+  flex: none;
+}
+
+.selection-header .label {
+  font: 700 2.6vh/1 "Rodin", sans-serif;
+  color: var(--ink);
+}
+
 .selection-list {
   position: absolute;
   left: var(--col-x);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 34vw;
+  right: calc(100vw - var(--col-right));
+  top: calc(var(--desc-top) + 4.5vh);
+  bottom: calc(100vh - var(--hint-baseline) + 3vh);
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
+  grid-auto-rows: 9.5vh;
+  align-content: start;
   gap: 1vh;
+  overflow: hidden;
 }
 
 .tile {
   position: relative;
-  height: 8.5vh;
+  height: 9.5vh;
   overflow: hidden;
   cursor: pointer;
 }
@@ -588,42 +575,56 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(45%) blur(1px);
+  /* Keeps a face in frame rather than whatever the portrait's vertical centre happens to be. */
+  object-position: center 30%;
+  /* Unfocused tiles read as "slightly desaturated" (not dimmed/blurred - this isn't the dark
+     overlay variant any more), full colour on focus. */
+  filter: saturate(55%);
 }
 
 .tile.focused .tile-cover {
-  filter: brightness(100%) blur(0);
+  filter: none;
+}
+
+/* Left-to-right paper-to-transparent gradient so the title stays legible over whatever colour
+   the key art happens to be underneath it, without dimming the art itself. */
+.tile-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, var(--paper) 0%, color-mix(in srgb, var(--paper) 55%, transparent) 35%, transparent 75%);
 }
 
 /* A game that isn't installed is still a selectable tile (its number lands on that game's
-   `NotInstalled` screen - see GameSelection's own doc-comment), but the grid must still tell
-   the player which games still need Steam install/extraction (a real signal the pre-4.7 grid
-   gave with a dashed border and 40%-opacity artwork, dropped by the 4.7 rewrite). Restored
-   here in the new tile shape: a dashed outline always shows, independent of whether a tile
-   has any cached cover art yet, and any cover art that *is* cached dims further on top of its
-   own focus/unfocus brightness. `.tile-title`/`.tile-number` are untouched by either rule, so
-   text never drops under the 4.5:1 contrast floor even on a not-installed tile with no art. */
+   `NotInstalled` screen - see GameSelection's own doc-comment), but the list must still tell
+   the player which games still need Steam install/extraction: a dashed outline, dimmed cover
+   art, and a greyed label - independent of whether a tile has any cached cover art yet. */
 .tile.not-installed {
-  border: 0.08vw dashed rgba(255, 255, 255, 0.35);
+  border: 0.08vw dashed color-mix(in srgb, var(--ink) 35%, transparent);
 }
 
 .tile.not-installed .tile-cover {
-  opacity: 0.4;
+  opacity: 0.45;
+}
+
+.tile.not-installed .tile-title {
+  color: color-mix(in srgb, var(--ink) 35%, transparent);
 }
 
 .tile-title {
   position: absolute;
-  left: 1.2vw;
-  bottom: 1vh;
-  font: 700 2.6vh/1 "Rodin", sans-serif;
-  color: #fff;
+  left: 1.4vw;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 700 2.8vh/1 "Rodin", sans-serif;
+  color: var(--ink);
 }
 
 .tile-number {
   position: absolute;
   right: 1.2vw;
-  bottom: 1vh;
-  font: 700 2.6vh/1 "Rodin", sans-serif;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 700 3.2vh/1 "Rodin", sans-serif;
 }
 
 .tile-bar {
@@ -642,7 +643,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .game-fade,
-  .selection-overlay,
   .fade-in,
   .fade-in-fast {
     animation: none;

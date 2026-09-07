@@ -4,10 +4,10 @@
   "indexLabel": "002",
   "yearLabel": "2007-2009", "subtitle": "Manhattan Tanker Incident / Big Shell Incident",
   "description": "MGS2 depicts two events: Solid Snake investigating a new kind of Metal Gear as part of the Tanker Incident, as well as FOXHOUND's newest member, Raiden, taking on a group of terrorists who have captured an off-shore facility in the Big Shell Incident. In addition to a first-person aiming mechanic, players also gained the ability to hold up enemies and dispose of their bodies.",
-  "theme": { "accent": "#2b5ea8", "ink": "#111111", "paper": "#f4f4ee" },
+  "theme": { "accent": "#2b5ea8", "ink": "#111111", "paper": "#fbfbf9" },
   "steam": { "appId": 2131640, "installDir": "MGS2" },
   "launch": { "exe": "METAL GEAR SOLID2.exe", "env": { "SteamAppId": "2131640" } },
-  "visualFit": { "heightVh": 118, "leftVw": 13, "widthVw": 46, "anchor": "top" },
+  "visualFit": { "leftVw": 11, "widthVw": 48, "heightVh": 118, "anchor": "top" },
   "assets": [
     { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "MGS2_MainVisual" },
     { "role": "logo",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mgs2_logo" },

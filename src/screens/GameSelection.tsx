@@ -1,63 +1,62 @@
 import type { GameState } from "@shared/ipc";
-import { layoutVars } from "../theme/theme";
+import type { InputKind } from "../input/useNavigation";
+import { themeVars, layoutVars } from "../theme/theme";
+import ScreenBackdrop from "./ScreenBackdrop";
+import FooterHints from "./FooterHints";
 
 export type GameSelectionProps = {
   games: GameState[];
   focusIndex: number;
+  lastInputKind: InputKind;
   onSelect: (index: number) => void;
 };
 
 /**
- * Full-screen dark overlay (spec 4.7) for jumping straight to a game: the right column
- * becomes a vertically centred list of banner tiles, one per game, while the left zone shows
- * the focused game's own logo strip and main visual dimmed to 60% with a release-year info
- * block. A tile for a game that isn't installed is still selectable - picking one just lands
- * on that game's `NotInstalled` screen. `.selection-right` is an opaque panel behind the tile
- * list spanning the full right column, since the previous `GameScreen` stays mounted behind
- * this overlay (for its own crossfade) and its header/description text would otherwise bleed
- * through the scrim around and between the tiles (spec 4.7 visual fix round 4). A tile for a
- * game that isn't installed gets `.not-installed` (dashed outline, dimmed cover art - see
- * global.css) so the grid still communicates which games need Steam install/extraction, the
- * signal the pre-4.7 grid gave via a dashed border and 40%-opacity artwork.
+ * Game Selection (round 6, matching `reference/ref-13.png`): NOT a dark overlay. It is the same
+ * light game screen - `ScreenBackdrop` renders the focused entry's own ground, logo strip, main
+ * visual and header block, exactly as `GameScreen` would - with the description and menu swapped
+ * for a small "Game Selection" header row and a banner list, one row per game. Moving the cursor
+ * swaps the focused entry, so the left zone's art and header change with it. A tile for a game
+ * that isn't installed is still selectable - picking one just lands on that game's `NotInstalled`
+ * screen - but stays visually marked (dashed border, dimmed cover, greyed label) so the list still
+ * shows which games need Steam install/extraction.
  */
-export default function GameSelection({ games, focusIndex, onSelect }: GameSelectionProps) {
+export default function GameSelection({ games, focusIndex, lastInputKind, onSelect }: GameSelectionProps) {
   const focused = games[focusIndex];
-  const hasLogo = focused && Boolean(focused.assetUrls.logo) && focused.pack.id !== "mg12";
+  if (!focused) return null;
 
   return (
     <div
-      className="screen-root selection-overlay"
+      className="screen"
       data-testid="game-selection"
-      style={{ position: "fixed", inset: 0, ...layoutVars() }}
+      data-game={focused.pack.id}
+      data-layout="v2"
+      style={{ ...themeVars(focused.pack.theme), ...layoutVars() }}
     >
-      <div className="selection-scrim" />
-      {focused && (
-        <div className="selection-left">
-          {hasLogo ? (
-            <img className="logo-strip" src={focused.assetUrls.logo} alt={focused.pack.title} />
-          ) : (
-            <div className="logo-text">{focused.pack.shortTitle}</div>
-          )}
-          {focused.assetUrls.mainVisual && (
-            <img className="main-visual" src={focused.assetUrls.mainVisual} alt={focused.pack.title} />
-          )}
-          <div className="selection-info">
-            <span className="title">{focused.pack.title}</span>
-            <span className="released">Originally released in {focused.pack.releaseYear}</span>
-          </div>
-        </div>
-      )}
-      <div className="selection-right" />
+      <ScreenBackdrop pack={focused.pack} assetUrls={focused.assetUrls} />
+
+      <div className="selection-info">
+        <span className="title">{focused.pack.title}</span>
+        <span className="released">Originally released in {focused.pack.releaseYear}</span>
+      </div>
+
+      <div className="selection-header">
+        <span className="tick" aria-hidden="true" />
+        <span className="label">Game Selection</span>
+      </div>
+
       <ul className="selection-list">
         {games.map((g, index) => (
           <li
             key={g.pack.id}
             data-testid={`tile-${g.pack.id}`}
+            data-focused={index === focusIndex ? "true" : undefined}
             className={`tile${index === focusIndex ? " focused" : ""}${g.installed ? "" : " not-installed"}`}
             onClick={() => onSelect(index)}
           >
             {g.assetUrls.mainVisual && <img className="tile-cover" src={g.assetUrls.mainVisual} alt="" />}
-            <span className="tile-bar" aria-hidden />
+            <span className="tile-scrim" aria-hidden="true" />
+            <span className="tile-bar" aria-hidden="true" />
             <span className="tile-title">{g.pack.shortTitle}</span>
             <span className="tile-number" style={{ color: g.pack.theme.accent }}>
               {g.pack.number}
@@ -65,6 +64,8 @@ export default function GameSelection({ games, focusIndex, onSelect }: GameSelec
           </li>
         ))}
       </ul>
+
+      <FooterHints lastInputKind={lastInputKind} />
     </div>
   );
 }

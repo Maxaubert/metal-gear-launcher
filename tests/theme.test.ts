@@ -11,8 +11,8 @@ describe("layoutVars", () => {
   it("exposes the normalized layout geometry", () => {
     expect(layoutVars()).toMatchObject({
       "--left-zone": "61vw", "--divider-x": "61.5vw", "--col-x": "63vw", "--col-right": "97.5vw",
-      "--row-h": "5.6vh", "--row-gap": "1.1vh", "--menu-top": "46vh", "--header-top": "7vh",
-      "--desc-top": "29vh", "--hint-baseline": "96vh",
+      "--row-h": "5.6vh", "--row-gap": "1.1vh", "--menu-top": "43vh", "--header-top": "5vh",
+      "--desc-top": "22vh", "--hint-baseline": "96vh",
     });
   });
 });

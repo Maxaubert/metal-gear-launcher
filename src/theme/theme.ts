@@ -39,9 +39,9 @@ export function layoutVars(): Record<string, string> {
     "--col-right": "97.5vw",
     "--row-h": "5.6vh",
     "--row-gap": "1.1vh",
-    "--menu-top": "46vh",
-    "--header-top": "7vh",
-    "--desc-top": "29vh",
+    "--menu-top": "43vh",
+    "--header-top": "5vh",
+    "--desc-top": "22vh",
     "--hint-baseline": "96vh",
   };
 }

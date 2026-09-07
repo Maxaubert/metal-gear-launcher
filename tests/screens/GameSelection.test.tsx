@@ -20,7 +20,7 @@ function makeGames(): GameState[] {
 describe("GameSelection - not-installed tiles", () => {
   it("marks only the not-installed game's tile so the grid still shows which games need install", () => {
     const games = makeGames();
-    const html = renderToStaticMarkup(<GameSelection games={games} focusIndex={0} onSelect={() => {}} />);
+    const html = renderToStaticMarkup(<GameSelection games={games} focusIndex={0} lastInputKind="keyboard" onSelect={() => {}} />);
 
     expect(html).toContain('data-testid="tile-mgs1"');
     const mgs1Tile = html.slice(html.indexOf('data-testid="tile-mgs1"'), html.indexOf('data-testid="tile-mgs1"') + 200);
@@ -36,7 +36,7 @@ describe("GameSelection - not-installed tiles", () => {
 
   it("still renders the not-installed tile's title/number text at full markup weight (no dimming on the text itself)", () => {
     const games = makeGames();
-    const html = renderToStaticMarkup(<GameSelection games={games} focusIndex={0} onSelect={() => {}} />);
+    const html = renderToStaticMarkup(<GameSelection games={games} focusIndex={0} lastInputKind="keyboard" onSelect={() => {}} />);
 
     // The dimming lives entirely in global.css's `.tile.not-installed .tile-cover` rule -
     // confirm the title/number spans carry no inline opacity styling of their own, so the
@@ -47,7 +47,7 @@ describe("GameSelection - not-installed tiles", () => {
 
   it("does not mark an installed game's tile, with or without cached cover art", () => {
     const games = makeGames();
-    const html = renderToStaticMarkup(<GameSelection games={games} focusIndex={0} onSelect={() => {}} />);
+    const html = renderToStaticMarkup(<GameSelection games={games} focusIndex={0} lastInputKind="keyboard" onSelect={() => {}} />);
 
     // mg12 (index 0) is installed but has no cached art yet - must still read as installed.
     const start = html.indexOf('data-testid="tile-mg12"');

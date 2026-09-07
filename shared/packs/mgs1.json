@@ -4,10 +4,10 @@
   "indexLabel": "001",
   "yearLabel": "2005", "subtitle": "Shadow Moses Incident",
   "description": "In this game, Solid Snake comes out of retirement after living in seclusion in Alaska in order to take on a mission regarding Big Boss's corpse. It tells the tale of the infiltration mission that would later be known as the Shadow Moses Incident. The game featured many new ideas, such as the use of the controller's vibration function and various secrets hidden within the game's packaging.",
-  "theme": { "accent": "#d81f26", "ink": "#111111", "paper": "#f4f4ee" },
+  "theme": { "accent": "#d81f26", "ink": "#111111", "paper": "#fbfbf9" },
   "steam": { "appId": 2131630, "installDir": "MGS1" },
   "launch": { "exe": "METAL GEAR SOLID.exe", "env": { "SteamAppId": "2131630" } },
-  "visualFit": { "heightVh": 116, "leftVw": 12, "widthVw": 46, "anchor": "top" },
+  "visualFit": { "leftVw": 5, "widthVw": 55, "heightVh": 112, "anchor": "top" },
   "assets": [
     { "role": "mainVisual", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0019" },
     { "role": "logo",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0012" },

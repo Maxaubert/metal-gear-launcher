@@ -43,9 +43,12 @@ test.describe("hub", () => {
   test("game selection picks a game", async () => {
     await page.keyboard.press("Tab");
     await expect(page.getByTestId("game-selection")).toBeVisible();
+    await expect(page.getByTestId("tile-mgs1")).toHaveAttribute("data-focused", "true");
     // Regression coverage for the single-column selection list: ArrowDown must step one tile
     // at a time (mgs1 -> mgs2 -> mgs3), not wrap by the old 3-column stride.
     await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("tile-mgs2")).toHaveAttribute("data-focused", "true");
+    await expect(page.getByTestId("tile-mgs1")).not.toHaveAttribute("data-focused", "true");
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");

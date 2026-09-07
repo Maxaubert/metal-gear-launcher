@@ -300,19 +300,24 @@ export default function HubProvider() {
 
   if (!currentGame) return <div className="screen-root" />;
 
+  // Round 6: Game Selection is no longer a dark overlay stacked on top of a dimmed GameScreen -
+  // it's the same light screen (`ScreenBackdrop` renders the focused entry's own art/header), so
+  // the two are mutually exclusive here rather than both mounted. The crossfade key follows
+  // whichever pack is actually on screen (the focused entry while browsing, the current game
+  // otherwise) so switching games/entries and entering/leaving Game Selection all still crossfade.
+  const displayedPackId = nav.screen === "selection" ? (games[nav.item]?.pack.id ?? currentGame.pack.id) : currentGame.pack.id;
+
   return (
     <>
-      {/* Spec 4.7: "the current screen stays underneath dimmed to 25% brightness" while Game
-          Selection is open (visual fix round 4, finding 5) - this screen keeps rendering (its
-          own game-change crossfade lives here, and GameSelection's left zone reads the focused
-          tile's own art independently), so the dimming is a filter on this wrapper rather than
-          unmounting anything. */}
-      <div
-        key={currentGame.pack.id}
-        className="game-fade"
-        style={{ position: "absolute", inset: 0, filter: nav.screen === "selection" ? "brightness(0.25)" : undefined }}
-      >
-        {currentGame.installed ? (
+      <div key={displayedPackId} className="game-fade" style={{ position: "absolute", inset: 0 }}>
+        {nav.screen === "selection" ? (
+          <GameSelection
+            games={games}
+            focusIndex={nav.item}
+            lastInputKind={lastInputKind}
+            onSelect={(index) => dispatch({ type: "selectGame", index })}
+          />
+        ) : currentGame.installed ? (
           <GameScreen
             game={currentGame}
             menuItem={nav.item}
@@ -328,9 +333,6 @@ export default function HubProvider() {
           <NotInstalled game={currentGame} onInstall={() => void window.hub.launch(currentGame.pack.id, { install: true })} />
         )}
       </div>
-      {nav.screen === "selection" && (
-        <GameSelection games={games} focusIndex={nav.item} onSelect={(index) => dispatch({ type: "selectGame", index })} />
-      )}
       {updateBanner}
     </>
   );
