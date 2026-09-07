@@ -14,10 +14,10 @@ export type ToolVersions = { assetStudio: string; freemote: string };
 export type AssetManifest = { gameId: string; buildId: string; toolVersions: ToolVersions; files: Partial<Record<AssetRole, string>>; failed: Partial<Record<AssetRole, string>> };
 export type Progress = { gameId: string; role: AssetRole; index: number; total: number; status: "start" | "done" | "failed"; error?: string };
 
-const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf" };
+const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", logo2: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf" };
 // Every raster role gets trimmed to its content bounding box (trim.ts) - everything except the
 // two roles that aren't images at all.
-const IMAGE_ROLES = new Set<AssetRole>(["mainVisual", "mainVisual2", "logo", "numbering", "year", "bgEffect"]);
+const IMAGE_ROLES = new Set<AssetRole>(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect"]);
 
 export function isStale(m: AssetManifest | null, install: Install, tools: ToolVersions): boolean {
   return !m || m.buildId !== install.buildId || m.toolVersions.assetStudio !== tools.assetStudio || m.toolVersions.freemote !== tools.freemote;

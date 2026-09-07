@@ -108,10 +108,17 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
           <>
             {pack.chapters!.map((chapter, i) => {
               const src = i === 0 ? assetUrls.mainVisual : assetUrls.mainVisual2;
+              const logoSrc = i === 0 ? assetUrls.logo : assetUrls.logo2;
               return (
                 <div className={`chapter-panel chapter-panel-${i}`} key={chapter.gameTitle}>
                   {src && <img className="chapter-visual" src={src} alt={chapter.gameTitle} />}
-                  <div className="chapter-logo">{chapter.gameTitle}</div>
+                  {logoSrc ? (
+                    <div className="chapter-logo-wrap">
+                      <img className="chapter-logo-img" src={logoSrc} alt={chapter.gameTitle} />
+                    </div>
+                  ) : (
+                    <div className="chapter-logo">{chapter.gameTitle}</div>
+                  )}
                 </div>
               );
             })}

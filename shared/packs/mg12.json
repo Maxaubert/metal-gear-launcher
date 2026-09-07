@@ -14,7 +14,8 @@
   "assets": [
     { "role": "mainVisual",  "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "MG1_MainVisual_gra" },
     { "role": "mainVisual2", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "MG2_MainVisual" },
-    { "role": "logo",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "mg12_grid_mask" },
+    { "role": "logo",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12logo.spriteatlas.bundle", "name": "MG1_logo", "type": "Sprite" },
+    { "role": "logo2",      "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12logo.spriteatlas.bundle", "name": "MG2_logo", "type": "Sprite" },
     { "role": "year",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_mg12_year", "type": "Sprite" },
     { "role": "bgEffect",   "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "mg12_grid_mask" },
     { "role": "bgm",        "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/bgm/mg12/mg35_mg_menu_lp.wav.bundle", "name": "MG35_mg_menu_lp", "type": "AudioClip" },

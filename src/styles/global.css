@@ -153,17 +153,50 @@ body {
   object-fit: cover;
 }
 
+/* Critique finding 9: the reference overlays each game's own bevelled logo lockup (rotated 90deg,
+   left edge of its own art panel), not plain rotated sans-serif text. The real assets exist in
+   the launcher bundle (`mg12logo.spriteatlas.bundle`'s `MG1_logo`/`MG2_logo` - see
+   shared/packs/mg12.json's `logo`/`logo2` roles) and are landscape-oriented PNGs, rotated here
+   with a plain CSS transform rather than re-set as vertical text. `width` is the image's
+   pre-rotation width, which becomes its on-screen height after the 90deg turn; `height: auto`
+   keeps its own aspect ratio, so MG2's two-line lockup (a shorter, wider source image) reads
+   correctly thicker than MG1's single-line one without a per-chapter override. */
+.chapter-logo-img {
+  /* Standard "centre then rotate" idiom: `top: 50%; left: <x>` places the element's own top-left
+     corner at that point; `translate(-50%, -50%)` (percentages here are of the element's OWN,
+     pre-rotation box, unlike a parent-relative `top`/`left`) then shifts it up/left by half its
+     own width/height, landing its centre exactly on (<x>, 50%) - `rotate(90deg)` then turns it
+     around that same centre point, since the default transform-origin is the element's own
+     centre. An earlier attempt chained translateY/rotate/translateX by hand and got the order
+     wrong (verified: it clipped the logo against the very top edge, critique finding 8) - this
+     is the well-tested pattern instead of another manual derivation. `width` is the source PNG's
+     pre-rotation width, becoming the on-screen height after the turn - 38vh leaves a few vh of
+     margin above and below within the panel's own 50vh, matching the reference's clear headroom;
+     `height: auto` keeps each logo's own aspect, so MG2's two-line lockup naturally reads as a
+     thicker strip than MG1's one-liner. */
+  position: absolute;
+  left: 4.5vw;
+  top: 50%;
+  width: 38vh;
+  height: auto;
+  transform: translate(-50%, -50%) rotate(90deg);
+  filter: drop-shadow(0 0.2vh 0.8vh rgba(0, 0, 0, 0.35));
+}
+
 .chapter-logo {
+  /* Fallback for a `chapters` pack whose logo asset failed to extract - not otherwise reachable
+     with mg12's own pack data. `display: flex; align-items: center` on a `writing-mode:
+     vertical-rl` container does not reliably centre its own bare text content (verified: critique
+     finding 8 measured the title's first non-background pixel at row 2 of 2052, i.e. touching the
+     top edge with zero headroom) - centred geometrically instead. */
   position: absolute;
   left: 1vw;
-  top: 0;
-  height: 100%;
+  top: 50%;
+  transform: translateY(-50%);
   writing-mode: vertical-rl;
   font: 700 4.2vh/1 "Rodin", sans-serif;
   letter-spacing: 0.02em;
   color: var(--accent);
-  display: flex;
-  align-items: center;
   text-shadow: 0 0.2vh 0.8vh rgba(0, 0, 0, 0.4);
 }
 

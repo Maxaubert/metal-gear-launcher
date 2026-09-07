@@ -2,7 +2,9 @@ import { z } from "zod";
 
 // `mainVisual2` exists only for a `chapters` pack (spec 4.7's MG1&2 delta): the second stacked
 // key-art panel, paired with `chapters[1]` the way `mainVisual` pairs with `chapters[0]`.
-export const assetRole = z.enum(["mainVisual", "mainVisual2", "logo", "numbering", "year", "bgEffect", "bgm", "fontMedium", "fontBold"]);
+// `logo2` exists only for a `chapters` pack: the second panel's own logo lockup, paired with
+// `chapters[1]` the way `logo` pairs with `chapters[0]`.
+export const assetRole = z.enum(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect", "bgm", "fontMedium", "fontBold"]);
 export type AssetRole = z.infer<typeof assetRole>;
 
 // Whether the texture is already cut to its subject ("cut", the default) or needs the soft
