@@ -112,12 +112,15 @@ export default function HubProvider() {
 
   const music = useMenuMusic(currentGame?.assetUrls.bgm, volume);
 
-  // Font: the current game's medium weight, falling back to MGS3's, falling back to the
-  // system font already declared in global.css when neither has been extracted yet.
+  // Font (D1): the current game's medium (400) and bold (700) weights, each falling back to
+  // MGS3's own weight, falling back to the system font already declared in global.css when
+  // neither has been extracted yet (MGS1 has no font asset at all, so it always falls back).
+  // `font-display: block` avoids a visible swap-in flash once the CORS-unblocked font loads.
   useEffect(() => {
-    const fontUrl = currentGame?.assetUrls.fontMedium ?? mgs3Game?.assetUrls.fontMedium;
+    const fontMediumUrl = currentGame?.assetUrls.fontMedium ?? mgs3Game?.assetUrls.fontMedium;
+    const fontBoldUrl = currentGame?.assetUrls.fontBold ?? mgs3Game?.assetUrls.fontBold;
     let styleEl = document.getElementById(FONT_STYLE_ID) as HTMLStyleElement | null;
-    if (!fontUrl) {
+    if (!fontMediumUrl && !fontBoldUrl) {
       styleEl?.remove();
       return;
     }
@@ -126,8 +129,11 @@ export default function HubProvider() {
       styleEl.id = FONT_STYLE_ID;
       document.head.appendChild(styleEl);
     }
-    styleEl.textContent = `@font-face { font-family: "Rodin"; src: url("${fontUrl}"); }`;
-  }, [currentGame?.assetUrls.fontMedium, mgs3Game?.assetUrls.fontMedium]);
+    const rules: string[] = [];
+    if (fontMediumUrl) rules.push(`@font-face { font-family: "Rodin"; font-weight: 400; font-display: block; src: url("${fontMediumUrl}"); }`);
+    if (fontBoldUrl) rules.push(`@font-face { font-family: "Rodin"; font-weight: 700; font-display: block; src: url("${fontBoldUrl}"); }`);
+    styleEl.textContent = rules.join("\n");
+  }, [currentGame?.assetUrls.fontMedium, currentGame?.assetUrls.fontBold, mgs3Game?.assetUrls.fontMedium, mgs3Game?.assetUrls.fontBold]);
 
   // Theme: the current game's colours become CSS custom properties on <html>.
   useEffect(() => {

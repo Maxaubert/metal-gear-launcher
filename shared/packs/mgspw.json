@@ -1,6 +1,7 @@
 {
   "id": "mgspw", "title": "METAL GEAR SOLID: PEACE WALKER", "shortTitle": "MGSPW", "number": "PW",
   "releaseYear": 2010,
+  "indexLabel": "005",
   "yearLabel": "1974", "subtitle": "Peace Walker Incident",
   "description": "A decade after the Virtuous Mission, Naked Snake, now called Big Boss, builds Militaires Sans Frontieres and confronts a nuclear-armed AI weapon in the jungles of Costa Rica.",
   "theme": { "accent": "#7a7f3a", "ink": "#111111", "paper": "#f4f4ee" },
@@ -9,7 +10,6 @@
   "assets": [
     { "role": "mainVisual", "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_bg_main_mgspw", "edge": "fade" },
     { "role": "logo",       "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_logo_mgspw" },
-    { "role": "numbering",  "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "mgspw_rogo" },
     { "role": "year",       "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_menu_txt_year_mgspw" },
     { "role": "bgEffect",   "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle", "name": "ui_launcher_eff_circle_1_mgspw" },
     { "role": "bgm",        "source": "unity", "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_scenarioapp/mgspw/bgm/mg35_mgspw_entrygate.wav.bundle", "name": "MG35_mgspw_entrygate", "type": "AudioClip" },

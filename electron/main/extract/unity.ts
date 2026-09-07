@@ -6,11 +6,14 @@ import { assetStudioArgs, runTool, toolPaths } from "./tools";
 
 export class ExtractError extends Error { constructor(msg: string, public detail: { stderr?: string; stdout?: string } = {}) { super(msg); } }
 
-const TYPE_FLAG = { Texture2D: "tex2d", Font: "font", AudioClip: "audio" } as const;
+// "Sprite" is for a texture packed into a sprite atlas (e.g. mgs2menutext.spriteatlas.bundle) -
+// AssetStudioModCLI only resolves it by name with `-t sprite`; `-t tex2d` there only reaches the
+// atlas's own combined texture (named after the atlas, not the individual asset).
+const TYPE_FLAG = { Texture2D: "tex2d", Font: "font", AudioClip: "audio", Sprite: "sprite" } as const;
 // AssetStudioModCLI exports MGS3's launcher fonts (MG-RodinProN-M/B) as .otf, not .ttf as the
 // task brief assumed - verified against the real install. The caller still names destFile
 // however it likes; this only controls what extension we look for in the tool's output.
-const EXT = { Texture2D: ".png", Font: ".otf", AudioClip: ".wav" } as const;
+const EXT = { Texture2D: ".png", Font: ".otf", AudioClip: ".wav", Sprite: ".png" } as const;
 
 export async function extractUnityAsset(installDir: string, asset: UnityAsset, destFile: string,
   deps: { run: typeof runTool; tools: typeof toolPaths } = { run: runTool, tools: toolPaths }): Promise<void> {

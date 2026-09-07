@@ -6,11 +6,15 @@ describe("packs", () => {
     const packs = loadPacks();
     expect(packs.map((p) => p.id)).toEqual(["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]);
   });
-  it("every pack has the five required art roles and a bgm", () => {
+  it("every pack has the required art roles and a bgm (numbering is optional - not every pack has a real numeral asset)", () => {
     for (const p of loadPacks()) {
       const roles = new Set(p.assets.map((a) => a.role));
-      for (const r of ["mainVisual", "logo", "numbering", "year", "bgm"]) expect(roles, p.id).toContain(r);
+      for (const r of ["mainVisual", "logo", "year", "bgm"]) expect(roles, p.id).toContain(r);
     }
+  });
+  it("every pack declares its fixed header index label", () => {
+    const expected: Record<string, string> = { mg12: "000", mgs1: "001", mgs2: "002", mgs3: "003", mgs4: "004", mgspw: "005" };
+    for (const p of loadPacks()) expect(p.indexLabel, p.id).toBe(expected[p.id]);
   });
   it("rejects a pack with an unknown role", () => {
     const bad = { ...loadPacks()[0], assets: [{ role: "poster", source: "unity", path: "x", name: "y" }] };

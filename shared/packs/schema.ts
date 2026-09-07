@@ -11,7 +11,10 @@ const unityAsset = z.object({
   role: assetRole, source: z.literal("unity"),
   path: z.string().min(1),              // relative to the install dir
   name: z.string().min(1),              // asset name inside the bundle or .assets file
-  type: z.enum(["Texture2D", "Font", "AudioClip"]).default("Texture2D"),
+  // "Sprite" covers a texture packed into a sprite atlas bundle (e.g. the real timeline ghost
+  // for MG1&2/MGS2, which AssetStudioModCLI can only resolve with -t sprite, not -t tex2d,
+  // since the underlying Texture2D is the whole atlas, not the individual asset).
+  type: z.enum(["Texture2D", "Font", "AudioClip", "Sprite"]).default("Texture2D"),
   edge: assetEdge,
 });
 const m2Asset = z.object({
@@ -27,15 +30,30 @@ export type AssetEntry = z.infer<typeof assetEntry>;
 export type UnityAsset = z.infer<typeof unityAsset>;
 export type M2Asset = z.infer<typeof m2Asset>;
 
+// Per-pack override of the main visual's box (spec 4.7's "art floats into the background,
+// cropped by the bottom edge" feel) - see GameScreen.tsx. Omitted entirely for packs that
+// should keep the shared `.main-visual` CSS defaults (bottom-anchored, 94vh/11vw/50vw).
+export const visualFitSchema = z.object({
+  heightVh: z.number().default(100),
+  leftVw: z.number().default(11),
+  widthVw: z.number().default(50),
+  anchor: z.enum(["top", "bottom"]).default("bottom"),
+});
+export type VisualFit = z.infer<typeof visualFitSchema>;
+
 export const packSchema = z.object({
   id: z.enum(["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]),
   title: z.string(), shortTitle: z.string(), number: z.string(),
   releaseYear: z.number().int().min(1987),
+  // The header's `[ 00N ]` mark (spec 4.7) - a fixed per-pack label, not the pack's computed
+  // position in PACK_ORDER, since the original UI's numbering doesn't always match release order.
+  indexLabel: z.string().min(1),
   yearLabel: z.string(), subtitle: z.string(), description: z.string(),
   theme: z.object({ accent: z.string().regex(/^#[0-9a-f]{6}$/i), ink: z.string(), paper: z.string() }),
   steam: z.object({ appId: z.number().int(), installDir: z.string() }),
   launch: z.object({ exe: z.string(), cwd: z.string().default("."), env: z.record(z.string()).default({}), steamOnly: z.boolean().default(false) }),
   assets: z.array(assetEntry).min(1),
   menu: z.array(z.enum(["start", "gameSelection", "quit"])).default(["start", "gameSelection", "quit"]),
+  visualFit: visualFitSchema.optional(),
 });
 export type Pack = z.infer<typeof packSchema>;

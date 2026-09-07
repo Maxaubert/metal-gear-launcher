@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import type { CSSProperties } from "react";
 import type { GameState } from "@shared/ipc";
-import { PACK_ORDER, type Pack } from "@shared/packs";
+import type { Pack } from "@shared/packs";
 import type { InputKind } from "../input/useNavigation";
 import { themeVars, layoutVars } from "../theme/theme";
 
@@ -26,6 +27,35 @@ const HINTS_OTHER: readonly Hint[] = [
 ];
 
 const MAX_PADS = 4;
+
+// D2: per-pack override of `.main-visual`'s box so the key art can bleed past the bottom edge
+// like the originals (spec 4.7's `visualFit` pack field). `undefined` when the pack omits the
+// field, so the shared `.main-visual` CSS rule's own defaults (bottom-anchored, 94vh/11vw/50vw)
+// apply unchanged - only mgs1/mgs2/mgs3 currently set this.
+function visualFitStyle(fit: Pack["visualFit"]): CSSProperties | undefined {
+  if (!fit) return undefined;
+  return {
+    top: fit.anchor === "top" ? 0 : "auto",
+    bottom: fit.anchor === "bottom" ? 0 : "auto",
+    height: `${fit.heightVh}vh`,
+    left: `${fit.leftVw}vw`,
+    width: `${fit.widthVw}vw`,
+    objectPosition: fit.anchor === "top" ? "center top" : "center bottom",
+  };
+}
+
+// D7: the header mark block's three "serial" lines are decorative hex digits (spec 4.7 doesn't
+// assign them any real meaning) - derived from the pack's own Steam app ID so they're stable
+// across renders and distinct per game, rather than re-randomized on every paint.
+function hexDigits(seed: number, length: number): string {
+  let n = (seed >>> 0) || 1;
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += (n & 0xf).toString(16).toUpperCase();
+    n = (Math.imul(n, 48271) + 1 + i) >>> 0;
+  }
+  return out;
+}
 
 export type GameScreenProps = {
   game: GameState;
@@ -62,10 +92,9 @@ export default function GameScreen({
   // Every pack's assets array is required (min 1) to contain a mainVisual entry (tests/packs.test.ts);
   // the `!` mirrors that guarantee rather than re-checking it at render time.
   const mainVisualAsset = pack.assets.find((a) => a.role === "mainVisual")!;
-  // `pack.number` is a display label ("MG", "PW", ...), not a count - the `[ 00N ]` index in the
-  // header is the pack's 1-based position in PACK_ORDER (spec 4.7: "N = pack position").
-  const positionIndex = PACK_ORDER.indexOf(pack.id) + 1;
   const hints = lastInputKind === "gamepad" ? HINTS_GAMEPAD : HINTS_OTHER;
+  const visualStyle = visualFitStyle(pack.visualFit);
+  const serialLines = [hexDigits(pack.steam.appId, 24), hexDigits(pack.steam.appId + 1, 24), hexDigits(pack.steam.appId + 2, 24)];
 
   // Y (gamepad button 3) and the R key retry a failed extraction while the hero art is missing.
   useEffect(() => {
@@ -112,7 +141,12 @@ export default function GameScreen({
           <div className="logo-text">{pack.shortTitle}</div>
         )}
         {hasMainVisual ? (
-          <img className={`main-visual edge-${mainVisualAsset.edge}`} src={assetUrls.mainVisual} alt={pack.title} />
+          <img
+            className={`main-visual edge-${mainVisualAsset.edge}`}
+            src={assetUrls.mainVisual}
+            alt={pack.title}
+            style={visualStyle}
+          />
         ) : (
           <div className="main-visual-fallback">
             <span className="fallback-number">{pack.number}</span>
@@ -138,9 +172,22 @@ export default function GameScreen({
             ))}
           </p>
           <div className="mark">
-            <span className="bang">!</span>
-            <span className="barcode" aria-hidden />
-            <span className="index">[ {String(positionIndex).padStart(3, "0")} ]</span>
+            <div className="mark-text">
+              <div className="mark-serial" aria-hidden="true">
+                {serialLines.map((line, i) => (
+                  <span key={i}>{line}</span>
+                ))}
+              </div>
+              <div className="mark-code">
+                <span className="barcode" aria-hidden="true" />
+                <span className="index">[ {pack.indexLabel} ]</span>
+              </div>
+            </div>
+            <div className="mark-accent">
+              <span className="rule" aria-hidden="true" />
+              <span className="bang">!</span>
+              <span className="rule" aria-hidden="true" />
+            </div>
           </div>
         </header>
         <p className="description">{pack.description}</p>

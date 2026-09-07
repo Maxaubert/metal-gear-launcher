@@ -170,11 +170,16 @@ ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and 
 - Logo strip: the vertical logo texture at x = 0, height 100 % H, top aligned, `object-fit: contain`,
   natural width (about 10 % W). Games without a vertical logo texture (MG1/MG2) render the title as
   rotated Rodin bold text in the same slot, same height.
-- Main visual: bottom anchored (bottom 0), height 94 % H, horizontally centred between 11 % W and 61 % W,
-  `object-fit: contain`. Textures that are not pre-cut (rectangular launcher backgrounds for MGS4 and
-  Peace Walker, the MGS1 atlas crop) get a soft edge: `mask-image` with a radial gradient (opaque to
-  70 %, transparent at 100 %) plus a linear fade on the top 12 %. Pack flag `edge: "fade" | "cut"`
-  per asset, default `cut`.
+- Main visual: bottom anchored (bottom 0), height 94 % H, left 11 % W, width 50 % W,
+  `object-fit: contain`, by default. A pack may override this box with a `visualFit` field
+  (`heightVh`, `leftVw`, `widthVw`, `anchor: "top" | "bottom"`) so its key art bleeds past the
+  bottom edge like the original menus (MGS1/MGS2/MGS3 all set one, sized past 100 % H so the
+  lower body/waist is cropped by the screen's own bottom edge instead of leaving empty paper
+  below it). Textures that are not pre-cut (rectangular launcher backgrounds for MGS4 and Peace
+  Walker) get a soft edge: `mask-image` with a radial gradient (opaque to 70 %, transparent at
+  100 %) plus a linear fade on the top 12 %. Pack flag `edge: "fade" | "cut"` per asset, default
+  `cut` - MGS1/MGS2/MGS3's cutout portraits use `cut` (their mask was painting a visible grey/red
+  halo behind the art), only MGS4/Peace Walker's uncut launcher backgrounds need `fade`.
 - Background effect: the bgEffect texture at 18 % opacity, width 58 % W, top left at (2 % W, 2 % H),
   behind the main visual and the logo strip.
 - Nothing in the left zone is interactive.
@@ -183,23 +188,29 @@ ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and 
 
 **Right column (63 % W to 97.5 % W).**
 - Ghosts (behind everything, non-interactive): the timeline texture (`year` role) at 15 % opacity,
-  height 100 % H, left aligned at 63 % W; the ghost number (`numbering` role) at 14 % opacity, height
-  46 % H, right aligned at 97.5 % W, top 3 % H.
+  height 100 % H, left aligned at 63 % W; the ghost number (`numbering` role), when the pack has a
+  real numeral asset for it, at 14 % opacity, height 46 % H, right aligned at 97.5 % W, top 3 % H.
+  `numbering` is optional - MG1/2 and Peace Walker's launcher bundles have no dedicated numeral
+  texture, only the timeline, so those packs omit the asset entirely rather than press an
+  unrelated decorative texture into service.
 - Header block, top 7 % H:
   - a 0.35 vw wide, 2.5 vh tall ink tick at 63 % W followed by a 1 px rule 2 vw long (the bracket),
   - the year: `pack.yearLabel` in Rodin bold, 8 vh tall, tight letter spacing, ink colour,
   - the subtitle under it: `pack.subtitle` split on ` / ` into one or two lines, Rodin bold 2.2 vh,
     letter-spacing 0.02 em, ink at 85 %,
-  - on the far right of the same block: an accent "!" glyph (Rodin bold, 6 vh) with a decorative
-    barcode built from 24 alternating 1 to 3 px ink bars, and `[ 00N ]` (N = pack position) in a
-    2 vh monospace line under it,
+  - on the far right of the same block, left to right: three decorative lines of hex-like serial
+    text (1.1 vh, monospace, ink at 45 %), a 12 vw wide barcode built from 24 alternating 1 to 3 px
+    ink bars with `pack.indexLabel` as `[ 00N ]` (a fixed per-pack label, not a computed position)
+    in a 1.9 vh monospace line immediately to its right on the same baseline, then an accent "!"
+    glyph (Rodin bold, 7 vh) flanked by two 2 px, 6 vh tall ink rules,
   - a 1 px rule under the block from 63 % W to 97.5 % W, ink at 45 %.
-- Description: top 29 % H, Rodin regular 2.35 vh, line-height 1.5, ink at 85 %, max 8 lines, no scroll.
-- Menu list: bottom anchored so the last row ends at 91 % H; rows 5.6 vh tall with 1.1 vh gaps; each row
-  is a 1 px ink border on paper at 70 % alpha, text Rodin regular 2.9 vh, padding-left 1.4 vw; the
-  focused row is filled with the accent colour, white text, and a 0.45 vw accent bar 0.6 vw to the
-  left of the row (outside the box); the quit row is uppercase "QUIT GAME". MVP rows: "Start Game",
-  "Game Selection", "QUIT GAME". Rows greyed (ink 35 %) when the game is not installed.
+- Description: top 29 % H, Rodin regular 2.35 vh, line-height 1.5, ink at 85 %, max 9 lines, no scroll.
+- Menu list: top anchored at 46 % H, directly under the description, rows growing downward; rows
+  5.6 vh tall with 1.1 vh gaps; each row is a 1 px ink border on paper at 70 % alpha, text Rodin
+  regular 2.9 vh, padding-left 1.4 vw; the focused row is filled with the accent colour, white
+  text, and a 0.45 vw accent bar flush against the row's left border (outside the box); the quit
+  row is uppercase "QUIT GAME". MVP rows: "Start Game", "Game Selection", "QUIT GAME". Rows greyed
+  (ink 35 %) when the game is not installed.
 - Footer hints: bottom right, baseline at 96 % H, 2.1 vh: a filled circle glyph with the button letter
   (L, A, B) then the label ("Move cursor", "Confirm", "Back"); mouse and keyboard users see
   "Arrows", "Enter", "Esc" instead when the last input was not a gamepad.

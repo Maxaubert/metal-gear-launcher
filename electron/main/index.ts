@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from "electron";
 import { exec, spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, extname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { z } from "zod";
@@ -22,9 +22,21 @@ import { checkForUpdate } from "./update";
 
 const execAsync = promisify(exec);
 
+// `corsEnabled` is required for the CSS engine's CORS-fetch of `@font-face` sources (D1): without
+// it, Chromium blocks the font request entirely and every string silently falls back to the
+// Segoe/Arial chain instead of the extracted Rodin font.
 protocol.registerSchemesAsPrivileged([
-  { scheme: ASSET_PROTOCOL, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
+  { scheme: ASSET_PROTOCOL, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
 ]);
+
+// `.ttf`-named font assets are actually OpenType CFF (`OTTO` magic), not TrueType, per
+// AssetStudioModCLI's real output - `font/otf` is the correct MIME either way.
+const ASSET_CONTENT_TYPES: Record<string, string> = {
+  ".png": "image/png",
+  ".wav": "audio/wav",
+  ".ttf": "font/otf",
+  ".otf": "font/otf",
+};
 
 function ok<T>(value: T): Result<T> {
   return { ok: true, value };
@@ -146,11 +158,19 @@ if (!gotSingleInstanceLock) {
     // (already resolved or resolving by the time it asks, so no push/race to worry about).
     const updateCheck = checkForUpdate(app.getVersion());
 
-    protocol.handle(ASSET_PROTOCOL, (req) => {
+    protocol.handle(ASSET_PROTOCOL, async (req) => {
       const u = new URL(req.url); // hub-asset://mgs3/mainVisual.png
       const file = join(assetsDir(u.hostname), decodeURIComponent(u.pathname.slice(1)));
       if (!file.startsWith(join(dataDir(), "assets"))) return new Response("forbidden", { status: 403 });
-      return net.fetch(pathToFileURL(file).toString());
+      const upstream = await net.fetch(pathToFileURL(file).toString());
+      if (!upstream.ok || !upstream.body) return upstream;
+      // The CSS engine's `@font-face` CORS-fetch (D1) needs both an explicit
+      // `Access-Control-Allow-Origin` and a real font/image/audio content type on the response -
+      // `net.fetch` on a bare `file://` URL supplies neither.
+      const headers = new Headers(upstream.headers);
+      headers.set("Access-Control-Allow-Origin", "*");
+      headers.set("Content-Type", ASSET_CONTENT_TYPES[extname(file).toLowerCase()] ?? "application/octet-stream");
+      return new Response(upstream.body, { status: upstream.status, headers });
     });
 
     ipcMain.handle("hub:getState", async () => {
