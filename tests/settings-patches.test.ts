@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { IniDocument } from "../electron/main/settings/ini";
@@ -86,7 +86,7 @@ describe("patch settings adapters", () => {
     await file("scripts/MGSM2Fix32.asi", binaryVersion(3, 7, 2));
     await file("scripts/MGSM2Fix.ini", "[Launcher]\nSkipNotice=false\n");
     const result = await readPatchSettings("mgs1", dir);
-    expect(result.sources[0]?.path).toBe(join(dir, "scripts/MGSM2Fix.ini"));
+    expect(result.sources[0]?.path).toBe(await realpath(join(dir, "scripts/MGSM2Fix.ini")));
   });
 
   it("missing HD config stays read-only until explicit initialization with complete defaults", async () => {
