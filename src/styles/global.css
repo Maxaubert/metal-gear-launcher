@@ -98,7 +98,10 @@ body {
   left: 2vw;
   top: 2vh;
   width: 58vw;
-  opacity: 0.18;
+  /* Round 8 critique finding 2: at 0.18 this line-art wash read as barely-there against the
+     reference's clearly legible (if still secondary) background layer - raised so it reads on
+     screen, not just in the CSS source. */
+  opacity: 0.3;
   pointer-events: none;
 }
 
@@ -188,15 +191,14 @@ body {
   mask-image: linear-gradient(to bottom, transparent 0, #000 16%);
 }
 
-/* MGS2's extracted key art (unlike MGS1's and MGS3's) bakes in roughly a 2% band of opaque
-   near-white canvas below the character's feet - not a transparent margin sharp's trim() can
-   remove (the file has no transparency at all: alpha is 255 throughout), and colour-based
-   auto-trim was verified against every pack's cached asset to be unsafe as a general rule (it
-   would slice ~17% off MGS3's width, cutting into art that already bleeds correctly). Per spec
-   4.7 note on this delta, the safe fix is this scoped compensation instead of a shared rule:
-   nudge the whole bottom-anchored image down by that band's height so the baked-in margin
-   slides below the visible frame (`.screen` clips overflow) while the real art shifts down to
-   fill the gap - no pixels are cropped, so nothing is lost at the image's own top edge either. */
+/* History: MGS2's original `mainVisual` asset (a flat, fully opaque launcher background,
+   replaced in round 7 - see shared/packs/mgs2.json) baked in a band of opaque near-white canvas
+   below the character's feet with no transparency to trim, so this scoped nudge shifted the
+   whole bottom-anchored image down by that band's height. Round 7 swapped the asset to the
+   bundle's real alpha-cutout key art, and round 8 added a generic content-bbox trim to every
+   extracted image (electron/main/extract/trim.ts) - kept as a small residual nudge since the
+   real cutout's own bottom edge still isn't pixel-perfect flush without it, verified against a
+   fresh 4K shoot each time this pack's `visualFit` changes. */
 .screen[data-game="mgs2"] .main-visual {
   transform: translateY(2.4vh);
 }
@@ -243,10 +245,13 @@ body {
   top: 12vh;
   height: 88vh;
   /* The extracted PNG's alpha channel is already normalized into a legible 45-170/255 band
-     (electron/main/extract/ghostAlpha.ts) - that IS the intended on-screen density; this CSS
-     opacity is a second, deliberate dimming pass on top of it (D10: 0.15 read too dark/large
-     next to the reference). */
-  opacity: 0.1;
+     (electron/main/extract/ghostAlpha.ts, mean around 42%) - this CSS opacity is a second,
+     multiplicative dimming pass on top of it, not the final on-screen density: at the old 0.1 the
+     combined result (round 8 critique finding 2) read as "effectively invisible", the right
+     column looking like a flat white field instead of carrying a legible ghost watermark like the
+     reference. Raised so the two dimming passes together land near the reference's visible-but-
+     secondary strength. */
+  opacity: 0.32;
   pointer-events: none;
 }
 
@@ -268,7 +273,7 @@ body {
      every pack, including this disproportionate one, back down to the intended faint watermark
      level without needing a second post-processing pass in the extractor.
   */
-  opacity: 0.14;
+  opacity: 0.34;
   pointer-events: none;
 }
 

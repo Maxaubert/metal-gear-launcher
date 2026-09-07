@@ -170,6 +170,12 @@ if (!gotSingleInstanceLock) {
       const headers = new Headers(upstream.headers);
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Content-Type", ASSET_CONTENT_TYPES[extname(file).toLowerCase()] ?? "application/octet-stream");
+      // Round 8: without this, Chromium's persistent disk cache (this session survives app
+      // restarts) can serve a stale response for the same `hub-asset://<id>/<file>` URL after the
+      // file on disk has changed underneath it - re-extraction (a pack edit, a tool upgrade, or
+      // the user's own "Retry extraction") writes a new file at the same path/URL, and the asset
+      // is meant to always reflect whatever is on disk right now.
+      headers.set("Cache-Control", "no-store");
       return new Response(upstream.body, { status: upstream.status, headers });
     });
 

@@ -6,6 +6,7 @@ import { extractUnityAsset } from "./unity";
 import { extractM2Asset, decodeManifest } from "./m2";
 import { normalizeGhostAlpha } from "./ghostAlpha";
 import { fitMainVisualAspect } from "./mainVisualFit";
+import { trimToContent } from "./trim";
 import { assetsDir as defaultAssetsDir } from "../paths";
 import { toolPaths } from "./tools";
 
@@ -14,6 +15,9 @@ export type AssetManifest = { gameId: string; buildId: string; toolVersions: Too
 export type Progress = { gameId: string; role: AssetRole; index: number; total: number; status: "start" | "done" | "failed"; error?: string };
 
 const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf" };
+// Every raster role gets trimmed to its content bounding box (trim.ts) - everything except the
+// two roles that aren't images at all.
+const IMAGE_ROLES = new Set<AssetRole>(["mainVisual", "mainVisual2", "logo", "numbering", "year", "bgEffect"]);
 
 export function isStale(m: AssetManifest | null, install: Install, tools: ToolVersions): boolean {
   return !m || m.buildId !== install.buildId || m.toolVersions.assetStudio !== tools.assetStudio || m.toolVersions.freemote !== tools.freemote;
@@ -46,6 +50,11 @@ export async function extractGame(pack: Pack, install: Install, onProgress: (p: 
     try {
       if (asset.source === "unity") await deps.unity(install.installDir, asset, dest);
       else { table ??= await decodeManifest(install.installDir, asset.archive); await deps.m2(install.installDir, asset, dest, undefined, table); }
+      if (IMAGE_ROLES.has(asset.role)) {
+        // Best-effort, same contract as the two touch-ups below: trimming is a quality
+        // improvement on an already-successful extraction, never a reason to report failure.
+        await trimToContent(dest).catch(() => {});
+      }
       if (asset.role === "year" || asset.role === "numbering") {
         // Best-effort legibility touch-up (see ghostAlpha.ts) - the extracted file already
         // stands on its own, so a failure here (e.g. a test double that never wrote `dest`)

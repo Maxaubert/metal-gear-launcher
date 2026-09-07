@@ -38,8 +38,12 @@ export function layoutVars(): Record<string, string> {
     "--divider-x": "61.5vw",
     "--col-x": "63vw",
     "--col-right": "97.5vw",
-    "--row-h": "5.6vh",
-    "--row-gap": "1.1vh",
+    // Round 8 critique finding 6: with only 3 MVP menu rows (start/gameSelection/quit), the
+    // block ended around 58vh, leaving a large empty gap down to the footer hints where the
+    // reference's own (longer) menu fills the column. Scaled by ~1.4x per the critique's own
+    // estimate rather than inventing extra rows a launcher has no use for.
+    "--row-h": "7.84vh",
+    "--row-gap": "1.54vh",
     "--menu-top": "43vh",
     "--header-top": "5vh",
     "--desc-top": "22vh",

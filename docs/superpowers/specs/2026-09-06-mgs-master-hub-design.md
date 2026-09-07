@@ -189,7 +189,7 @@ that the plain shared `paper` colour can't express on its own.
   uncut launcher backgrounds use `fade`, which also runs the extractor's aspect pre-crop
   (`mainVisualFit.ts`) so the mask's top-edge fade actually reaches real pixels instead of empty
   letterboxing.
-- Background effect: the bgEffect texture at 18 % opacity, width 58 % W, top left at (2 % W, 2 % H),
+- Background effect: the bgEffect texture at 30 % opacity, width 58 % W, top left at (2 % W, 2 % H),
   behind the main visual and the logo strip, by default. A pack may override this box with a
   `bgEffectFit` field (`leftVw`, `topVh`, `widthVw`, `opacity`) - MGS3's reference shows a large
   ghosted vehicle sketch bleeding across the header too, which needs a much wider, fainter box than
@@ -214,14 +214,19 @@ declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exa
 **Divider.** 1 px vertical rule at x = 61.5 % W, full height, ink at 25 % alpha.
 
 **Right column (63 % W to 97.5 % W).**
-- Ghosts (behind everything, non-interactive): the timeline texture (`year` role) at 10 % opacity,
+- Ghosts (behind everything, non-interactive): the timeline texture (`year` role) at 32 % opacity,
   height 88 % H starting at top 12 % H, left aligned at 63 % W - shifted down and shrunk from a
   full-height 15 % layer so it sits beside the description/menu rather than rising into the
   header and colliding with the subtitle; the ghost number (`numbering` role), when the pack has a
-  real numeral asset for it, at 14 % opacity, height 58 % H, right aligned at 97.5 % W (clips at
+  real numeral asset for it, at 34 % opacity, height 58 % H, right aligned at 97.5 % W (clips at
   the column's right edge), top 3 % H. `numbering` is optional - MG1/2 and Peace Walker's launcher
   bundles have no dedicated numeral texture, only the timeline, so those packs omit the asset
-  entirely rather than press an unrelated decorative texture into service.
+  entirely rather than press an unrelated decorative texture into service. These CSS opacity
+  figures (round 8) are a second, multiplicative dimming pass on top of the extracted PNG's own
+  alpha, already normalized into a legible band by `ghostAlpha.ts` - at the earlier 10/14 % the
+  combined result read as invisible (critique finding 2: "the right column reads as a flat white
+  field"), so they were raised until the ghost layers are visible but still clearly secondary,
+  matching the reference.
 - Header block, top 5 % H:
   - a 0.35 vw wide, 2.5 vh tall ink tick at 63 % W followed by a 1 px rule 2 vw long (the bracket),
   - the year: `pack.yearLabel` in Rodin bold, 8 vh tall, tight letter spacing, ink colour.
@@ -240,7 +245,7 @@ declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exa
   space above the menu so a full-length description clips inside its own box rather than
   touching the menu rows.
 - Menu list: top anchored at 43 % H, directly under the description, rows growing downward; rows
-  5.6 vh tall with 1.1 vh gaps; each row is a 1 px ink border on paper at 70 % alpha, text Rodin
+  7.84 vh tall with 1.54 vh gaps; each row is a 1 px ink border on paper at 70 % alpha, text Rodin
   regular 2.9 vh, padding-left 1.4 vw; the focused row is filled with the accent colour, white
   text, and a 0.45 vw accent bar flush against the row's left border (outside the box); the quit
   row is uppercase "QUIT GAME". MVP rows: "Start Game", "Game Selection", "QUIT GAME". Rows greyed
@@ -294,8 +299,16 @@ per game's key art, with a gold logo strip; the phase 3 plan builds it from the 
 - **E2E (Playwright, Electron):** boots the app with a fixture asset cache (small PNGs and a
   silent WAV committed under `e2e/fixtures/`), navigates with keyboard events between games,
   opens Game Selection, confirms Start Game calls a mocked launcher.
-- **Visual check:** Playwright screenshots of every game screen at 3840x2160 stored as
-  artifacts for review, not as a gate.
+- **Visual check:** `npm run shoot` (`scripts/shoot.mjs`) launches the real built app against the
+  user's own real Steam install and asset cache (not e2e's fixtures), drives it through every
+  game and Game Selection via the actual UI, and screenshots each at 3840x2160 into
+  `e2e/out/real/` for comparison against the owner's reference art - not a gate. Round 8: this
+  replaced an earlier mechanism that requested a 3840x2160 `BrowserWindow` and captured with
+  `webContents.capturePage()`, which Windows silently clamped to the desktop's work area at high
+  display scaling (measured 3843x2052, aspect 1.873, not 1.778) - since the whole layout is
+  expressed in vh/vw, that shorter-than-requested canvas shifted every vertical position the
+  layout computes. Playwright's CDP-driven `page.setViewportSize`/`page.screenshot` isn't subject
+  to that clamp; the script asserts each capture is exactly 3840x2160 before writing it.
 - CI (`ci.yml`): typecheck, lint, unit on PR and push to main. `release.yml` builds the NSIS
   installer and publishes `v<version>`.
 
