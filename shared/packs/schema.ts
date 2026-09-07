@@ -4,7 +4,7 @@ import { z } from "zod";
 // key-art panel, paired with `chapters[1]` the way `mainVisual` pairs with `chapters[0]`.
 // `logo2` exists only for a `chapters` pack: the second panel's own logo lockup, paired with
 // `chapters[1]` the way `logo` pairs with `chapters[0]`.
-export const assetRole = z.enum(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect", "bgm", "fontMedium", "fontBold", "headerYear", "headerSubtitle", "headerYear2", "headerSubtitle2", "fontUi", "headerMark", "backgroundArt", "reticle1", "reticle2", "reticle3"]);
+export const assetRole = z.enum(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect", "bgm", "fontMedium", "fontBold", "headerYear", "headerSubtitle", "headerYear2", "headerSubtitle2", "fontUi", "headerMark", "backgroundArt", "reticle1", "reticle2", "reticle3", "settingsHeader", "settingsTimeline"]);
 export type AssetRole = z.infer<typeof assetRole>;
 
 // Whether the texture is already cut to its subject ("cut", the default) or needs the soft
@@ -90,7 +90,7 @@ export const packSchema = z.object({
   launch: z.object({ exe: z.string(), cwd: z.string().default("."), env: z.record(z.string()).default({}), steamOnly: z.boolean().default(false) }),
   assets: z.array(assetEntry).min(1),
   assetRevision: z.number().int().nonnegative().default(0),
-  menu: z.array(z.enum(["start", "gameSelection", "quit"])).default(["start", "gameSelection", "quit"]),
+  menu: z.array(z.enum(["start", "gameSelection", "options", "quit"])).default(["start", "gameSelection", "options", "quit"]),
   visualFit: visualFitSchema.optional(),
   bgEffectFit: bgEffectFitSchema.optional(),
   chapters: z.array(chapterSchema).length(2).optional(),

@@ -19,6 +19,8 @@ import { extractGame, isStale, readManifest, readToolVersions } from "./extract/
 import { launchGame } from "./launch/launcher";
 import { minimizeForLaunch, restoreAfterLaunch } from "./launch/windowTransition";
 import { checkForUpdate } from "./update";
+import { settingsReadRequest, saveSettingsRequest } from "@shared/settings";
+import { getGameSettings, saveGameSettings } from "./settings/service";
 
 const execAsync = promisify(exec);
 
@@ -185,6 +187,28 @@ if (!gotSingleInstanceLock) {
       } catch (e) {
         return err(asError(e));
       }
+    });
+
+    ipcMain.handle("hub:settings:get", async (_event, arg) => {
+      const parsed = settingsReadRequest.safeParse(arg);
+      if (!parsed.success) return err("Invalid settings request.");
+      try {
+        const state = await buildState();
+        const game = state.games.find((game) => game.pack.id === parsed.data.gameId);
+        if (!game?.installed || !game.installDir) return err("This game is not installed.");
+        return ok(await getGameSettings(parsed.data.gameId, game.installDir, parsed.data.accountId));
+      } catch (error) { return err(asError(error)); }
+    });
+
+    ipcMain.handle("hub:settings:save", async (_event, arg) => {
+      const parsed = saveSettingsRequest.safeParse(arg);
+      if (!parsed.success) return err("Invalid settings changes.");
+      try {
+        const state = await buildState();
+        const game = state.games.find((game) => game.pack.id === parsed.data.gameId);
+        if (!game?.installed || !game.installDir) return err("This game is not installed.");
+        return ok(await saveGameSettings(parsed.data, game.installDir, dataDir()));
+      } catch (error) { return err(asError(error)); }
     });
 
     ipcMain.handle("hub:extract", async (_e, arg) => {

@@ -7,6 +7,7 @@ export default defineConfig({
   timeout: 60_000,
   outputDir: "test-results",
   fullyParallel: false,
+  workers: 1, // The desktop app intentionally owns a single-instance lock.
   retries: 0,
   use: {},
   projects: [{ name: "electron" }],

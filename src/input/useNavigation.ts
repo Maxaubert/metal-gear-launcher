@@ -36,6 +36,7 @@ export function useNavigation(onAction: (action: Action) => void) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement && event.code !== "Escape") return;
       const action = KEY_MAP[event.code] ?? KEY_MAP[event.key];
       if (!action) return;
       event.preventDefault();

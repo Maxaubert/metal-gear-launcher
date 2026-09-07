@@ -11,7 +11,10 @@
     "numbering": "numbering.png",
     "year": "year.png",
     "bgEffect": "bgEffect.png",
-    "bgm": "bgm.wav"
+    "bgm": "bgm.wav",
+    "settingsHeader": "settingsHeader.png",
+    "settingsTimeline": "settingsTimeline.png"
   },
-  "failed": {}
+  "failed": {},
+  "assetRevision": 1
 }

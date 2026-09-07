@@ -3,6 +3,7 @@ import type { Config } from "../electron/main/config";
 import type { AssetManifest, Progress } from "../electron/main/extract/extractor";
 import type { GameId } from "../electron/main/cli";
 import type { UpdateInfo } from "../electron/main/update";
+import type { GameSettings, SaveSettingsRequest } from "./settings";
 
 export const ASSET_PROTOCOL = "hub-asset";
 
@@ -36,6 +37,8 @@ export type HubState = {
 export type ExtractTarget = "all" | Pack["id"];
 
 export interface HubApi {
+  getGameSettings(gameId: GameId, accountId?: string): Promise<Result<GameSettings>>;
+  saveGameSettings(request: SaveSettingsRequest): Promise<Result<GameSettings>>;
   getState(): Promise<Result<HubState>>;
   extract(target: ExtractTarget): Promise<Result<HubState>>;
   onExtractProgress(cb: (p: Progress) => void): () => void;

@@ -8,12 +8,15 @@
   "steam": { "appId": 2131630, "installDir": "MGS1" },
   "launch": { "exe": "METAL GEAR SOLID.exe", "env": { "SteamAppId": "2131630" } },
   "visualFit": { "leftVw": 12, "widthVw": 48, "heightVh": 100, "anchor": "bottom" },
+  "assetRevision": 1,
   "assets": [
     { "role": "mainVisual", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0019" },
     { "role": "logo",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0012" },
     { "role": "numbering",  "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0007" },
     { "role": "year",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0015" },
     { "role": "bgEffect",   "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0045" },
-    { "role": "bgm",        "source": "m2", "file": "system/sound/bgm_title.psb" }
+    { "role": "bgm",        "source": "m2", "file": "system/sound/bgm_title.psb" },
+    { "role": "settingsHeader", "source": "m2", "file": "system/motion/txt_en.psb.m", "texture": "tex", "sprite": "0025" },
+    { "role": "settingsTimeline", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0015" }
   ]
 }

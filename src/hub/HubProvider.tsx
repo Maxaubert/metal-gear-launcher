@@ -9,8 +9,9 @@ import GameScreen, { type MenuKey } from "../screens/GameScreen";
 import GameSelection from "../screens/GameSelection";
 import FirstRun, { type ExtractProgress } from "../screens/FirstRun";
 import NotInstalled from "../screens/NotInstalled";
+import SettingsScreen from "../settings/SettingsScreen";
 
-const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 3, gameCount: PACK_ORDER.length };
+const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
 const LAUNCH_MESSAGE_MS = 3000;
 const FONT_STYLE_ID = "hub-font-face";
 const MAX_PADS = 4;
@@ -29,6 +30,11 @@ export default function HubProvider() {
   const [hubState, setHubState] = useState<HubState | null>(null);
   const [nav, rawDispatch] = useReducer(reduceNav, INITIAL_NAV);
   const [quitOpen, setQuitOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsOpenRef = useRef(false);
+  useEffect(() => { settingsOpenRef.current = settingsOpen; }, [settingsOpen]);
+  const pendingNavigation = useRef<Action | SelectGame | null>(null);
+  const settingsActionRef = useRef<((action: Action) => void) | null>(null);
   const [quitItem, setQuitItem] = useState(0);
   const [launching, setLaunching] = useState(false);
   const [firstRunItem, setFirstRunItem] = useState(0);
@@ -71,10 +77,17 @@ export default function HubProvider() {
     const offSelectGame = window.hub.onSelectGame((id) => {
       if (cancelled) return;
       const index = PACK_ORDER.indexOf(id);
-      if (index >= 0) dispatch({ type: "selectGame", index });
+      if (index >= 0) {
+        const action: SelectGame = { type: "selectGame", index };
+        if (settingsOpenRef.current) pendingNavigation.current = action;
+        else dispatch(action);
+      }
     });
     const offSelectionOpen = window.hub.onSelectionOpen(() => {
-      if (!cancelled) dispatch("menu");
+      if (!cancelled) {
+        if (settingsOpenRef.current) pendingNavigation.current = "menu";
+        else dispatch("menu");
+      }
     });
     const off = window.hub.onExtractProgress((p: Progress) => {
       if (cancelled) return;
@@ -149,7 +162,7 @@ export default function HubProvider() {
   // Y/retry effect (same button, same polling shape) since both are global "press Y for the
   // thing the footer/overlay is telling you about" affordances rather than menu navigation.
   useEffect(() => {
-    if (!updateInfo) return;
+    if (!updateInfo || settingsOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "KeyY") void window.hub.openUpdate();
     };
@@ -172,7 +185,7 @@ export default function HubProvider() {
       window.removeEventListener("keydown", onKeyDown);
       cancelAnimationFrame(frame);
     };
-  }, [updateInfo]);
+  }, [updateInfo, settingsOpen]);
 
   async function refreshState(): Promise<void> {
     const r = await window.hub.getState();
@@ -187,6 +200,8 @@ export default function HubProvider() {
       window.setTimeout(() => setLaunching(false), LAUNCH_MESSAGE_MS);
     } else if (key === "gameSelection") {
       dispatch("menu");
+    } else if (key === "options") {
+      setSettingsOpen(true);
     } else {
       setQuitItem(0);
       setQuitOpen(true);
@@ -226,6 +241,10 @@ export default function HubProvider() {
   }
 
   const onAction = (action: Action) => {
+    if (settingsOpen) {
+      settingsActionRef.current?.(action);
+      return;
+    }
     if (!hasActedRef.current) {
       hasActedRef.current = true;
       music.unlock();
@@ -312,7 +331,16 @@ export default function HubProvider() {
   return (
     <>
       <div key={displayedPackId} className="game-fade" style={{ position: "absolute", inset: 0 }}>
-        {nav.screen === "selection" ? (
+        {settingsOpen ? (
+          <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind}
+            onClose={() => {
+              setSettingsOpen(false);
+              if (pendingNavigation.current) {
+                dispatch(pendingNavigation.current);
+                pendingNavigation.current = null;
+              }
+            }} />
+        ) : nav.screen === "selection" ? (
           <GameSelection
             games={games}
             focusIndex={nav.item}
