@@ -7,7 +7,7 @@
   "theme": { "accent": "#2b5ea8", "ink": "#111111", "paper": "#fbfbf9" },
   "steam": { "appId": 2131640, "installDir": "MGS2" },
   "launch": { "exe": "METAL GEAR SOLID2.exe", "env": { "SteamAppId": "2131640" } },
-  "visualFit": { "leftVw": 11, "widthVw": 48, "heightVh": 118, "anchor": "top" },
+  "visualFit": { "leftVw": 11, "widthVw": 48, "heightVh": 118, "anchor": "bottom" },
   "assets": [
     { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "MGS2_MainVisual" },
     { "role": "logo",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mgs2_logo" },
