@@ -1,0 +1,142 @@
+/* Native artwork registration against the supplied 1920 x 1080 composition. */
+.screen[data-game="mgspw"] .main-visual {
+  mask-image: none;
+  transform: translateY(-5.081vh);
+}
+
+.screen[data-game="mgspw"] .logo-strip {
+  left: 0;
+  top: 1vh;
+  height: 98vh;
+  z-index: 1;
+}
+
+.screen[data-game="mgspw"] .ghost-effect {
+  display: none;
+}
+
+.screen[data-game="mgspw"] .ghost-timeline {
+  left: 62.3vw;
+  top: 3vh;
+  height: 97vh;
+  opacity: 0.3;
+}
+
+.screen[data-game="mgspw"] .description {
+  right: 1vw;
+  color: #fff;
+  font-size: 2.1535vh;
+  line-height: 2.65vh;
+  letter-spacing: 0;
+}
+
+.screen[data-game="mgspw"] .head {
+  top: 8.7vh;
+  padding-bottom: 2.3vh;
+}
+
+.screen[data-game="mgspw"] .head .subtitle {
+  margin-top: 2.5vh;
+}
+
+.screen[data-game="mgspw"] .header-subtitle-art {
+  height: 1.48vh;
+}
+
+.screen[data-game="mgspw"] .menu li.focused {
+  color: #000;
+  padding-left: 1.6vw;
+}
+
+.screen[data-game="mgspw"] .menu li:not(.focused):not(.menu-bar) {
+  margin-left: -0.6vw;
+}
+
+.screen[data-game="mgspw"] .tile.focused .tile-number {
+  /* The numeral occupies the yellow end cap, while its white title sits on black. */
+  color: #000 !important;
+}
+
+.pw-motion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.reticle-backdrop {
+  position: absolute;
+  left: 55.88vw;
+  top: 53.89vh;
+  width: 203.7037vh;
+  height: 203.7037vh;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.reticle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: reticle-turn linear infinite;
+}
+
+.reticle-2 {
+  animation-direction: reverse;
+}
+
+.pw-motion[data-paused="true"] .reticle,
+.pw-motion[data-paused="true"] .mech-frame,
+.pw-motion[data-paused="true"] .mech-frame img {
+  animation-play-state: paused;
+}
+
+.mech-backdrop {
+  position: absolute;
+  left: 58.333vw;
+  top: -8.426vh;
+  width: 58.333vw;
+  height: 62.963vh;
+  mask-image: linear-gradient(to right, transparent, #000 26.8%, #000 73.2%, transparent),
+    linear-gradient(to bottom, transparent, #000 14.7%, #000 85.3%, transparent);
+  mask-composite: intersect;
+}
+
+.mech-frame {
+  position: absolute;
+  width: 81.25vw;
+  height: 101.852vh;
+  transform: translate(-50%, -50%);
+  animation: mech-crossfade 9s linear infinite;
+}
+
+.mech-frame-1 { left: 38.802vw; top: 16.111vh; --drift-x: 4.95vh; --drift-y: -4.95vh; }
+.mech-frame-2 { left: 6.042vw; top: 43.704vh; --drift-x: 5.625vh; --drift-y: 1.5vh; }
+.mech-frame-3 { left: 10.729vw; top: 18.148vh; width: 71.875vw; height: 90.741vh; --drift-x: 5.25vh; --drift-y: 3vh; }
+
+.mech-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: mech-drift 9s linear infinite;
+}
+
+@keyframes mech-crossfade {
+  0%, 44.444%, 100% { opacity: 0; }
+  11.111%, 33.333% { opacity: 1; }
+}
+
+@keyframes mech-drift {
+  0%, 44.445%, 100% { transform: translate(0, 0); }
+  44.444% { transform: translate(var(--drift-x), var(--drift-y)); }
+}
+
+@keyframes reticle-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reticle, .mech-frame, .mech-frame img { animation-play-state: paused; }
+}

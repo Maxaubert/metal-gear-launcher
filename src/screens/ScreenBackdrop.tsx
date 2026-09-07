@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { GameState } from "@shared/ipc";
 import type { Pack } from "@shared/packs";
+import PeaceWalkerMotion from "./PeaceWalkerMotion";
 
 // D2 (round 5): per-pack override of `.main-visual`'s box so the key art can bleed past the
 // bottom edge like the originals (spec 4.7's `visualFit` pack field). `undefined` when the pack
@@ -151,6 +152,7 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
             )}
           </>
         )}
+        {pack.id === "mgspw" && <PeaceWalkerMotion assetUrls={assetUrls} />}
       </div>
 
       <div className="divider" />

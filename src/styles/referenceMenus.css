@@ -1,11 +1,11 @@
 /* Geometry measured against the installed launchers' supplied reference images.
    Scope keeps the accepted MGS1 screen and deferred games unchanged. */
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .ground {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .ground {
   background-image: linear-gradient(to right, var(--paper-left), var(--paper) 62%);
   background-size: 100% 100%;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .divider {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .divider {
   width: 0.1vw;
   background: var(--ink);
 }
@@ -40,15 +40,15 @@
   height: 100vh;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .menu li {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li {
   border-width: 0.08vw;
   padding-left: 0.9vw;
   font-size: 2.9vh;
   box-shadow: none;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .head .year,
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .head .subtitle {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .year,
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .subtitle {
   margin-left: 0;
 }
 
@@ -65,14 +65,14 @@
   align-self: flex-start;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .head .tick {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick {
   left: -1.9vw;
   top: 0.5vh;
   height: 8.5vh;
   width: 0.3vw;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .head .tick::after {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick::after {
   top: 4vh;
   width: 0.8vw;
 }
@@ -85,9 +85,9 @@
   height: 1.9vh;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .description,
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .menu li,
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .hints {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .description,
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li,
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .hints {
   font-family: "MenuEnglish", "Rodin", sans-serif;
   font-weight: 400;
 }
@@ -147,14 +147,14 @@
   width: 100%;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .menu .menu-bar {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu .menu-bar {
   left: -1.9vw;
   width: 0.3vw;
   border: 0;
   padding: 0;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .menu li.focused {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li.focused {
   margin-left: -1.3vw;
   padding-left: 2.2vw;
 }
@@ -245,7 +245,7 @@
   height: 38.3vh;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"]) .menu::before {
+.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu::before {
   content: "";
   position: absolute;
   top: -1.2vh;

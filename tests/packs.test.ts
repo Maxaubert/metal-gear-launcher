@@ -13,7 +13,7 @@ describe("packs", () => {
     }
   });
   it("every pack declares its fixed header index label", () => {
-    const expected: Record<string, string> = { mg12: "000", mgs1: "001", mgs2: "002", mgs3: "003", mgs4: "004", mgspw: "005" };
+    const expected: Record<string, string> = { mg12: "000", mgs1: "001", mgs2: "002", mgs3: "003", mgs4: "004", mgspw: "0PW" };
     for (const p of loadPacks()) expect(p.indexLabel, p.id).toBe(expected[p.id]);
   });
   it("rejects a pack with an unknown role", () => {

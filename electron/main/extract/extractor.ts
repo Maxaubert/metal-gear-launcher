@@ -14,9 +14,8 @@ export type ToolVersions = { assetStudio: string; freemote: string };
 export type AssetManifest = { gameId: string; buildId: string; assetRevision?: number; toolVersions: ToolVersions; files: Partial<Record<AssetRole, string>>; failed: Partial<Record<AssetRole, string>> };
 export type Progress = { gameId: string; role: AssetRole; index: number; total: number; status: "start" | "done" | "failed"; error?: string };
 
-const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", logo2: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf", headerYear: "png", headerSubtitle: "png", headerYear2: "png", headerSubtitle2: "png", fontUi: "ttf", headerMark: "png", backgroundArt: "png" };
-// Every raster role gets trimmed to its content bounding box (trim.ts) - everything except the
-// two roles that aren't images at all.
+const EXT: Record<AssetRole, string> = { mainVisual: "png", mainVisual2: "png", logo: "png", logo2: "png", numbering: "png", year: "png", bgEffect: "png", bgm: "wav", fontMedium: "ttf", fontBold: "ttf", headerYear: "png", headerSubtitle: "png", headerYear2: "png", headerSubtitle2: "png", fontUi: "ttf", headerMark: "png", backgroundArt: "png", reticle1: "png", reticle2: "png", reticle3: "png" };
+// Reticle textures retain their transparent canvas so rotation preserves the native pivot.
 const IMAGE_ROLES = new Set<AssetRole>(["mainVisual", "mainVisual2", "logo", "logo2", "numbering", "year", "bgEffect", "headerYear", "headerSubtitle", "headerYear2", "headerSubtitle2", "headerMark", "backgroundArt"]);
 
 export function isStale(m: AssetManifest | null, install: Install, tools: ToolVersions, assetRevision = 0): boolean {
