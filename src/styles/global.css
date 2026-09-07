@@ -175,26 +175,17 @@ body {
 }
 
 .main-visual.edge-fade {
-  /* The radial layer's size is given explicitly as `50% 50%` (half the box's own width/height)
-     rather than left to the default `farthest-corner` keyword - verified by a differential
-     `HUB_SHOOT` capture (edge:"fade" vs edge:"cut", same asset, pixel-diffed) that the default
-     keyword sizes the ellipse to reach whichever box CORNER is farthest from the 50%/60% centre
-     (here, the two top corners at ~1551px from centre vs. ~1920px box width) - so the 70%-100%
-     fade band only ever touched a sliver near that one corner, and the entire straight left/
-     right/bottom edge stayed inside the "fully opaque" 0-70% zone: a hard cut, exactly what
-     visual fix round 4's finding 2 measured (std~8 inside the box vs std~42 on the paper - a
-     flat rectangle, not a fade). `50% 50%` makes the ellipse's own edge coincide with the box's
-     left/right edges (and pass near top/bottom, offset by the 60% vertical centre), so the
-     70%-100% stops now fall across the outer ~15% of the box on every side, a real vignette
-     instead of a near no-op. Re-verified with the same diff technique after this change: the
-     fade band now spans the full box perimeter, not just the top strip the linear layer alone
-     produced. */
-  mask-image: radial-gradient(ellipse 50% 50% at 50% 60%, #000 70%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 12%);
-  /* Chromium (this app's only target) treats -webkit-mask-composite as an alias of the
-     unprefixed property and lets whichever is declared LAST win - so the legacy Safari fallback
-     goes first here, and the standard `intersect` after it is the one that actually applies. */
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
+  /* History: an earlier version of this rule used a radial ellipse spanning the whole box
+     (`radial-gradient(ellipse 50% 50% at 50% 60%, ...)` combined with the same top linear fade)
+     to vignette all four edges at once. The owner rejected that result on MGS4/Peace Walker's
+     dark, photographic launcher backdrops - a full radial fade reads as an obvious oval mask on
+     a rectangular photo composition, unlike the organic hand-painted cutouts (MGS1/MGS2/MGS3)
+     that never use this class (round "drop the vignette" commit, c3993fb). Rather than restore
+     that, this only feathers the TOP edge - the one seam that's genuinely jarring, a hard line
+     floating in open paper with nothing else touching it - and leaves the left/right/bottom
+     edges straight: the bottom is already cropped by the screen's own edge (spec 4.7's bottom-
+     anchor rule), and a vertical poster's straight sides read as a deliberate card, not a flaw. */
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16%);
 }
 
 /* MGS2's extracted key art (unlike MGS1's and MGS3's) bakes in roughly a 2% band of opaque
