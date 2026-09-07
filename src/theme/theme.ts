@@ -33,7 +33,7 @@ export function themeVars(theme: ThemeColors): Record<string, string> {
  * pack, so this takes no arguments.
  */
 export function layoutVars(gameId?: string): Record<string, string> {
-  if (gameId === "mg12" || gameId === "mgs2" || gameId === "mgs3") {
+  if (gameId === "mg12" || gameId === "mgs2" || gameId === "mgs3" || gameId === "mgs4") {
     return {
       "--left-zone": "62.2vw", "--divider-x": "62.2vw",
       "--col-x": "63.5vw", "--col-right": "99.4vw",

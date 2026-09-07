@@ -72,7 +72,7 @@ async function main() {
     }
 
     // Hand-made shapes exercise the original menu sprite layout without game assets.
-    if (["mg12", "mgs2", "mgs3"].includes(gameId)) {
+    if (["mg12", "mgs2", "mgs3", "mgs4"].includes(gameId)) {
       const shapes = { headerYear: [gameId === "mgs2" ? 313 : 141, 88], headerSubtitle: [237, 47] };
       if (gameId === "mg12") Object.assign(shapes, { mainVisual2: [256, 178], logo2: [256, 95], headerYear2: [141, 88], headerSubtitle2: [239, 17] });
       for (const [role, [width, height]] of Object.entries(shapes)) {
@@ -85,7 +85,7 @@ async function main() {
     await writeFile(join(dir, "bgm.wav"), silentWav());
     files.bgm = "bgm.wav";
 
-    const assetRevision = ["mg12", "mgs2", "mgs3"].includes(gameId) ? 1 : 0;
+    const assetRevision = ["mg12", "mgs2", "mgs3", "mgs4"].includes(gameId) ? 1 : 0;
     const manifest = { gameId, buildId, ...(assetRevision ? { assetRevision } : {}), toolVersions: TOOL_VERSIONS, files, failed: {} };
     await writeFile(join(dir, "manifest.json"), JSON.stringify(manifest, null, 2));
   }

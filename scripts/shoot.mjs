@@ -80,7 +80,7 @@ async function main() {
       const buf = await page.screenshot();
       await assertSize(buf, id);
       await writeFile(join(outDir, `${id}.png`), buf);
-      if (["mg12", "mgs2", "mgs3"].includes(id)) {
+      if (["mg12", "mgs2", "mgs3", "mgs4"].includes(id)) {
         await page.keyboard.press("Tab");
         await page.getByTestId("game-selection").waitFor({ state: "visible" });
         await page.waitForTimeout(400);

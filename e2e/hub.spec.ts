@@ -107,7 +107,7 @@ test.describe("hub", () => {
   test("reference menus keep descriptions clear and all selection entries reachable at HD and 4K", async () => {
     for (const width of [1920, 3840]) {
       await page.setViewportSize({ width, height: width * 9 / 16 });
-      for (const id of ["mg12", "mgs2", "mgs3"]) {
+      for (const id of ["mg12", "mgs2", "mgs3", "mgs4"]) {
         await page.keyboard.press("Tab");
         await page.getByTestId(`tile-${id}`).click();
         await expect(page.locator(".header-year-art").first()).toBeVisible();
@@ -118,6 +118,12 @@ test.describe("hub", () => {
         await expect(page.getByTestId("tile-mg12").locator(".tile-number")).toHaveCount(0);
         await expect(page.getByTestId("tile-mgs2").locator(".tile-number")).toHaveText("2");
         await expect(page.getByTestId("tile-mgspw")).toBeInViewport({ ratio: 1 });
+        if (id === "mgs4") {
+          // The label sits on black, while its numeral sits inside the red end cap.
+          const selected = page.getByTestId("tile-mgs4");
+          await expect(selected.locator(".tile-title")).toHaveCSS("color", "rgb(255, 255, 255)");
+          await expect(selected.locator(".tile-number")).toHaveCSS("color", "rgb(0, 0, 0)");
+        }
         await page.keyboard.press("Escape");
       }
     }
