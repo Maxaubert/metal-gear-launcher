@@ -78,7 +78,7 @@ and are validated with zod at startup. A pack declares:
   "id": "mgs3",
   "title": "METAL GEAR SOLID 3: SNAKE EATER",
   "number": "3",
-  "yearLabel": "1964",
+  "yearLabel": "2004",
   "subtitle": "Operation Snake Eater",
   "description": "In 1964 ...",
   "theme": { "accent": "#3f8a2f", "ink": "#101410", "paper": "#f4f4ee" },
@@ -197,7 +197,9 @@ ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and 
   entirely rather than press an unrelated decorative texture into service.
 - Header block, top 5 % H:
   - a 0.35 vw wide, 2.5 vh tall ink tick at 63 % W followed by a 1 px rule 2 vw long (the bracket),
-  - the year: `pack.yearLabel` in Rodin bold, 8 vh tall, tight letter spacing, ink colour,
+  - the year: `pack.yearLabel` in Rodin bold, 8 vh tall, tight letter spacing, ink colour.
+    It carries the game's release year, not the year its story is set in, and always equals
+    `pack.releaseYear`,
   - the subtitle under it: `pack.subtitle` split on ` / ` into one or two lines, Rodin bold 2.2 vh,
     letter-spacing 0.02 em, ink at 85 %,
   - on the far right of the same block, left to right: three decorative lines of hex-like serial

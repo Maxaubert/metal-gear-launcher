@@ -27,4 +27,10 @@ describe("packs", () => {
       expect(["fade", "cut"]).toContain(mv.edge);
     }
   });
+
+  it("shows the release year in the header, not the year the story is set in", () => {
+    for (const p of loadPacks()) {
+      expect(p.yearLabel, p.id).toBe(String(p.releaseYear));
+    }
+  });
 });
