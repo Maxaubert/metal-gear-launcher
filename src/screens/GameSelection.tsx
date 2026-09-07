@@ -12,7 +12,10 @@ export type GameSelectionProps = {
  * becomes a vertically centred list of banner tiles, one per game, while the left zone shows
  * the focused game's own logo strip and main visual dimmed to 60% with a release-year info
  * block. A tile for a game that isn't installed is still selectable - picking one just lands
- * on that game's `NotInstalled` screen.
+ * on that game's `NotInstalled` screen. `.selection-right` is an opaque panel behind the tile
+ * list spanning the full right column, since the previous `GameScreen` stays mounted behind
+ * this overlay (for its own crossfade) and its header/description text would otherwise bleed
+ * through the scrim around and between the tiles (spec 4.7 visual fix round 4).
  */
 export default function GameSelection({ games, focusIndex, onSelect }: GameSelectionProps) {
   const focused = games[focusIndex];
@@ -41,6 +44,7 @@ export default function GameSelection({ games, focusIndex, onSelect }: GameSelec
           </div>
         </div>
       )}
+      <div className="selection-right" />
       <ul className="selection-list">
         {games.map((g, index) => (
           <li

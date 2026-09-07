@@ -142,7 +142,21 @@ body {
 }
 
 .main-visual.edge-fade {
-  mask-image: radial-gradient(ellipse at 50% 60%, #000 70%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 12%);
+  /* The radial layer's size is given explicitly as `50% 50%` (half the box's own width/height)
+     rather than left to the default `farthest-corner` keyword - verified by a differential
+     `HUB_SHOOT` capture (edge:"fade" vs edge:"cut", same asset, pixel-diffed) that the default
+     keyword sizes the ellipse to reach whichever box CORNER is farthest from the 50%/60% centre
+     (here, the two top corners at ~1551px from centre vs. ~1920px box width) - so the 70%-100%
+     fade band only ever touched a sliver near that one corner, and the entire straight left/
+     right/bottom edge stayed inside the "fully opaque" 0-70% zone: a hard cut, exactly what
+     visual fix round 4's finding 2 measured (std~8 inside the box vs std~42 on the paper - a
+     flat rectangle, not a fade). `50% 50%` makes the ellipse's own edge coincide with the box's
+     left/right edges (and pass near top/bottom, offset by the 60% vertical centre), so the
+     70%-100% stops now fall across the outer ~15% of the box on every side, a real vignette
+     instead of a near no-op. Re-verified with the same diff technique after this change: the
+     fade band now spans the full box perimeter, not just the top strip the linear layer alone
+     produced. */
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 60%, #000 70%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 12%);
   /* Chromium (this app's only target) treats -webkit-mask-composite as an alias of the
      unprefixed property and lets whichever is declared LAST win - so the legacy Safari fallback
      goes first here, and the standard `intersect` after it is the one that actually applies. */
@@ -215,9 +229,32 @@ body {
   right: calc(100vw - var(--col-right));
   top: 3vh;
   height: 46vh;
-  /* Same reasoning as .ghost-timeline above: the pre-baked alpha band is the final density. */
-  opacity: 1;
+  /* Unlike .ghost-timeline (whose pre-baked alpha band IS the final on-screen density per
+     round 3), the numbering role's real extracted assets are not all numeral-shaped cutouts -
+     MG1/2's bound texture (`mg12_grid_mask`, see round 2's report: no dedicated numeral/timeline
+     asset exists in that bundle) is a near-full-screen 1920x1080 diagonal vignette, verified
+     against the real cached PNG at ~77% of its own width non-transparent. At `opacity: 1` that
+     rendered at roughly 40-50% visible strength across most of the header/description width
+     (visual fix round 4, finding 4) - re-adding the spec's literal 14% CSS opacity here (not
+     compounded with a second alpha remap - `ghostAlpha.ts`'s 45-170 band is unchanged) brings
+     every pack, including this disproportionate one, back down to the intended faint watermark
+     level without needing a second post-processing pass in the extractor.
+  */
+  opacity: 0.14;
   pointer-events: none;
+}
+
+/* MG1/2's numbering texture (see the .ghost-number comment above) is a near-full-screen 16:9
+   image, not a small numeral - at `height: 46vh` its natural aspect renders roughly 82vw wide,
+   sweeping across nearly the whole right column instead of staying "confined to the far right"
+   (spec 4.7). No other pack's numbering asset has this shape (MGS1/3/4/PW's are narrow, near-
+   portrait numerals/timelines that already read correctly at their natural width), so this is a
+   scoped exception for the one asset that needs it, the same pattern as the MGS2 main-visual
+   nudge below rather than a change to every game's box. */
+.screen[data-game="mg12"] .ghost-number {
+  width: 20vw;
+  object-fit: cover;
+  object-position: right center;
 }
 
 .head {
@@ -448,6 +485,22 @@ body {
   position: absolute;
   inset: 0;
   overflow: hidden;
+}
+
+/* Spec 4.7: "the right column turns into a list of banner tiles" - the previous game screen's
+   header/description text (still mounted underneath so its own crossfade doesn't restart)
+   otherwise bleeds through the scrim's 75% black at legible contrast around and between the
+   tiles (visual fix round 4, finding 6). This opaque panel spans the full right column so
+   nothing from the screen below shows through it, independent of the 25% brightness dimming
+   `HubProvider` applies to that whole screen (finding 5) - belt and suspenders, since a real
+   screenshot's residual contrast at 25% brightness was still enough to read as ghost text. */
+.selection-right {
+  position: absolute;
+  left: var(--col-x);
+  right: calc(100vw - var(--col-right));
+  top: 0;
+  bottom: 0;
+  background: rgba(8, 8, 10, 0.92);
 }
 
 .selection-left .logo-strip,

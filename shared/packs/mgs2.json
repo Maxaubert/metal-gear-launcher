@@ -7,7 +7,7 @@
   "steam": { "appId": 2131640, "installDir": "MGS2" },
   "launch": { "exe": "METAL GEAR SOLID2.exe", "env": { "SteamAppId": "2131640" } },
   "assets": [
-    { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "MGS2_MainVisual" },
+    { "role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "MGS2_MainVisual", "edge": "fade" },
     { "role": "logo",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mgs2_logo" },
     { "role": "numbering",  "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mgs2_numbering" },
     { "role": "year",       "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/prefabs/mgs2/animator.prefab.bundle", "name": "mini" },

@@ -296,7 +296,16 @@ export default function HubProvider() {
 
   return (
     <>
-      <div key={currentGame.pack.id} className="game-fade" style={{ position: "absolute", inset: 0 }}>
+      {/* Spec 4.7: "the current screen stays underneath dimmed to 25% brightness" while Game
+          Selection is open (visual fix round 4, finding 5) - this screen keeps rendering (its
+          own game-change crossfade lives here, and GameSelection's left zone reads the focused
+          tile's own art independently), so the dimming is a filter on this wrapper rather than
+          unmounting anything. */}
+      <div
+        key={currentGame.pack.id}
+        className="game-fade"
+        style={{ position: "absolute", inset: 0, filter: nav.screen === "selection" ? "brightness(0.25)" : undefined }}
+      >
         {currentGame.installed ? (
           <GameScreen
             game={currentGame}
