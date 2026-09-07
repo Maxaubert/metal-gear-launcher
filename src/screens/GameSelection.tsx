@@ -15,7 +15,10 @@ export type GameSelectionProps = {
  * on that game's `NotInstalled` screen. `.selection-right` is an opaque panel behind the tile
  * list spanning the full right column, since the previous `GameScreen` stays mounted behind
  * this overlay (for its own crossfade) and its header/description text would otherwise bleed
- * through the scrim around and between the tiles (spec 4.7 visual fix round 4).
+ * through the scrim around and between the tiles (spec 4.7 visual fix round 4). A tile for a
+ * game that isn't installed gets `.not-installed` (dashed outline, dimmed cover art - see
+ * global.css) so the grid still communicates which games need Steam install/extraction, the
+ * signal the pre-4.7 grid gave via a dashed border and 40%-opacity artwork.
  */
 export default function GameSelection({ games, focusIndex, onSelect }: GameSelectionProps) {
   const focused = games[focusIndex];
@@ -50,7 +53,7 @@ export default function GameSelection({ games, focusIndex, onSelect }: GameSelec
           <li
             key={g.pack.id}
             data-testid={`tile-${g.pack.id}`}
-            className={`tile${index === focusIndex ? " focused" : ""}`}
+            className={`tile${index === focusIndex ? " focused" : ""}${g.installed ? "" : " not-installed"}`}
             onClick={() => onSelect(index)}
           >
             {g.assetUrls.mainVisual && <img className="tile-cover" src={g.assetUrls.mainVisual} alt="" />}

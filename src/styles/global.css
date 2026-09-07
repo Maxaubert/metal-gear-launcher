@@ -563,6 +563,22 @@ body {
   filter: brightness(100%) blur(0);
 }
 
+/* A game that isn't installed is still a selectable tile (its number lands on that game's
+   `NotInstalled` screen - see GameSelection's own doc-comment), but the grid must still tell
+   the player which games still need Steam install/extraction (a real signal the pre-4.7 grid
+   gave with a dashed border and 40%-opacity artwork, dropped by the 4.7 rewrite). Restored
+   here in the new tile shape: a dashed outline always shows, independent of whether a tile
+   has any cached cover art yet, and any cover art that *is* cached dims further on top of its
+   own focus/unfocus brightness. `.tile-title`/`.tile-number` are untouched by either rule, so
+   text never drops under the 4.5:1 contrast floor even on a not-installed tile with no art. */
+.tile.not-installed {
+  border: 0.08vw dashed rgba(255, 255, 255, 0.35);
+}
+
+.tile.not-installed .tile-cover {
+  opacity: 0.4;
+}
+
 .tile-title {
   position: absolute;
   left: 1.2vw;
