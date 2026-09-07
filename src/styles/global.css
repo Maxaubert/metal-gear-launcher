@@ -143,8 +143,11 @@ body {
 
 .main-visual.edge-fade {
   mask-image: radial-gradient(ellipse at 50% 60%, #000 70%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 12%);
-  mask-composite: intersect;
+  /* Chromium (this app's only target) treats -webkit-mask-composite as an alias of the
+     unprefixed property and lets whichever is declared LAST win - so the legacy Safari fallback
+     goes first here, and the standard `intersect` after it is the one that actually applies. */
   -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .main-visual-fallback {

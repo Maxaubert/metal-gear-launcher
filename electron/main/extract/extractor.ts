@@ -4,6 +4,8 @@ import type { AssetRole, Pack } from "@shared/packs";
 import type { Install } from "../steam/resolve";
 import { extractUnityAsset } from "./unity";
 import { extractM2Asset, decodeManifest } from "./m2";
+import { normalizeGhostAlpha } from "./ghostAlpha";
+import { fitMainVisualAspect } from "./mainVisualFit";
 import { assetsDir as defaultAssetsDir } from "../paths";
 import { toolPaths } from "./tools";
 
@@ -44,6 +46,16 @@ export async function extractGame(pack: Pack, install: Install, onProgress: (p: 
     try {
       if (asset.source === "unity") await deps.unity(install.installDir, asset, dest);
       else { table ??= await decodeManifest(install.installDir, asset.archive); await deps.m2(install.installDir, asset, dest, undefined, table); }
+      if (asset.role === "year" || asset.role === "numbering") {
+        // Best-effort legibility touch-up (see ghostAlpha.ts) - the extracted file already
+        // stands on its own, so a failure here (e.g. a test double that never wrote `dest`)
+        // must not turn a successful extraction into a reported failure.
+        await normalizeGhostAlpha(dest, asset.role).catch(() => {});
+      }
+      if (asset.role === "mainVisual" && asset.edge === "fade") {
+        // Same best-effort contract as the ghost touch-up above (see mainVisualFit.ts).
+        await fitMainVisualAspect(dest).catch(() => {});
+      }
       manifest.files[asset.role] = `${asset.role}.${EXT[asset.role]}`;
       onProgress({ gameId: pack.id, role: asset.role, index, total, status: "done" });
     } catch (e) {
