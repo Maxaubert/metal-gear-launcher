@@ -4,6 +4,7 @@ import { PACK_ORDER } from "@shared/packs";
 import { navigate, type Action, type NavState } from "../input/navigationReducer";
 import { useNavigation } from "../input/useNavigation";
 import { useMenuMusic } from "../audio/useMenuMusic";
+import { playMenuSound, preloadMenuSounds, setMenuSoundVolume } from "../audio/menuSounds";
 import { themeVars } from "../theme/theme";
 import GameScreen, { type MenuKey } from "../screens/GameScreen";
 import GameSelection from "../screens/GameSelection";
@@ -53,6 +54,7 @@ export default function HubProvider() {
   const pendingNavigation = useRef<Action | SelectGame | null>(null);
   const settingsActionRef = useRef<((action: Action) => void) | null>(null);
   const [quitItem, setQuitItem] = useState(0);
+  const quitting = useRef(false);
   const [launching, setLaunching] = useState(false);
   const [firstRunItem, setFirstRunItem] = useState(0);
   const [extractingAll, setExtractingAll] = useState(false);
@@ -63,6 +65,7 @@ export default function HubProvider() {
   const [musicPreview, setMusicPreview] = useState<string>();
   const [mutedStartupGame, setMutedStartupGame] = useState<string>();
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [soundsReady, setSoundsReady] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   // The "Launching..." overlay (and the dimmed screen behind it) was otherwise only cleared by
@@ -73,6 +76,22 @@ export default function HubProvider() {
   function dispatch(action: Action | SelectGame): void {
     setLaunching(false);
     rawDispatch(action);
+  }
+  function userDispatch(action: Action | SelectGame): void {
+    const next = reduceNav(nav, action);
+    if (next.screen !== nav.screen || next.game !== nav.game) void playMenuSound(action === "back" || action === "menu" && nav.screen === "selection" ? "back" : "select");
+    else if (next.item !== nav.item) void playMenuSound("navigate");
+    dispatch(action);
+  }
+  function focusQuit(index: number): void {
+    if (index === quitItem) return;
+    void playMenuSound("navigate");
+    setQuitItem(index);
+  }
+  function focusFirstRun(index: number): void {
+    if (index === firstRunItem) return;
+    void playMenuSound("navigate");
+    setFirstRunItem(index);
   }
 
   useEffect(() => {
@@ -140,6 +159,13 @@ export default function HubProvider() {
   const musicUrl = configLoaded && !needsFirstRun && currentGame && musicLibraries[currentGame.pack.id]
     ? musicPreview ?? (mutedStartupGame === currentGame.pack.id ? undefined : resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id], musicLibraries[currentGame.pack.id])) : undefined;
   const music = useMenuMusic(musicUrl, volume, musicAttempt, Boolean(musicPreview));
+  useEffect(() => { setMenuSoundVolume(volume); }, [volume]);
+  useEffect(() => {
+    if (!configLoaded) return;
+    let cancelled = false;
+    void preloadMenuSounds().then(() => { if (!cancelled) setSoundsReady(true); });
+    return () => { cancelled = true; };
+  }, [configLoaded]);
   const startupError = preparationError || (!ready ? music.error : "");
   // Keep a completed startup latched while later tracks buffer or fail. This conditional
   // state adjustment finishes before React commits the newly visible menu.
@@ -157,6 +183,7 @@ export default function HubProvider() {
     void Promise.all([
       settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
       preloadPresentation(hubState.games),
+      preloadMenuSounds(),
       Promise.all(hubState.games.map(async game => {
         const result = await window.hub.getMenuMusic(game.pack.id);
         if (!result.ok) throw new Error(result.error);
@@ -242,23 +269,35 @@ export default function HubProvider() {
   async function handleMenuChoice(key: MenuKey): Promise<void> {
     if (!currentGame) return;
     if (key === "start") {
+      void playMenuSound("start");
       setLaunching(true);
       await window.hub.launch(currentGame.pack.id);
       window.setTimeout(() => setLaunching(false), LAUNCH_MESSAGE_MS);
     } else if (key === "gameSelection") {
-      dispatch("menu");
+      userDispatch("menu");
     } else if (key === "options") {
+      void playMenuSound("options");
       setSettingsDetail(false);
       setSettingsOpen(true);
     } else {
+      void playMenuSound("select");
       setQuitItem(0);
       setQuitOpen(true);
     }
   }
 
-  function handleQuitChoice(index: number): void {
-    if (index === 0) void window.hub.quit();
-    else setQuitOpen(false);
+  async function handleQuitChoice(index: number): Promise<void> {
+    if (quitting.current) return;
+    if (index === 0) {
+      quitting.current = true;
+      try {
+        await playMenuSound("back");
+        await window.hub.quit();
+      } finally { quitting.current = false; }
+    } else {
+      void playMenuSound("back");
+      setQuitOpen(false);
+    }
   }
 
   async function handleRetryExtract(): Promise<void> {
@@ -268,6 +307,7 @@ export default function HubProvider() {
   }
 
   async function handleStartExtraction(): Promise<void> {
+    void playMenuSound("select");
     setExtractingAll(true);
     await window.hub.extract("all");
     setExtractingAll(false);
@@ -275,6 +315,7 @@ export default function HubProvider() {
   }
 
   async function handlePickFolder(): Promise<void> {
+    void playMenuSound("select");
     const picked = await window.hub.pickFolder();
     if (!picked.ok) return;
     const r = await window.hub.setSteamPath(picked.value);
@@ -292,7 +333,8 @@ export default function HubProvider() {
   }
 
   const onAction = (action: Action) => {
-    if (startupError || (!ready && !needsFirstRun)) {
+    if (quitting.current) return;
+    if (startupError || !soundsReady || (!ready && !needsFirstRun)) {
       if (startupError) {
         if (action === "up" || action === "down") setStartupItem(index => (index + (action === "up" ? startupRowCount - 1 : 1)) % startupRowCount);
         else if (action === "confirm") recoverStartup(Math.min(startupItem, startupRowCount - 1));
@@ -306,7 +348,7 @@ export default function HubProvider() {
     if (needsFirstRun) {
       const rows = firstRunRows();
       if (action === "up" || action === "down") {
-        setFirstRunItem((i) => (i + (action === "up" ? rows.length - 1 : 1)) % rows.length);
+        focusFirstRun((firstRunItem + (action === "up" ? rows.length - 1 : 1)) % rows.length);
       } else if (action === "confirm") {
         rows[firstRunItem]?.onSelect();
       }
@@ -314,9 +356,9 @@ export default function HubProvider() {
     }
 
     if (quitOpen) {
-      if (action === "up" || action === "down") setQuitItem((i) => (i === 0 ? 1 : 0));
-      else if (action === "confirm") handleQuitChoice(quitItem);
-      else if (action === "back") setQuitOpen(false);
+      if (action === "up" || action === "down") focusQuit(quitItem === 0 ? 1 : 0);
+      else if (action === "confirm") void handleQuitChoice(quitItem);
+      else if (action === "back") void handleQuitChoice(1);
       return;
     }
 
@@ -326,20 +368,26 @@ export default function HubProvider() {
         return;
       }
       if (action === "back") {
+        void playMenuSound("back");
         setQuitItem(0);
         setQuitOpen(true);
         return;
       }
     }
 
-    dispatch(action);
+    userDispatch(action);
   };
 
   // `lastInputKind` (Task 14) is threaded down to `GameScreen`'s footer hints - `useNavigation`
   // must stay a single call site (it owns the keydown/gamepad listeners), so this is the only
   // place a consumer can read it.
   const { lastInputKind, focusByMouse } = useNavigation(onAction);
-  const hoverItem = (index: number) => { focusByMouse(index); rawDispatch({ type: "focusItem", index }); };
+  const hoverItem = (index: number) => {
+    focusByMouse(index);
+    if (index === nav.item) return;
+    void playMenuSound("navigate");
+    rawDispatch({ type: "focusItem", index });
+  };
 
   const updateBanner = updateInfo && !settingsOpen && (
     <div
@@ -354,7 +402,7 @@ export default function HubProvider() {
     </div>
   );
 
-  if (!hubState || startupError || (!needsFirstRun && !ready)) return <div className="startup-screen" data-testid="startup-screen">
+  if (!hubState || startupError || !soundsReady || (!needsFirstRun && !ready)) return <div className="startup-screen" data-testid="startup-screen">
     <p role="status">{startupError || "Loading…"}</p>
     {startupError && startupActions.map((label, index) => <button key={label}
       ref={button => { startupButtons.current[index] = button; }} className={startupItem === index ? "focused" : undefined}
@@ -369,7 +417,7 @@ export default function HubProvider() {
           steamPath={hubState.steamPath}
           progress={progress}
           focusIndex={firstRunItem}
-          onFocusItem={index => { focusByMouse(index); setFirstRunItem(index); }}
+          onFocusItem={index => { focusByMouse(index); focusFirstRun(index); }}
           extracting={extractingAll}
           onPickFolder={() => void handlePickFolder()}
           onStart={() => void handleStartExtraction()}
@@ -408,7 +456,7 @@ export default function HubProvider() {
             focusIndex={nav.item}
             onFocusItem={hoverItem}
             lastInputKind={lastInputKind}
-            onSelect={(index) => dispatch({ type: "selectGame", index })}
+            onSelect={(index) => userDispatch({ type: "selectGame", index })}
           />
         ) : currentGame.installed ? (
           <GameScreen
@@ -420,12 +468,12 @@ export default function HubProvider() {
             lastInputKind={lastInputKind}
             onSelectMenuItem={(index) => void handleMenuChoice(currentGame.pack.menu[index] ?? "start")}
             onHoverMenuItem={hoverItem}
-            onHoverQuitItem={index => { focusByMouse(index); setQuitItem(index); }}
-            onQuitSelect={handleQuitChoice}
+            onHoverQuitItem={index => { focusByMouse(index); focusQuit(index); }}
+            onQuitSelect={index => void handleQuitChoice(index)}
             onRetryExtract={() => void handleRetryExtract()}
           />
         ) : (
-          <NotInstalled game={currentGame} onInstall={() => void window.hub.launch(currentGame.pack.id, { install: true })} />
+          <NotInstalled game={currentGame} onInstall={() => { void playMenuSound("select"); void window.hub.launch(currentGame.pack.id, { install: true }); }} />
         )}
       </div>
       {updateBanner}

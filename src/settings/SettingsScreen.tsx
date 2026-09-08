@@ -12,6 +12,7 @@ import { graphicsEdit } from "./graphicsEdit";
 import type { GameSettingsCache } from "./gameSettingsCache";
 import Mgs1NativeText from "../typography/Mgs1NativeText";
 import { availableMenuThemes, effectiveMenuTheme, resolveMenuMusic, type MenuMusicLibrary, type MenuMusicSelections } from "@shared/menuMusic";
+import { playMenuSound, type MenuSound } from "../audio/menuSounds";
 
 type Props = {
   game: GameState;
@@ -27,7 +28,7 @@ type Props = {
   onMusicPreview: (url?: string) => void;
   musicError?: string;
 };
-type Row = { id: string; label: string; field?: SettingField; mute?: SettingField; section?: SettingsSection; selected?: boolean; onSelect?: () => void };
+type Row = { id: string; label: string; field?: SettingField; mute?: SettingField; section?: SettingsSection; selected?: boolean; sound?: MenuSound | false; onSelect?: () => void };
 const changeKey = (section: string, field: string) => `${section}\n${field}`;
 const MUTE_FIELDS: Record<string, string> = {
   launcherMasterVolume: "launcherMute", SndMasterVol: "SndMute", SndVolBGM: "SndMuteBGM",
@@ -59,6 +60,24 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const pageDirty = category ? musicPage ? musicDirty : nativeDirty : dirty;
   const musicThemes = availableMenuThemes(game.pack.id, game.assetUrls, musicLibrary);
   const selectedMusicId = effectiveMenuTheme(game.pack.id, game.assetUrls, musicDraft ?? musicSelection, musicLibrary)?.id;
+  const focusRef = useRef(focus);
+  focusRef.current = focus;
+  function focusItem(index: number) {
+    if (index === focusRef.current) return;
+    focusRef.current = index;
+    void playMenuSound("navigate");
+    setFocus(index);
+  }
+  function focusDiscard(index: number) {
+    if (index === discardItem) return;
+    void playMenuSound("navigate");
+    setDiscardItem(index);
+  }
+  function dismissDiscard(leave: boolean) {
+    void playMenuSound("back");
+    if (leave) onClose();
+    else setDiscardOpen(false);
+  }
 
   async function refreshMusic() {
     if (busy) return;
@@ -112,6 +131,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
 
   async function save() {
     if (busy || !pageDirty) return;
+    void playMenuSound("select");
     setBusy(true);
     setMessage("");
     try {
@@ -138,6 +158,8 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     finally { setBusy(false); }
   }
   function discard() {
+    if (!pageDirty || busy) return;
+    void playMenuSound("back");
     if (musicPage || !category) { setMusicDraft(undefined); onMusicPreview(undefined); }
     setMessage("");
     if (!musicPage && nativeDirty) void load(settings?.accountId);
@@ -150,15 +172,17 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   }
   function back() {
     if (busy) return;
+    void playMenuSound("back");
     if (accountPage) { setAccountPage(false); setFocus(0); }
     else if (patchId) openCategory("Community Fixes");
     else if (category) openCategory(null);
     else if (dirty) { setDiscardOpen(true); setDiscardItem(0); }
     else onClose();
   }
-  function edit(section: SettingsSection, field: SettingField, value: SettingValue, selectCustom = true) {
+  function edit(section: SettingsSection, field: SettingField, value: SettingValue, selectCustom = true, audible = true) {
     if (busy || field.readOnly || section.status === "unsupported") return;
     if (section.status === "needsSetup" && !initialize.includes(section.id)) return;
+    if (audible && value !== currentValue(section, field)) void playMenuSound("adjust");
     const key = changeKey(section.id, field.id);
     setChanges((previous) => {
       const graphics = graphicsEdit(settings, previous, section, field, value, selectCustom);
@@ -230,7 +254,11 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   } else if (musicPage) {
     rows = musicThemes.map(theme => ({ id: theme.id, label: theme.label,
       selected: theme.id === selectedMusicId,
-      onSelect: () => { setMusicDraft(theme.id === musicSelection ? undefined : theme.id); setMessage(""); },
+      sound: false,
+      onSelect: () => {
+        if (theme.id !== selectedMusicId) void playMenuSound("adjust");
+        setMusicDraft(theme.id === musicSelection ? undefined : theme.id); setMessage("");
+      },
     }));
     rows.push(
       { id: "music-folder", label: "Open Music Folder", onSelect: () => void openMusicFolder() },
@@ -274,17 +302,19 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
         .sort((a, b) => languageOrder.indexOf(a.label) - languageOrder.indexOf(b.label))
         .map((option) => ({ id: `${row.id}-${option.value}`, label: option.label,
           selected: currentValue(row.section!, row.field!) === option.value,
+          sound: false,
           onSelect: () => edit(row.section!, row.field!, option.value) })) : [row]);
     }
     if (!selectedPatch && /^(Audio|Sound|Screen|Button Icons|Button Settings)$/.test(category)) {
       const defaults = native.flatMap((section) => section.fields.filter((field) => field.category === category && field.defaultValue !== undefined && !field.readOnly)
         .map((field) => ({ section, field })));
-      if (defaults.length) rows.push({ id: "reset", label: "Restore Defaults", onSelect: () => {
-        for (const { section, field } of defaults) edit(section, field, field.defaultValue!, false);
+      if (defaults.length) rows.push({ id: "reset", label: "Restore Defaults", sound: false, onSelect: () => {
+        if (defaults.some(({ section, field }) => currentValue(section, field) !== field.defaultValue)) void playMenuSound("adjust");
+        for (const { section, field } of defaults) edit(section, field, field.defaultValue!, false, false);
       } });
     }
     if (selectedPatch?.status === "needsSetup" && !initialize.includes(selectedPatch.id)) {
-      rows = [{ id: "initialize", label: "Set Up This Fix", onSelect: () => {
+      rows = [{ id: "initialize", label: "Set Up This Fix", sound: "adjust", onSelect: () => {
         setInitialize((previous) => [...previous, selectedPatch.id]);
         setMessage("Defaults selected. Review settings, then save changes.");
       } }];
@@ -312,10 +342,10 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const actions: Row[] = [];
   if (message && !dirty && !musicPage) actions.push({ id: "reload", label: "Reload", onSelect: () => void load(settings?.accountId) });
   if (pageDirty) actions.push(
-    { id: "discard", label: "Discard Changes", onSelect: discard },
-    { id: "save", label: "Save Changes", onSelect: () => void save() },
+    { id: "discard", label: "Discard Changes", sound: false, onSelect: discard },
+    { id: "save", label: "Save Changes", sound: false, onSelect: () => void save() },
   );
-  actions.push({ id: "back", label: "Back", onSelect: back });
+  actions.push({ id: "back", label: "Back", sound: false, onSelect: back });
   const navigationRows = [...rows, ...actions];
   const focusedMusic = musicPage ? musicThemes.find(theme => theme.id === rows[focus]?.id) : undefined;
   const previewMusicUrl = focusedMusic ? resolveMenuMusic(game.pack.id, game.assetUrls, focusedMusic.id, musicLibrary) : undefined;
@@ -327,7 +357,11 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   }, [musicPage, onMusicPreview]);
 
   function activateRow(row: Row | undefined) {
-    if (row?.onSelect) row.onSelect();
+    if (busy) return;
+    if (row?.onSelect) {
+      if (row.sound !== false) void playMenuSound(row.sound ?? "select");
+      row.onSelect();
+    }
     else if (row?.field?.kind === "text" || row?.field?.kind === "range" && (row.field.max ?? 0) > 100) {
       const input = listRef.current?.querySelector<HTMLInputElement>('[data-focused="true"] input');
       input?.focus(); input?.select();
@@ -342,18 +376,17 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     actionRef.current = (action) => {
       if (busy) return;
       if (discardOpen) {
-        if (action === "up" || action === "down") setDiscardItem((index) => 1 - index);
-        else if (action === "back") setDiscardOpen(false);
+        if (action === "up" || action === "down") focusDiscard(1 - discardItem);
+        else if (action === "back") dismissDiscard(false);
         else if (action === "confirm") {
-          if (discardItem === 0) setDiscardOpen(false);
-          else onClose();
+          dismissDiscard(discardItem !== 0);
         }
         return;
       }
       if (action === "back" && document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
       else if (action === "back") back();
       else if (action === "up" || action === "down") {
-        setFocus((index) => (index + (action === "up" ? -1 : 1) + navigationRows.length) % navigationRows.length);
+        focusItem((focus + (action === "up" ? -1 : 1) + navigationRows.length) % navigationRows.length);
       } else if (action === "left" || action === "right") adjust(rows[focus], action === "left" ? -1 : 1);
       else if (action === "confirm") activateRow(navigationRows[focus]);
       else if (action === "menu") void save();
@@ -390,9 +423,9 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
           ?? (typeof value === "boolean" ? value ? "ON" : "OFF" : String(value ?? ""));
         return <div key={row.id} className={`settings-row${focus === index ? " focused" : ""}${field ? " has-value" : ""}${field?.readOnly ? " read-only" : ""}${buttonIcons ? " controller-row" : ""}`}
           data-focused={focus === index ? "true" : undefined} data-testid={`setting-${field?.id ?? row.id}`}
-          onPointerMove={(event) => { if (event.pointerType !== "touch" && !discardOpen) setFocus(index); }}>
+          onPointerMove={(event) => { if (event.pointerType !== "touch" && !discardOpen) focusItem(index); }}>
           <button className="settings-row-label" aria-label={row.label} disabled={busy} aria-disabled={Boolean(field?.readOnly || row.section?.status === "unsupported" && field)}
-            onFocus={() => setFocus(index)} onClick={() => activateRow(row)}>
+            onFocus={() => focusItem(index)} onClick={() => activateRow(row)}>
             {musicPage ? <span className="music-track-label">{row.label}</span> : text(row.label)}{row.selected && <span className="settings-selected" aria-label="Selected">✓</span>}
             {!field && row.section && <small>{row.section.status === "needsSetup" ? "Needs setup" : row.section.version ?? "Detected"}</small>}
           </button>
@@ -426,7 +459,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     <div className="settings-actions">
       {actions.map((action, index) => <button key={action.id} disabled={busy}
         className={focus === rows.length + index ? "focused" : ""}
-        onPointerMove={(event) => { if (event.pointerType !== "touch" && !discardOpen) setFocus(rows.length + index); }} onFocus={() => setFocus(rows.length + index)} onClick={action.onSelect}>{action.label}</button>)}
+        onPointerMove={(event) => { if (event.pointerType !== "touch" && !discardOpen) focusItem(rows.length + index); }} onFocus={() => focusItem(rows.length + index)} onClick={() => activateRow(action)}>{action.label}</button>)}
     </div>
     <div className="settings-hints" aria-hidden="true">{lastInputKind === "gamepad"
       ? "↑ ↓ Move cursor　← → Change　A Confirm　B Back　Menu Save"
@@ -434,7 +467,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     {discardOpen && <div className="overlay settings-discard" role="dialog" aria-modal="true" aria-label="Unsaved settings">
       <div><p>Discard unsaved changes?</p>{["Keep Editing", "Discard and Leave"].map((label, index) =>
         <button key={label} className={discardItem === index ? "focused" : ""}
-          onPointerMove={(event) => { if (event.pointerType !== "touch") setDiscardItem(index); }} onFocus={() => setDiscardItem(index)} onClick={() => index === 0 ? setDiscardOpen(false) : onClose()}>{label}</button>)}</div>
+          onPointerMove={(event) => { if (event.pointerType !== "touch") focusDiscard(index); }} onFocus={() => focusDiscard(index)} onClick={() => dismissDiscard(index !== 0)}>{label}</button>)}</div>
     </div>}
   </div>;
 }
