@@ -43,13 +43,13 @@ change this preference; `--game` still overrides it for a particular launch.
 | Left stick / D-pad, arrow keys | Move focus |
 | A, Enter / Space, or click | Confirm |
 | B, Escape / Backspace | Back, or open the quit prompt from the hub |
-| LB / RB, Page Up / Page Down | Previous / next game |
 | Start, Tab | Open game selection |
 | Y, R key | Retry a failed extraction (shown only when a game's art is missing) |
 | Y, Y key (when shown) | Open the release page for an available update |
 
 Moving the mouse over a menu item highlights it without activating it. Keyboard and gamepad
-navigation take over when you use them.
+navigation take over when you use them. Change games through **Game Selection**; arrows and
+shoulder buttons do not switch games from the main menu.
 
 ## Menu music
 

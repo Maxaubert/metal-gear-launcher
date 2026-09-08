@@ -21,6 +21,8 @@ test("settings headings and row origins stay fixed across native and hub categor
         { id: "language", label: "Language", category: "Language", kind: "choice", value: 1,
           options: [{ label: "English", value: 1 }, { label: "Japanese", value: 2 }] },
         { id: "volume", label: "Game Volume", category: "Audio", kind: "range", value: 7, min: 0, max: 10, step: 1 },
+        { id: "screen", label: "Windowed", category: "Screen", kind: "toggle", value: true },
+        { id: "buttons", label: "Controller", category: "Button Settings", kind: "toggle", value: true },
       ] },
       { id: "fixture-fix", title: "Community Fix", kind: "patch", status: "ready", fields: [
         { id: "enabled", label: "Enabled", category: "General", kind: "toggle", value: true },
@@ -49,6 +51,11 @@ test("settings headings and row origins stay fixed across native and hub categor
         await page.keyboard.press("Tab");
         await page.getByTestId(`tile-${id}`).click();
         await page.getByTestId("menu-item-options").click();
+        const overviewRows = page.locator(".settings-list .settings-row");
+        await expect(overviewRows).toHaveCount(6);
+        await expect(page.locator(".settings-list")).toHaveCSS("overflow-y", "visible");
+        for (const row of await overviewRows.all()) await expect(row).toBeInViewport({ ratio: 1 });
+        expect(await page.locator(".settings-list").evaluate(element => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
         for (const category of ["Language", "Audio", "Community Fixes", "Menu Music"]) {
           await page.getByRole("button", { name: category, exact: true }).click();
           const heading = page.getByRole("heading", { name: category, exact: true });
@@ -73,6 +80,7 @@ test("settings headings and row origins stay fixed across native and hub categor
             musicBounds ??= bounds;
             expect(bounds, `${id} music row bounds with different list lengths at ${width}`).toEqual(musicBounds);
             await expect(page.locator(".settings-list")).toHaveCSS("scrollbar-gutter", "stable");
+            await expect(page.locator(".settings-list")).toHaveCSS("overflow-y", "auto");
             if (id === "mgs1") {
               expect(await page.locator(".settings-list").evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
             }

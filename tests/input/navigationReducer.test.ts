@@ -8,9 +8,11 @@ describe("navigate", () => {
     expect(navigate({ ...base, item: 2 }, "down").item).toBe(0);
     expect(navigate(base, "up").item).toBe(2);
   });
-  it("left/right and prev/next change game and reset item", () => {
-    expect(navigate({ ...base, item: 1 }, "right")).toMatchObject({ game: 3, item: 0 });
-    expect(navigate({ ...base, game: 0 }, "prevGame").game).toBe(5);
+  it("main-screen horizontal and shoulder inputs preserve the selected game and menu item", () => {
+    const current = { ...base, item: 1 };
+    for (const action of ["left", "right", "prevGame", "nextGame"] as const) {
+      expect(navigate(current, action)).toEqual(current);
+    }
   });
   it("menu opens selection, back closes it, confirm on selection picks the focused game", () => {
     const sel = navigate(base, "menu");

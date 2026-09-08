@@ -44,7 +44,9 @@ test.describe("hub", () => {
 
   test("shows the first game and navigates with the keyboard", async () => {
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mg12");
+    await page.keyboard.press("Tab");
     await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Enter");
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
     await page.keyboard.press("ArrowDown");
     await expect(page.getByTestId("menu-item-gameSelection")).toHaveClass(/focused/);
@@ -149,7 +151,42 @@ test.describe("hub", () => {
     }
   });
 
-  test("arrow-key game switching keeps single-game menus and year headers anchored", async () => {
+  test("main menu keeps its game and focused row until Game Selection confirms a different game", async () => {
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs3").click();
+    await page.mouse.move(0, 0);
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    for (const key of ["ArrowLeft", "ArrowRight", "PageUp", "PageDown"]) {
+      await page.keyboard.press(key);
+      await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
+      await expect(page.getByTestId("menu-item-options")).toHaveClass(/focused/);
+    }
+    for (const shoulder of [4, 5]) {
+      await page.evaluate(async index => {
+        const original = navigator.getGamepads.bind(navigator);
+        Object.defineProperty(navigator, "getGamepads", { configurable: true, value: () => [{
+          buttons: Array.from({ length: 16 }, (_, button) => ({ pressed: button === index })), axes: [0, 0],
+        }] });
+        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        Object.defineProperty(navigator, "getGamepads", { configurable: true, value: original });
+      }, shoulder);
+      await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
+      await expect(page.getByTestId("menu-item-options")).toHaveClass(/focused/);
+    }
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("tile-mgs4")).toHaveAttribute("data-focused", "true");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.getByTestId("tile-mgs2")).toHaveAttribute("data-focused", "true");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+  });
+
+  test("game selection keeps single-game menus and year headers anchored", async () => {
     for (const width of [1920, 3840]) {
       const scale = width / 1920;
       await page.setViewportSize({ width, height: width * 9 / 16 });
@@ -165,7 +202,9 @@ test.describe("hub", () => {
             expect(header!.x / scale).toBeCloseTo(1219.2, 1);
             expect(header!.y / scale).toBeCloseTo(86.4, 1);
           }
+          await page.keyboard.press("Tab");
           await page.keyboard.press(direction);
+          await page.keyboard.press("Enter");
         }
       }
     }

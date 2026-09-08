@@ -123,13 +123,15 @@ test("startup remembers successful game launches instead of browsed tabs or inst
   try {
     let page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
-    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs2").click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
     await app.close();
     app = await electron.launch(f.options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
-    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs2").click();
     await page.getByTestId("menu-item-start").click();
     await expect.poll(async () => JSON.parse(await readFile(join(f.data, "config.json"), "utf8")).lastLaunchedGame).toBe("mgs2");
     expect(await readFile(join(f.data, "launch.log"), "utf8")).toBe("mgs2\n");
@@ -137,7 +139,8 @@ test("startup remembers successful game launches instead of browsed tabs or inst
     app = await electron.launch(f.options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
-    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs3").click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
     // Keep an install request inside the isolated app without opening the real Steam client.
     await app.evaluate(({ shell }) => { shell.openExternal = async () => {}; });
