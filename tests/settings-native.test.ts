@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 import { readNativeSettings, prepareNativeEdits } from "../electron/main/settings/native";
 import { decodeUsersv, editUsersv, usersvCrc16 } from "../electron/main/settings/usersv";
+import { graphicsEdit } from "../src/settings/graphicsEdit";
 
 const ACCOUNT = "76561198000000001";
 const roots: string[] = [];
@@ -42,6 +43,44 @@ afterEach(async () => {
 });
 
 describe("native usersv format", () => {
+  it("prepares an MGS2 individual edit as Custom without restoring remembered companion values", async () => {
+    const { root, dir } = await fixture("mgs2");
+    await writeFile(join(dir, "launcher_sv"), '{"keyList":["HiresoPreset","HiresoRender","HiresoUpScale","HiresoMovie"],"valueList":["0","1","2","1"]}');
+    await writeFile(join(dir, "usersv"), usersv({ 2: 2, 3: 10 }).encrypted);
+    const result = await readNativeSettings("mgs2", root, undefined, { width: 3840, height: 2160, label: "Test display" });
+    const game = result.sections.find(section => section.id === "native-game")!;
+    const field = game.fields.find(item => item.id === "HiresoMovie")!;
+    const changes = graphicsEdit({ gameId: "mgs2", accounts: [], revision: "test", sections: result.sections }, {}, game, field, 1)!;
+    const writes = prepareNativeEdits(result.sources, Object.values(changes));
+    const json = JSON.parse(writes.find(write => write.path.endsWith("launcher_sv"))!.updated.toString());
+    expect(["HiresoPreset", "HiresoRender", "HiresoUpScale", "HiresoMovie"]
+      .map(key => json.valueList[json.keyList.indexOf(key)])).toEqual(["2", "0", "0", "1"]);
+    const decoded = decodeUsersv(writes.find(write => write.path.endsWith("usersv"))!.updated);
+    expect([11, 12, 13].map(index => decoded.readInt32LE(16 + index * 4))).toEqual([0, 0, 1]);
+    const launcher = result.sections.find(section => section.id === "native-launcher")!;
+    const preset = launcher.fields.find(item => item.id === "HiresoPreset")!;
+    const original = graphicsEdit({ gameId: "mgs2", accounts: [], revision: "test", sections: result.sections }, changes, launcher, preset, 0)!;
+    const originalWrites = prepareNativeEdits(result.sources, Object.values(original));
+    const originalJson = JSON.parse(originalWrites.find(write => write.path.endsWith("launcher_sv"))!.updated.toString());
+    expect(originalJson.valueList[originalJson.keyList.indexOf("HiresoPreset")]).toBe("0");
+    expect(originalJson.valueList[originalJson.keyList.indexOf("HiresoMovie")]).toBe("1");
+    // The effective Original values already match the file, so no binary rewrite is needed.
+    expect(originalWrites.some(write => write.path.endsWith("usersv"))).toBe(false);
+    const originalGame = decodeUsersv(await readFile(join(dir, "usersv")));
+    expect([11, 12, 13].map(index => originalGame.readInt32LE(16 + index * 4))).toEqual([0, 0, 0]);
+    expect(decodeUsersv(await readFile(join(dir, "usersv"))).readInt32LE(68)).toBe(0);
+  });
+
+  it("explains why mirrored controls are unavailable when their launcher file is missing", async () => {
+    const { root, dir } = await fixture("mgs2");
+    await writeFile(join(dir, "usersv"), usersv({ 2: 2, 3: 10 }).encrypted);
+    const result = await readNativeSettings("mgs2", root);
+    const movie = result.sections.flatMap(section => section.fields).find(field => field.id === "HiresoMovie")!;
+    expect(movie.readOnly).toBe(true);
+    expect(movie.description).toMatch(/launcher settings file is missing/);
+    expect(() => prepareNativeEdits(result.sources, [{ sectionId: "native-game", fieldId: movie.id, value: 1 }])).toThrow(/read-only/);
+  });
+
   it("uses the standard CRC16/ARC check value and preserves unrelated bytes on edit", () => {
     expect(usersvCrc16(Buffer.from("123456789"))).toBe(0xbb3d);
     const { encrypted, plain } = usersv({ 3: 10, 9: -40 });

@@ -145,6 +145,10 @@ export async function readNativeSettings(gameId: NativeGameId, installDir: strin
   const launcher = result.sources.find((source): source is UnitySource => source.format === "launcher-json");
   const game = result.sources.find((source): source is UnitySource => source.format === "usersv");
   for (const source of [launcher, game]) if (source) source.display = display;
+  if (launcher && !display) {
+    const preset = launcher.fields.find(field => field.id === "HiresoPreset");
+    if (preset) preset.description = "Automatic presets require a single identified display. Individual graphics options can still be changed and select Custom when saved.";
+  }
   if (launcher && display && (gameId === "mgspw" || game)) {
     const preset = launcher.specs.find(spec => spec.id === "HiresoPreset");
     if (preset) {
@@ -209,7 +213,10 @@ export async function readNativeSettings(gameId: NativeGameId, installDir: strin
   // must be available so one missing/corrupt file cannot produce a partial edit.
   if (!result.sources.some(source => source.format === "launcher-json")) {
     const game = result.sources.find(source => source.format === "usersv");
-    for (const field of game?.fields ?? []) if (isMirrored(gameId, field.id)) field.readOnly = true;
+    for (const field of game?.fields ?? []) if (isMirrored(gameId, field.id)) {
+      field.readOnly = true;
+      field.description = "The original launcher settings file is missing or cannot be read. Open the original launcher to repair it, then reload these settings.";
+    }
   }
   return result;
 }

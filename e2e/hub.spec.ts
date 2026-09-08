@@ -129,6 +129,38 @@ test.describe("hub", () => {
     }
   });
 
+  test("portraits retain their geometry when opening Options at HD, 4K, and windowed aspect ratios", async () => {
+    await expect(page.getByTestId("game-screen")).toBeVisible();
+    for (const viewport of [{ width: 1920, height: 1080 }, { width: 3840, height: 2160 }, { width: 1600, height: 850 }]) {
+      await page.setViewportSize(viewport);
+      for (const id of ["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]) {
+        await page.keyboard.press("Tab");
+        await page.getByTestId(`tile-${id}`).click();
+        const portraits = page.locator(".main-visual, .chapter-visual");
+        const geometry = () => portraits.evaluateAll(images => images.map(image => {
+          const rect = image.getBoundingClientRect();
+          const style = getComputedStyle(image);
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+            fit: style.objectFit, position: style.objectPosition, transform: style.transform };
+        }));
+        const main = await geometry();
+        if (id === "mgs1") {
+          expect(main[0].fit).toBe("contain");
+          expect(main[0].x / viewport.width).toBeCloseTo(115 / 1920, 4);
+          expect(main[0].y / viewport.height).toBeCloseTo(2 / 1080, 4);
+          expect(main[0].width / viewport.width).toBeCloseTo(1102 / 1920, 4);
+          expect(main[0].height / viewport.height).toBeCloseTo(1082 / 1080, 3);
+        }
+        await page.getByTestId("menu-item-options").click();
+        await expect(page.getByTestId("settings-screen")).toBeVisible();
+        await expect(page.getByText("Loading settings...", { exact: true })).toHaveCount(0);
+        expect(await geometry()).toEqual(main);
+        await page.keyboard.press("Escape");
+        await expect(page.getByTestId("game-screen")).toBeVisible();
+      }
+    }
+  });
+
   test("Peace Walker motion plays, respects reduced motion, and leaves with its screen", async () => {
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgspw").click();

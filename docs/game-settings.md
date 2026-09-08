@@ -38,7 +38,10 @@ Bugfix Compilations. PW Passcode Restoration and MGSFPSUnlock can be identified
 without claiming they have editable settings. Detection confirms files are installed;
 it does not claim a patch loaded successfully in a running game.
 
-Native graphics presets preserve remembered Custom values. Display-dependent choices
+Native graphics presets preserve remembered Custom values. Editing an individual graphics
+option from Original or Adjusted Mode automatically selects Custom and keeps the other
+currently displayed values. Unavailable controls can receive focus to explain their restriction.
+Display-dependent choices
 use a verified single-display mapping. Multiple-display ordering and unsupported DLC
 states remain unavailable until they can be verified. The native launcher remains the
 source for options that cannot yet be mapped safely.

@@ -7,7 +7,7 @@
   "theme": { "accent": "#d81f26", "ink": "#111111", "paper": "#fbfbf9" },
   "steam": { "appId": 2131630, "installDir": "MGS1" },
   "launch": { "exe": "METAL GEAR SOLID.exe", "env": { "SteamAppId": "2131630" } },
-  "visualFit": { "leftVw": 12, "widthVw": 48, "heightVh": 100, "anchor": "bottom" },
+  "visualFit": { "leftVw": 5.989583, "widthVw": 57.395833, "heightVh": 100.185185, "anchor": "top" },
   "assetRevision": 1,
   "assets": [
     { "role": "mainVisual", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0019" },

@@ -12,7 +12,6 @@
 .settings-row-label { font: inherit; color: inherit; padding: 0 .5vw; text-align: left; background: transparent; border: 0; flex: 1; min-width: 0; cursor: pointer; }
 .settings-row-label small { float: right; font-size: 1.6vh; margin: .6vh .4vw; }
 .settings-screen[data-game="mgs1"] .head { top: 22.8vh; }
-.settings-screen[data-game="mgs1"] .main-visual { height: 100.185185vh !important; width: 57.395833vw !important; left: 5.989583vw !important; top: .185185vh !important; bottom: auto !important; object-fit: fill; object-position: center top !important; }
 .settings-screen[data-game="mgs1"] .head .year { font-family: "Impact", sans-serif; font-size: 9.5vh; font-weight: 400; transform: scaleX(.68); transform-origin: left center; }
 .settings-screen[data-game="mgs1"] .head .subtitle { font-size: 1.9vh; }
 .settings-screen[data-game="mgs1"] .settings-row-label { font-weight: 400; }
@@ -130,5 +129,3 @@
 .settings-screen[data-detail="true"] .settings-row.read-only button:disabled { opacity: 1; }
 .settings-screen[data-category="Community Fixes"] .settings-help { font-size: 2.1vh; padding-top: .6vh; }
 .settings-screen:has(.settings-native-mgs1-header) .ghost-number { left: 91.614583vw; top: 2.87037vh; width: 5.833333vw; height: 39.722222vh; object-fit: fill; }
-.settings-screen[data-game="mgs1"] .logo-strip { z-index: 2; }
-.settings-screen[data-game="mgs1"] .main-visual { z-index: 1; }

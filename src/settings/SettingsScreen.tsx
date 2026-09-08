@@ -9,6 +9,7 @@ import ControllerPreview from "./ControllerPreview";
 import NumberSetting from "./NumberSetting";
 import Mg12ScreenPreview from "./Mg12ScreenPreview";
 import { mgs2ScreenHelp } from "./mgs2ScreenHelp";
+import { graphicsEdit } from "./graphicsEdit";
 
 type Props = {
   game: GameState;
@@ -93,13 +94,17 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     else if (dirty) { setDiscardOpen(true); setDiscardItem(0); }
     else onClose();
   }
-  function edit(section: SettingsSection, field: SettingField, value: SettingValue) {
+  function edit(section: SettingsSection, field: SettingField, value: SettingValue, selectCustom = true) {
     if (busy || field.readOnly || section.status === "unsupported") return;
     if (section.status === "needsSetup" && !initialize.includes(section.id)) return;
     const key = changeKey(section.id, field.id);
     setChanges((previous) => {
+      const graphics = graphicsEdit(settings, previous, section, field, value, selectCustom);
+      if (graphics) return graphics;
       const next = { ...previous };
-      if (value === field.value) delete next[key];
+      const projection = presetProjection(section, field);
+      const baseline = projection?.preset === 2 ? projection.value : field.value;
+      if (value === baseline) delete next[key];
       else next[key] = { sectionId: section.id, fieldId: field.id, value };
       return next;
     });
@@ -121,10 +126,8 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     return projected === undefined ? undefined : { value: projected, preset: value };
   }
   function adjust(row: Row | undefined, direction: number) {
-    if (!row?.field || !row.section) return;
+    if (!row?.field || !row.section || row.field.readOnly) return;
     const { field, section } = row;
-    const projection = presetProjection(section, field);
-    if (projection && projection.preset !== 2) return;
     const value = currentValue(section, field);
     if (field.kind === "toggle") edit(section, field, !value);
     else if (field.options?.length) {
@@ -172,7 +175,8 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
         const projection = presetProjection(section, field);
         const windowMode = section.fields.find((item) => item.id === "WindowMode");
         const windowSizeDisabled = game.pack.id === "mgspw" && field.id === "WindowSizeMode" && windowMode && !currentValue(section, windowMode);
-        const displayed = projection && projection.preset !== 2 || windowSizeDisabled ? { ...field, readOnly: true } : field;
+        const displayed = windowSizeDisabled ? { ...field, readOnly: true, description: "Choose Windowed mode to change the window size." }
+          : projection && projection.preset !== 2 && !field.readOnly ? { ...field, description: `Changing this setting selects Custom. ${field.description ?? ""}`.trim() } : field;
         return { id: changeKey(section.id, field.id), label: field.label, field: displayed, section };
       }));
     if (!selectedPatch && category === "Screen") {
@@ -204,7 +208,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
       const defaults = native.flatMap((section) => section.fields.filter((field) => field.category === category && field.defaultValue !== undefined && !field.readOnly)
         .map((field) => ({ section, field })));
       if (defaults.length) rows.push({ id: "reset", label: "Restore Defaults", onSelect: () => {
-        for (const { section, field } of defaults) edit(section, field, field.defaultValue!);
+        for (const { section, field } of defaults) edit(section, field, field.defaultValue!, false);
       } });
     }
     if (selectedPatch?.status === "needsSetup" && !initialize.includes(selectedPatch.id)) {
@@ -266,13 +270,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
       if (action === "back" && document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
       else if (action === "back") back();
       else if (action === "up" || action === "down") {
-        setFocus((index) => {
-          for (let step = 0; step < navigationRows.length; step++) {
-            index = (index + (action === "up" ? -1 : 1) + navigationRows.length) % navigationRows.length;
-            if (!navigationRows[index]?.field?.readOnly) break;
-          }
-          return index;
-        });
+        setFocus((index) => (index + (action === "up" ? -1 : 1) + navigationRows.length) % navigationRows.length);
       } else if (action === "left" || action === "right") adjust(rows[focus], action === "left" ? -1 : 1);
       else if (action === "confirm") activateRow(navigationRows[focus]);
       else if (action === "menu") void save();
@@ -287,6 +285,9 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const focusedFieldId = rows[focus]?.field?.id;
   const screenHelp = category === "Screen" && game.pack.id === "mgs2"
     ? mgs2ScreenHelp(focusedFieldId, previewValue("HiresoPreset"), focusedFieldId ? previewValue(focusedFieldId) : undefined) : undefined;
+  const availabilityHelp = rows[focus]?.field?.readOnly ? fieldDescription
+    : fieldDescription?.startsWith("Changing this setting selects Custom.") ? "Changing this setting selects Custom." : undefined;
+  if (screenHelp && availabilityHelp) screenHelp.side = `${availabilityHelp}\n\n${screenHelp.side}`.trim();
 
   return <div className="screen settings-screen" data-testid="settings-screen" data-game={game.pack.id}
     data-layout="v2" data-detail={detail ? "true" : undefined} data-category={category} style={{ ...themeVars(game.pack.theme), ...layoutVars(game.pack.id),
@@ -309,8 +310,8 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
           ?? (typeof value === "boolean" ? value ? "ON" : "OFF" : String(value ?? ""));
         return <div key={row.id} className={`settings-row${focus === index ? " focused" : ""}${field ? " has-value" : ""}${field?.readOnly ? " read-only" : ""}${buttonIcons ? " controller-row" : ""}`}
           data-focused={focus === index ? "true" : undefined} data-testid={`setting-${field?.id ?? row.id}`}
-          onMouseEnter={() => { if (!field?.readOnly) setFocus(index); }}>
-          <button className="settings-row-label" disabled={busy || field?.readOnly || row.section?.status === "unsupported" && Boolean(field)}
+          onMouseEnter={() => setFocus(index)}>
+          <button className="settings-row-label" disabled={busy} aria-disabled={Boolean(field?.readOnly || row.section?.status === "unsupported" && field)}
             onFocus={() => setFocus(index)} onClick={() => activateRow(row)}>
             {row.label}{row.selected && <span className="settings-selected" aria-label="Selected">✓</span>}
             {!field && row.section && <small>{row.section.status === "needsSetup" ? "Needs setup" : row.section.version ?? "Detected"}</small>}

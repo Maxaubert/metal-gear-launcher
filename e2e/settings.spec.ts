@@ -38,6 +38,12 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
   await mkdir(mg12Launcher, { recursive: true });
   await writeFile(join(mg12Launcher, "usersv"), syntheticSettings());
   await writeFile(join(mg12Launcher, "launcher_sv"), JSON.stringify({ keyList: ["languageLauncher"], valueList: ["1"] }));
+  const mgs2Launcher = join(steam, "steamapps", "common", "MGS2", "mgs2_savedata_win", account, "launcher");
+  await mkdir(mgs2Launcher, { recursive: true });
+  const mgs2Game = syntheticSettings();
+  const mgs2Json = JSON.stringify({ keyList: ["languageLauncher", "HiresoPreset", "HiresoMovie"], valueList: ["1", "0", "1"] });
+  await writeFile(join(mgs2Launcher, "usersv"), mgs2Game);
+  await writeFile(join(mgs2Launcher, "launcher_sv"), mgs2Json);
   const app = await electron.launch({ args: [join(__dirname, "..", "out", "main", "index.js")], env: {
     ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
   } });
@@ -93,6 +99,50 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
     expect(decodeUsersv(await readFile(join(launcher, "usersv"))).readInt32LE(28)).toBe(9);
     await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
     await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await page.getByTestId("menu-item-options").click();
+    await page.getByRole("button", { name: "Screen", exact: true }).click();
+    const preset = page.getByTestId("setting-HiresoPreset").locator("output");
+    const movie = page.getByTestId("setting-HiresoMovie").locator("output");
+    await expect(preset).toHaveText("Original Mode");
+    await expect(page.getByRole("button", { name: "Increase Movie", exact: true })).toBeEnabled();
+    await page.getByTestId("setting-HiresoMovie").hover();
+    await expect(page.locator(".settings-side-help")).toContainText("Changing this setting selects Custom.");
+    await page.getByRole("button", { name: "Increase Movie", exact: true }).click();
+    await expect(preset).toHaveText("Custom");
+    await expect(movie).toHaveText("High Resolution");
+    await expect(page.getByTestId("setting-HiresoUpScale").locator("output")).toHaveText("Default");
+    // Returning to the raw Original value must not restore remembered Custom movie=1.
+    await page.getByRole("button", { name: "Increase Movie", exact: true }).click();
+    await expect(movie).toHaveText("Original");
+    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
+    await expect(preset).toHaveText("Original Mode");
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Screen", exact: true }).click();
+    for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("setting-HiresoMovie")).toHaveAttribute("data-focused", "true");
+    await page.keyboard.press("ArrowRight");
+    await expect(preset).toHaveText("Custom");
+    await expect(movie).toHaveText("High Resolution");
+    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
+    await expect(page.getByText("Loading settings...", { exact: true })).toHaveCount(0);
+    await expect(preset).toHaveText("Original Mode");
+    expect(await readFile(join(mgs2Launcher, "usersv"))).toEqual(mgs2Game);
+    expect(await readFile(join(mgs2Launcher, "launcher_sv"), "utf8")).toBe(mgs2Json);
+    // Returning to Original must save the displayed mode while remembering the Custom edit.
+    await page.getByRole("button", { name: "Increase Movie", exact: true }).click();
+    await expect(preset).toHaveText("Custom");
+    await page.getByRole("button", { name: "Increase Resolution Settings", exact: true }).click();
+    await expect(preset).toHaveText("Original Mode");
+    await expect(movie).toHaveText("Original");
+    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
+    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
+    const savedMgs2 = JSON.parse(await readFile(join(mgs2Launcher, "launcher_sv"), "utf8"));
+    expect(savedMgs2.valueList[savedMgs2.keyList.indexOf("HiresoPreset")]).toBe("0");
+    expect(savedMgs2.valueList[savedMgs2.keyList.indexOf("HiresoMovie")]).toBe("1");
+    expect(decodeUsersv(await readFile(join(mgs2Launcher, "usersv"))).readInt32LE(68)).toBe(0);
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
