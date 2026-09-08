@@ -1,4 +1,5 @@
 import { MENU_SOUNDS, type MenuSound, type MenuSoundData } from "@shared/menuSounds";
+import { levelMenuSound } from "./levelMenuSound";
 export type { MenuSound } from "@shared/menuSounds";
 
 let context: AudioContext | undefined;
@@ -49,7 +50,10 @@ async function decodeSounds(data: MenuSoundData): Promise<void> {
     try {
       const bytes = Uint8Array.from(atob(encoded), character => character.charCodeAt(0));
       const buffer = await context!.decodeAudioData(bytes.buffer);
-      if (buffer.duration <= 10) buffers.set(sound, buffer);
+      if (buffer.duration <= 10) {
+        levelMenuSound(Array.from({ length: buffer.numberOfChannels }, (_, channel) => buffer.getChannelData(channel)));
+        buffers.set(sound, buffer);
+      }
     } catch { console.warn(`Menu sound could not be decoded: ${sound}`); }
   }));
   await resumeAudio();

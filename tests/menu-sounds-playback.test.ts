@@ -9,6 +9,14 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+function decodedBuffer(duration = 0.25, channels = [new Float32Array([0, 0.1, -0.05, 0])]) {
+  return {
+    duration,
+    numberOfChannels: channels.length,
+    getChannelData: vi.fn((channel: number) => channels[channel]!),
+  };
+}
+
 function audioHarness(data: MenuSoundData = { select: btoa("valid"), navigate: btoa("valid") }) {
   const getMenuSounds = vi.fn(async () => ({ ok: true, value: data }));
   const gain = { gain: { value: 1 }, connect: vi.fn() };
@@ -16,7 +24,7 @@ function audioHarness(data: MenuSoundData = { select: btoa("valid"), navigate: b
   const context = {
     state: "running", destination: {},
     createGain: vi.fn(() => gain),
-    decodeAudioData: vi.fn(async (bytes: ArrayBuffer) => { void bytes; return { duration: 0.25 }; }),
+    decodeAudioData: vi.fn(async (bytes: ArrayBuffer) => { void bytes; return decodedBuffer(); }),
     resume: vi.fn(async () => { context.state = "running"; }),
     createBufferSource: vi.fn(() => {
       const source = { buffer: undefined as unknown, connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null as (() => void) | null };
@@ -38,7 +46,7 @@ describe("preloaded menu sound playback", () => {
   it("shares one preload and waits for decoding before startup can finish", async () => {
     const harness = audioHarness({ select: btoa("valid") });
     harness.context.state = "suspended";
-    const decoding = deferred<{ duration: number }>();
+    const decoding = deferred<ReturnType<typeof decodedBuffer>>();
     harness.context.decodeAudioData.mockReturnValue(decoding.promise);
     const sounds = await import("../src/audio/menuSounds");
     const first = sounds.preloadMenuSounds();
@@ -47,7 +55,7 @@ describe("preloaded menu sound playback", () => {
     void first.then(() => { loaded = true; });
     await Promise.resolve();
     expect(loaded).toBe(false);
-    decoding.resolve({ duration: 0.25 });
+    decoding.resolve(decodedBuffer());
     await first;
     expect(loaded).toBe(true);
     expect(harness.getMenuSounds).toHaveBeenCalledTimes(1);
@@ -69,6 +77,45 @@ describe("preloaded menu sound playback", () => {
     expect(harness.getMenuSounds).toHaveBeenCalledTimes(1);
     expect(harness.context.decodeAudioData).toHaveBeenCalledTimes(decoded);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("plays the leveled quiet stereo buffer at the saved master volume", async () => {
+    const harness = audioHarness({ navigate: btoa("quiet recording") });
+    const left = new Float32Array([0, 0.053, -0.106, 0]);
+    const right = new Float32Array([0, 0.0265, -0.053, 0]);
+    const buffer = decodedBuffer(0.25, [left, right]);
+    harness.context.decodeAudioData.mockResolvedValue(buffer);
+    const sounds = await import("../src/audio/menuSounds");
+    sounds.setMenuSoundVolume(0.2);
+    await sounds.preloadMenuSounds();
+    expect(left[2]).toBeCloseTo(-0.85);
+    expect(right[2]).toBeCloseTo(-0.425);
+    const playing = sounds.playMenuSound("navigate");
+    expect(harness.sources[0]!.buffer).toBe(buffer);
+    expect(harness.sources[0]!.connect).toHaveBeenCalledWith(harness.gain);
+    expect(harness.gain.gain.value).toBe(0.2);
+    expect(harness.sources[0]!.start).toHaveBeenCalledOnce();
+    harness.sources[0]!.onended?.();
+    await playing;
+  });
+
+  it("does not repeatedly amplify a gain-capped clip during navigation replay", async () => {
+    const harness = audioHarness({ navigate: btoa("very quiet recording") });
+    const channel = new Float32Array([0, 0.002, -0.003, 0]);
+    const buffer = decodedBuffer(0.25, [channel]);
+    harness.context.decodeAudioData.mockResolvedValue(buffer);
+    const sounds = await import("../src/audio/menuSounds");
+    await sounds.preloadMenuSounds();
+    const leveled = channel.slice();
+    expect(channel[2]).toBeCloseTo(-0.048);
+    const first = sounds.playMenuSound("navigate");
+    const second = sounds.playMenuSound("navigate");
+    await sounds.preloadMenuSounds();
+    expect(channel).toEqual(leveled);
+    expect(buffer.getChannelData).toHaveBeenCalledTimes(1);
+    expect(harness.sources[1]!.buffer).toBe(buffer);
+    harness.sources[1]!.onended?.();
+    await Promise.all([first, second]);
   });
 
   it("keeps the completion promise pending until the confirmation sound ends", async () => {
@@ -114,7 +161,7 @@ describe("preloaded menu sound playback", () => {
     harness.context.decodeAudioData.mockImplementation(async bytes => {
       const value = new TextDecoder().decode(bytes);
       if (value === "corrupt") throw new Error("Invalid WAV");
-      return { duration: value === "long" ? 11 : 0.25 };
+      return decodedBuffer(value === "long" ? 11 : 0.25);
     });
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const sounds = await import("../src/audio/menuSounds");
