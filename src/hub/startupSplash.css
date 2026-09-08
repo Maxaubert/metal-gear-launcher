@@ -116,7 +116,6 @@
 }
 
 .startup-status p { margin: 0; }
-.startup-status .startup-detail { margin-top: .7vh; font-size: .8em; color: #b7babd; }
 .startup-splash[data-error="true"] .startup-brand { height: 20vh; }
 .startup-splash[data-error="true"] .startup-brand { width: min(54vw, 96vh); }
 .startup-splash[data-error="true"] .startup-status { margin-top: 3vh; }

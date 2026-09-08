@@ -31,7 +31,6 @@ export default function StartupSplash({ exiting, progress, error, actions, selec
           <span style={{ transform: `scaleX(${progress / 100})` }} />
         </div>}
         <p role={error ? "alert" : "status"}>{error || "Preparing your games"}</p>
-        {!error && <p className="startup-detail">Artwork, settings and audio</p>}
       </div>
       {error && <div className="startup-actions">
         {actions.map((label, index) => <button key={label}
