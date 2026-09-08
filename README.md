@@ -78,7 +78,8 @@ Music files stay on your PC and are not included with the installer.
 
 Menu effects are also local. Place WAV files named `navigate`, `select`, `back`, `options`,
 `adjust` and `start` in `%LOCALAPPDATA%\MGSMasterHub\sounds\` (with the `.wav` extension).
-They play across all game menus and settings, using the hub's saved volume. The hub decodes
+They play across all game menus and settings, using the hub's saved volume. Quiet recordings
+are raised to a consistent peak level before playback, with capped gain and headroom. The hub decodes
 them before showing the menus; missing or invalid files leave that action silent.
 `vr.wav` is reserved for a future VR Missions entry.
 
