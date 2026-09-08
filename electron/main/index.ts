@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from "electron";
 import { exec, spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
 import { mkdir, stat, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -28,6 +29,13 @@ import { achievementsRequest } from "@shared/achievements";
 import { getAchievements } from "./achievements/service";
 
 const execAsync = promisify(exec);
+
+// Preserve the Chromium profile and single-instance namespace across the product rename.
+const profileDirectory = process.env.HUB_DATA_DIR
+  ? join(process.env.HUB_DATA_DIR, "chromium") : join(app.getPath("appData"), "MGS Master Hub");
+mkdirSync(profileDirectory, { recursive: true });
+app.setPath("userData", profileDirectory);
+app.setAppUserModelId("com.maxaubert.mgsmasterhub");
 
 // `corsEnabled` is required for the CSS engine's CORS-fetch of `@font-face` sources (D1): without
 // it, Chromium blocks the font request entirely and every string silently falls back to the

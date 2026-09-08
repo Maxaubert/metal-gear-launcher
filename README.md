@@ -1,4 +1,4 @@
-# MGS Master Hub
+# Metal Gear Launcher
 
 A fullscreen launcher for the Metal Gear Solid Master Collection, styled after the collection's
 own in-game menus. It extracts each game's own menu art and music from its install, shows one
@@ -21,9 +21,12 @@ preview, or install the hub for the real thing.
 ## Install
 
 Download the installer from the
-[latest release](https://github.com/Maxaubert/mgs-master-hub/releases/latest)
-(`MGSMasterHub-Setup-x64-<version>.exe`) and run it. The hub checks GitHub Releases once at
+[latest release](https://github.com/Maxaubert/metal-gear-launcher/releases/latest)
+(`MetalGearLauncher-Setup-x64-<version>.exe`) and run it. The launcher checks GitHub Releases once at
 boot and shows a footer prompt when a newer version is out.
+
+Previously named MGS Master Hub. Upgrades retain your settings, music and extracted artwork in
+the existing `%LOCALAPPDATA%\MGSMasterHub\` data folder.
 
 ## First run and extraction
 
@@ -115,7 +118,7 @@ silently substituted. Restart the hub after replacing effect files.
 Launch straight into one game, skipping the hub's own selection screen:
 
 ```
-MGSMasterHub.exe --game mgs3
+"Metal Gear Launcher.exe" --game mgs3
 ```
 
 Valid ids: `mg12`, `mgs1`, `mgs2`, `mgs3`, `mgs4`, `mgspw`. If the hub is already running, a

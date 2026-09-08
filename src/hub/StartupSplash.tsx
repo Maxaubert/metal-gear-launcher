@@ -17,13 +17,13 @@ export default function StartupSplash({ exiting, progress, error, actions, selec
   const [logoFailed, setLogoFailed] = useState(false);
 
   return <main className="startup-screen startup-splash" data-testid="startup-screen" data-error={Boolean(error)} data-exiting={exiting} aria-busy={!error}>
-    <section className="startup-content" aria-label="MGS Master Hub startup">
+    <section className="startup-content" aria-label="Metal Gear Launcher startup">
       <div className="startup-brand">
         {logoFailed ? <div className="startup-brand-fallback">METAL GEAR SOLID</div>
           : <img className="startup-logo" src={neutralWordmark} alt="Metal Gear Solid" draggable={false}
             fetchPriority="high" onError={() => setLogoFailed(true)} />}
       </div>
-      <h1 className="startup-title">MGS MASTER HUB</h1>
+      <h1 className="startup-title">METAL GEAR LAUNCHER</h1>
       <div className="startup-status">
         {!error && <div className="startup-loading-rail" role="progressbar" aria-label="Hub startup"
           aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>

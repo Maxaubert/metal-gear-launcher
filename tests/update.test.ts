@@ -12,6 +12,7 @@ describe("checkForUpdate", () => {
       version: "0.2.0",
       url: "https://example.com/releases/v0.2.0",
     });
+    expect(fetchImpl).toHaveBeenCalledWith("https://api.github.com/repos/Maxaubert/metal-gear-launcher/releases/latest", expect.any(Object));
   });
 
   it("returns null when already on the latest version", async () => {

@@ -130,7 +130,7 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
     await page.reload();
     const splash = page.getByTestId("startup-screen");
     await expect(splash).toBeVisible();
-    await expect(splash.getByRole("heading", { name: "MGS MASTER HUB", exact: true })).toBeVisible();
+    await expect(splash.getByRole("heading", { name: "METAL GEAR LAUNCHER", exact: true })).toBeVisible();
     await expect(splash.getByRole("status")).toHaveText("Preparing your games");
     const logo = splash.locator(".startup-logo");
     await expect(logo).toBeVisible();
@@ -171,7 +171,7 @@ test("failed game artwork retains neutral hub branding and existing keyboard rec
   try {
     const page = await app.firstWindow();
     const splash = page.getByTestId("startup-screen");
-    await expect(splash.getByRole("heading", { name: "MGS MASTER HUB", exact: true })).toBeVisible();
+    await expect(splash.getByRole("heading", { name: "METAL GEAR LAUNCHER", exact: true })).toBeVisible();
     await expect(splash.locator(".startup-logo")).toBeVisible();
     await expect(splash.getByRole("alert")).toBeVisible();
     await expect(splash.getByRole("button", { name: "Retry", exact: true })).toBeFocused();
