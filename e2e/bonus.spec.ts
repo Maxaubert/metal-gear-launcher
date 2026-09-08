@@ -15,6 +15,7 @@ test("combined bonus content handles missing installs, both volumes, playback, c
     const page = await app.firstWindow();
     await page.setViewportSize({ width: 1920, height: 1080 });
     await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 15000 });
+    await expect(page.getByTestId("game-screen")).toBeVisible();
     const noInstalls = await page.evaluate(() => window.hub.getBonusContent());
     expect(noInstalls.ok && noInstalls.value.tracks.length).toBe(0);
     expect(noInstalls.ok && noInstalls.value.videos.length).toBe(0);
