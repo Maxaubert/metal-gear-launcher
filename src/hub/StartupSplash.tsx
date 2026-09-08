@@ -4,6 +4,7 @@ import "./startupSplash.css";
 
 type Props = {
   exiting: boolean;
+  progress: number;
   error: string;
   actions: string[];
   selectedAction: number;
@@ -12,7 +13,7 @@ type Props = {
   onRecover: (index: number) => void;
 };
 
-export default function StartupSplash({ exiting, error, actions, selectedAction, buttonRefs, onFocusAction, onRecover }: Props) {
+export default function StartupSplash({ exiting, progress, error, actions, selectedAction, buttonRefs, onFocusAction, onRecover }: Props) {
   const [logoFailed, setLogoFailed] = useState(false);
 
   return <main className="startup-screen startup-splash" data-testid="startup-screen" data-error={Boolean(error)} data-exiting={exiting} aria-busy={!error}>
@@ -25,7 +26,10 @@ export default function StartupSplash({ exiting, error, actions, selectedAction,
       </div>
       <h1 className="startup-title">MGS MASTER HUB</h1>
       <div className="startup-status">
-        <div className="startup-loading-rail" aria-hidden="true"><span /></div>
+        {!error && <div className="startup-loading-rail" role="progressbar" aria-label="Hub startup"
+          aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+          <span style={{ transform: `scaleX(${progress / 100})` }} />
+        </div>}
         <p role={error ? "alert" : "status"}>{error || "Preparing your games"}</p>
         {!error && <p className="startup-detail">Artwork, settings and audio</p>}
       </div>

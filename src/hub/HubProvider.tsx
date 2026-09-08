@@ -481,6 +481,6 @@ export default function HubProvider() {
       {content}
     </div>
     {startup.visible && <StartupSplash error={startupError} actions={startupActions} selectedAction={startupItem}
-      exiting={startup.exiting} buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />}
+      exiting={startup.exiting} progress={startup.progress} buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />}
   </>;
 }

@@ -1,4 +1,4 @@
-import { test, expect, _electron as electron } from "@playwright/test";
+import { test, expect, _electron as electron, type Page } from "@playwright/test";
 import { cp, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -20,31 +20,49 @@ async function clean(root: string) {
   await rm(root, { recursive: true, force: true });
 }
 
-test("fast startup holds two seconds, fades over an inert menu and preserves its mounted backdrop", async () => {
+type SplashTiming = { shown: number; exiting: number; removed: number; completed: number; fadedIn: boolean };
+
+async function observeSplash(page: Page) {
+  await page.addInitScript(() => {
+    const timing = { shown: 0, exiting: 0, removed: 0, completed: 0, fadedIn: false };
+    Object.assign(window, { splashTiming: timing });
+    const watchEntrance = () => {
+      const content = document.querySelector(".startup-content");
+      const opacity = content ? Number(getComputedStyle(content).opacity) : 1;
+      if (!timing.exiting && opacity > 0 && opacity < 1) timing.fadedIn = true;
+      const rail = document.querySelector(".startup-loading-rail");
+      const fill = rail?.firstElementChild;
+      if (!timing.completed && !timing.exiting && opacity >= .99 && rail?.getAttribute("aria-valuenow") === "100"
+        && fill && fill.getBoundingClientRect().width >= rail.getBoundingClientRect().width - 1) timing.completed = performance.now();
+      if (!timing.removed) requestAnimationFrame(watchEntrance);
+    };
+    requestAnimationFrame(watchEntrance);
+    new MutationObserver(() => {
+      const splash = document.querySelector('[data-testid="startup-screen"]');
+      if (splash && !timing.shown) timing.shown = performance.now();
+      if (splash?.getAttribute("data-exiting") === "true" && !timing.exiting) timing.exiting = performance.now();
+      if (!splash && timing.shown && !timing.removed) timing.removed = performance.now();
+    }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-exiting", "aria-valuenow"] });
+  });
+}
+
+async function expectFullProgress(page: Page) {
+  const splash = page.getByTestId("startup-screen");
+  const progress = splash.getByRole("progressbar", { name: "Hub startup", exact: true });
+  await expect.poll(() => progress.getAttribute("aria-valuenow"), { intervals: [20], timeout: 10000 }).toBe("100");
+  await expect.poll(() => progress.evaluate(element => element.firstElementChild!.getBoundingClientRect().width / element.getBoundingClientRect().width), { intervals: [20] }).toBeGreaterThanOrEqual(.99);
+  await expect(splash).toHaveAttribute("data-exiting", "false");
+}
+
+test("fast startup holds four seconds, fills progress before fading and preserves its mounted backdrop", async () => {
   const setup = await fixture();
   const app = await electron.launch(setup.options);
   try {
     const page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toBeVisible();
-    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 10000 });
     await page.emulateMedia({ reducedMotion: "no-preference" });
-    await page.addInitScript(() => {
-      const timing = { shown: 0, exiting: 0, removed: 0, fadedIn: false };
-      Object.assign(window, { splashTiming: timing });
-      const watchEntrance = () => {
-        const content = document.querySelector(".startup-content");
-        const opacity = content ? Number(getComputedStyle(content).opacity) : 1;
-        if (!timing.exiting && opacity > 0 && opacity < 1) timing.fadedIn = true;
-        if (!timing.removed) requestAnimationFrame(watchEntrance);
-      };
-      requestAnimationFrame(watchEntrance);
-      new MutationObserver(() => {
-        const splash = document.querySelector('[data-testid="startup-screen"]');
-        if (splash && !timing.shown) timing.shown = performance.now();
-        if (splash?.getAttribute("data-exiting") === "true" && !timing.exiting) timing.exiting = performance.now();
-        if (!splash && timing.shown && !timing.removed) timing.removed = performance.now();
-      }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-exiting"] });
-    });
+    await observeSplash(page);
     await page.reload();
     const splash = page.getByTestId("startup-screen");
     const content = page.getByTestId("hub-content");
@@ -59,14 +77,17 @@ test("fast startup holds two seconds, fades over an inert menu and preserves its
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("menu-item-start")).toHaveClass(/focused/);
     await expect(page.getByTestId("game-selection")).toHaveCount(0);
+    await expectFullProgress(page);
     await expect.poll(() => splash.getAttribute("data-exiting"), { intervals: [20] }).toBe("true");
     await expect.poll(() => splash.evaluate(element => Number(getComputedStyle(element).opacity)), { intervals: [20] }).toBeLessThan(1);
     await expect(splash.locator(".startup-content")).toHaveCSS("opacity", "0");
     await expect(content).toHaveAttribute("inert", "");
-    await expect(splash).toHaveCount(0);
-    const timing = await page.evaluate(() => (window as unknown as { splashTiming: { shown: number; exiting: number; removed: number; fadedIn: boolean } }).splashTiming);
+    await expect(splash).toHaveCount(0, { timeout: 10000 });
+    const timing = await page.evaluate(() => (window as unknown as { splashTiming: SplashTiming }).splashTiming);
     expect(timing.fadedIn).toBe(true);
-    expect(timing.exiting - timing.shown).toBeGreaterThanOrEqual(1950);
+    expect(timing.exiting - timing.shown).toBeGreaterThanOrEqual(3950);
+    expect(timing.completed).toBeGreaterThan(0);
+    expect(timing.exiting - timing.completed).toBeGreaterThanOrEqual(90);
     expect(timing.removed - timing.exiting).toBeGreaterThanOrEqual(380);
     expect(await backdrop!.evaluate(element => element.isConnected)).toBe(true);
     expect(await menu!.evaluate(element => element.isConnected)).toBe(true);
@@ -74,17 +95,20 @@ test("fast startup holds two seconds, fades over an inert menu and preserves its
     await expect(content).not.toHaveAttribute("aria-hidden");
     await page.keyboard.press("ArrowDown");
     await expect(page.getByTestId("menu-item-gameSelection")).toHaveClass(/focused/);
-    await expect(splash).toHaveCount(0);
+    await expect(splash).toHaveCount(0, { timeout: 10000 });
 
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.reload();
     await expect(splash).toBeVisible();
     await expect(page.getByTestId("game-screen")).toBeVisible();
     expect(await splash.locator(".startup-content").evaluate(element => getComputedStyle(element).animationName)).toBe("none");
-    await expect(splash).toHaveCount(0);
-    const reducedTiming = await page.evaluate(() => (window as unknown as { splashTiming: { shown: number; exiting: number; removed: number } }).splashTiming);
+    await expectFullProgress(page);
+    await expect(splash).toHaveCount(0, { timeout: 10000 });
+    const reducedTiming = await page.evaluate(() => (window as unknown as { splashTiming: SplashTiming }).splashTiming);
     expect(reducedTiming.exiting).toBe(0);
-    expect(reducedTiming.removed - reducedTiming.shown).toBeGreaterThanOrEqual(1950);
+    expect(reducedTiming.completed).toBeGreaterThan(0);
+    expect(reducedTiming.removed - reducedTiming.completed).toBeGreaterThanOrEqual(210);
+    expect(reducedTiming.removed - reducedTiming.shown).toBeGreaterThanOrEqual(3950);
   } finally { await app.close(); await clean(setup.root); }
 });
 
@@ -94,7 +118,8 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
   try {
     const page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toBeVisible();
-    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 10000 });
+    await observeSplash(page);
     await page.addInitScript(() => {
       const play = HTMLMediaElement.prototype.play;
       HTMLMediaElement.prototype.play = function () {
@@ -119,7 +144,9 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
       expect(Math.abs(bounds!.x + bounds!.width / 2 - width / 2)).toBeLessThan(1);
       expect(await splash.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     }
-    await page.waitForTimeout(2200);
+    await page.waitForTimeout(4200);
+    const progress = splash.getByRole("progressbar", { name: "Hub startup", exact: true });
+    expect(Number(await progress.getAttribute("aria-valuenow"))).toBeLessThan(100);
     await expect(splash).toHaveAttribute("data-exiting", "false");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("game-screen")).toHaveCount(0);
@@ -129,8 +156,12 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
     }
     await expect.poll(() => page.evaluate(() => "releaseMusic" in window)).toBe(true);
     await page.evaluate(() => (window as unknown as { releaseMusic: () => Promise<void> }).releaseMusic());
+    await expectFullProgress(page);
     await expect(page.getByTestId("game-screen")).toBeVisible();
-    await expect(splash).toHaveCount(0);
+    await expect(splash).toHaveCount(0, { timeout: 10000 });
+    const timing = await page.evaluate(() => (window as unknown as { splashTiming: SplashTiming }).splashTiming);
+    expect(timing.completed).toBeGreaterThan(0);
+    expect(timing.removed - timing.completed).toBeGreaterThanOrEqual(210);
   } finally { await app.close(); await clean(setup.root); }
 });
 
@@ -148,7 +179,7 @@ test("failed game artwork retains neutral hub branding and existing keyboard rec
     await page.keyboard.press("ArrowDown");
     await expect(splash.getByRole("button", { name: "Re-extract Artwork", exact: true })).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(splash).toHaveCount(0);
+    await expect(splash).toHaveCount(0, { timeout: 10000 });
     await expect(page.getByRole("heading", { name: "Preparing your games", exact: true })).toBeVisible();
   } finally { await app.close(); await clean(setup.root); }
 });

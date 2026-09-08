@@ -7,7 +7,8 @@
   overflow: auto;
   background: #08090a;
   color: #f6f6f3;
-  font-family: "MenuEnglish", "Rodin", "Segoe UI", sans-serif;
+  /* Startup must not swap typefaces while the games' extracted fonts load. */
+  font-family: "Segoe UI", sans-serif;
   z-index: 200;
   opacity: 1;
 }
@@ -107,15 +108,15 @@
 
 .startup-loading-rail span {
   display: block;
-  width: 30%;
+  width: 100%;
   height: 100%;
   background: #e50019;
-  animation: startup-loading 1600ms ease-in-out infinite;
+  transform-origin: left;
+  transition: transform 120ms linear;
 }
 
 .startup-status p { margin: 0; }
 .startup-status .startup-detail { margin-top: .7vh; font-size: .8em; color: #b7babd; }
-.startup-splash[data-error="true"] .startup-loading-rail span { width: 100%; animation: none; }
 .startup-splash[data-error="true"] .startup-brand { height: 20vh; }
 .startup-splash[data-error="true"] .startup-brand { width: min(54vw, 96vh); }
 .startup-splash[data-error="true"] .startup-status { margin-top: 3vh; }
@@ -149,11 +150,10 @@
 
 @keyframes startup-reveal { from { opacity: 0; } to { opacity: 1; } }
 @keyframes startup-exit { from { opacity: 1; } to { opacity: 0; } }
-@keyframes startup-loading { from { transform: translateX(-100%); } to { transform: translateX(434%); } }
 
 @media (prefers-reduced-motion: reduce) {
   .startup-content, .startup-frame, .startup-loading-rail span,
   .startup-splash[data-exiting="true"] :is(.startup-content, .startup-frame),
   .startup-splash[data-exiting="true"] { animation: none; }
-  .startup-loading-rail span { transform: none; width: 100%; }
+  .startup-loading-rail span { transition: none; }
 }

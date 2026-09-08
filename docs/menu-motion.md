@@ -7,9 +7,10 @@ the in-flight reveal rather than queuing transitions. Main and Options navigatio
 same mounted backdrop. Reduced motion switches artwork and the bracket immediately.
 
 Startup uses a black and red splash with an original neutral METAL GEAR SOLID wordmark and
-readable hub branding. Content fades in over 400 ms. The splash remains for at least two seconds
-and until artwork, settings and audio are ready, then fades out over the mounted menu in 400 ms.
-That menu stays inert throughout the fade. Reduced motion keeps the two-second minimum and
+readable hub branding. Content fades in over 400 ms. The splash remains for at least four seconds
+and until artwork, settings and audio are ready. Its bar fills toward 90% during the opening,
+reaches 100% only when preparation completes, and stays complete briefly before the 400 ms exit.
+That menu stays inert throughout the fade. Reduced motion keeps the four-second minimum and
 uses immediate visibility changes. Existing startup recovery remains keyboard and controller
 accessible. Branding is bundled and independent of installed games or Playnite.
 
