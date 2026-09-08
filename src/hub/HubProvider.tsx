@@ -22,6 +22,7 @@ import BonusContentScreen from "../bonus/BonusContentScreen";
 import { useBonusResources } from "../bonus/useBonusResources";
 import { useBonusPlaylist } from "../bonus/useBonusPlaylist";
 import { useBooksCatalog } from "./useBooksCatalog";
+import { useLibraryPreparation } from "./useLibraryPreparation";
 
 const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 5, gameCount: PACK_ORDER.length + 1 };
 const LAUNCH_MESSAGE_MS = 3000;
@@ -45,6 +46,10 @@ function presentationState(state: HubState): HubState {
 
 export default function HubProvider() {
   const [hubState, setHubState] = useState<HubState | null>(null);
+  const libraryPreparation = useLibraryPreparation(hubState?.steamPath);
+  useEffect(() => {
+    if (libraryPreparation.hub) setHubState(presentationState(libraryPreparation.hub));
+  }, [libraryPreparation.hub]);
   const [preparedState, setPreparedState] = useState<HubState | null>(null);
   const [startedState, setStartedState] = useState<HubState | null>(null);
   const [musicAttempt, setMusicAttempt] = useState(0);
@@ -188,14 +193,14 @@ export default function HubProvider() {
     void preloadMenuSounds().then(() => { if (!cancelled) setSoundsReady(true); });
     return () => { cancelled = true; };
   }, [configLoaded]);
-  const startupError = preparationError || (!ready ? music.error : "");
-  const canReveal = Boolean(hubState && !startupError && soundsReady && (needsFirstRun || ready));
+  const startupError = libraryPreparation.error || preparationError || (!ready ? music.error : "");
+  const canReveal = Boolean(hubState && libraryPreparation.ready && !startupError && soundsReady && (needsFirstRun || ready));
   const startup = useStartupPresentation(canReveal);
   useBonusPlaylist({ playlist: bonusPlaylist, active: bonusAudioActive, suspended: bonusMediaOpen || startup.visible, volume });
   // Keep a completed startup latched while later tracks buffer or fail. This conditional
   // state adjustment finishes before React commits the newly visible menu.
   if (hubState && preparedState === hubState && music.ready && startedState !== hubState) setStartedState(hubState);
-  const startupActions = ["Retry", ...(games.some(game => game.installed) ? ["Re-extract Artwork"] : []), ...(music.error ? ["Continue Without Music"] : [])];
+  const startupActions = libraryPreparation.error ? ["Retry preparation"] : ["Retry", ...(games.some(game => game.installed) ? ["Re-extract Artwork"] : []), ...(music.error ? ["Continue Without Music"] : [])];
   const startupRowCount = startupActions.length;
 
   useEffect(() => {
@@ -203,7 +208,7 @@ export default function HubProvider() {
   }, [startupError, startupItem, startupRowCount]);
 
   useEffect(() => {
-    if (!hubState || needsFirstRun || !configLoaded) return;
+    if (!hubState || needsFirstRun || !configLoaded || !libraryPreparation.ready) return;
     let cancelled = false;
     void Promise.all([
       settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
@@ -223,7 +228,7 @@ export default function HubProvider() {
       setPreparedState(hubState);
     }).catch(error => { if (!cancelled) setStartupError(error instanceof Error ? error.message : String(error)); });
     return () => { cancelled = true; };
-  }, [hubState, needsFirstRun, settingsCache, configLoaded, preloadBonus, preloadBooks]);
+  }, [hubState, needsFirstRun, settingsCache, configLoaded, preloadBonus, preloadBooks, libraryPreparation.ready]);
 
   useEffect(() => { if (ready && !startup.visible) void window.hub.ready(); }, [ready, startup.visible]);
 
@@ -282,6 +287,7 @@ export default function HubProvider() {
   }
 
   function recoverStartup(index: number): void {
+    if (libraryPreparation.error) { libraryPreparation.retry(); return; }
     setStartupError("");
     setStartupItem(0);
     if (index === 0) void refreshState();
@@ -528,6 +534,7 @@ export default function HubProvider() {
       {content}
     </div>
     {startup.visible && <StartupSplash error={startupError} actions={startupActions} selectedAction={startupItem}
+      preparation={libraryPreparation.progress}
       exiting={startup.exiting} progress={startup.progress} buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />}
   </>;
 }

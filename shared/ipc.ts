@@ -10,6 +10,7 @@ import type { AchievementsRequest, AchievementsSnapshot } from "./achievements";
 import type { BonusLibrary, BonusPresentation } from "./bonus";
 import type { BonusPlaylist } from "./bonusPlaylist";
 import type { BookDocument, BookEntry, BookPage, BookPageRequest, BookRequest } from "./books";
+import type { PreparationProgress, PreparationResult } from "./preparation";
 
 export const ASSET_PROTOCOL = "hub-asset";
 
@@ -43,6 +44,8 @@ export type HubState = {
 export type ExtractTarget = "all" | Pack["id"];
 
 export interface HubApi {
+  prepareLibrary(): Promise<Result<PreparationResult>>;
+  onPreparationProgress(cb: (progress: PreparationProgress) => void): () => void;
   getBooksCatalog(): Promise<Result<BookEntry[]>>;
   openBook(request: BookRequest): Promise<Result<BookDocument>>;
   getBookPage(request: BookPageRequest): Promise<Result<BookPage>>;

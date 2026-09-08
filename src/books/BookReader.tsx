@@ -6,6 +6,7 @@ import { ControlHint } from "../screens/FooterHints";
 import { playMenuSound } from "../audio/menuSounds";
 import { useBookReader } from "./useBookReader";
 import BookViewport from "./BookViewport";
+import { useBookControls } from "./useBookControls";
 
 export default function BookReader({ request, actionRef, lastInputKind, onClose }: Omit<BooksScreenProps, "catalog"> & { request: BookRequest }) {
   const reader = useBookReader(request);
@@ -13,6 +14,7 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
   const [contents, setContents] = useState(false);
   const [contentFocus, setContentFocus] = useState(0);
   const [pageInput, setPageInput] = useState<string | null>(null);
+  const controls = useBookControls(contents || reader.loading || Boolean(reader.error) || Boolean(reader.saveError));
   const viewport = useRef<HTMLDivElement>(null);
   const contentsList = useRef<HTMLDivElement>(null);
   const document = reader.document;
@@ -47,6 +49,7 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
     return () => window.removeEventListener("keydown", handler, true);
   }, []);
   useBonusActions(actionRef, action => {
+    controls.reveal();
     if (action === "back") { back(); return; }
     if (contents) {
       const count = document?.contents.length ?? 0;
@@ -65,8 +68,10 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
     else if (action === "menu") toggleContents();
     else if (action === "confirm") { if (reader.error) reader.retry(); else setZoom(value => value === 1 ? 1.75 : 1); }
   });
-  return <main className="bonus-screen books-screen book-reader" data-testid="book-reader" aria-busy={reader.loading}>
-    <header className="bonus-strip-heading"><h1>{document?.title ?? (request.kind === "master" ? "Master Book" : "Screenplay Book")}<span>{request.language === "en" ? "English" : "日本語"}</span></h1></header>
+  return <main className="bonus-screen books-screen book-reader" data-testid="book-reader" aria-busy={reader.loading}
+    data-controls-visible={controls.visible} onPointerMove={controls.reveal} onPointerDown={controls.reveal} onWheel={controls.reveal}>
+    <div className="book-controls-overlay" data-testid="book-controls" data-visible={controls.visible} {...controls.overlayEvents}>
+    <header className="book-reader-heading"><h1>{document?.title ?? (request.kind === "master" ? "Master Book" : "Screenplay Book")}<span>{request.language === "en" ? "English" : "日本語"}</span></h1></header>
     <nav className="book-toolbar" aria-label="Book controls">
       <button data-testid="book-contents" disabled={!document?.contents.length} aria-expanded={contents} onClick={toggleContents}>Contents</button>
       <div className="book-page-navigation">
@@ -78,9 +83,10 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
       </div>
       <div className="book-zoom-controls"><button data-testid="book-zoom-out" aria-label="Zoom out" disabled={zoom === 1} onClick={() => changeZoom(-.25)}>−</button><span aria-live="polite">{Math.round(zoom * 100)}%</span><button data-testid="book-zoom-in" aria-label="Zoom in" disabled={zoom === 3} onClick={() => changeZoom(.25)}>+</button><button data-testid="book-fit" onClick={() => setZoom(1)}>Fit</button></div>
     </nav>
+    </div>
     <section className="book-content-area">
       {reader.page && !reader.loading && <BookViewport page={reader.page} zoom={zoom} language={request.language} viewport={viewport} />}
-      {reader.loading && <div className="book-status" role="status"><h2>{document ? "Preparing page…" : "Opening book…"}</h2><p>Preparing the original pages from your installed game.</p><div className="book-loading-line" /></div>}
+      {reader.loading && <div className="book-status" role="status"><h2>{document ? "Loading page…" : "Opening book…"}</h2><p>Loading the original page.</p><div className="book-loading-line" /></div>}
       {reader.error && <div className="book-status" role="alert"><h2>This book could not be opened</h2><p>{reader.error}</p><button data-testid="book-retry" onClick={reader.retry}>Try Again</button></div>}
       {reader.saveError && <p className="book-save-error" role="status">{reader.saveError} Reopen the book to try again.</p>}
       {contents && <section className="book-contents-panel" aria-label="Contents"><header><h2>Contents</h2><button onClick={() => setContents(false)}>Close</button></header>
@@ -88,7 +94,7 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
           onPointerMove={() => setContentFocus(index)} onFocus={() => setContentFocus(index)} onClick={() => { changePage(entry.page); setContents(false); }}><span>{entry.title}</span><span>{entry.page + 1}</span></button>)}</div>
       </section>}
     </section>
-    <footer className="bonus-player-hints books-footer">
+    <footer className="bonus-player-hints books-footer book-controls-footer" data-visible={controls.visible} {...controls.overlayEvents}>
       <ControlHint lastInputKind={lastInputKind} keyboard={["PgUp", "PgDn"]} gamepad="LB RB" label="Turn page" />
       <ControlHint lastInputKind={lastInputKind} keyboard={["↑", "↓", "←", "→"]} gamepad="L" label={zoom > 1 ? "Pan" : "Navigate"} />
       <ControlHint lastInputKind={lastInputKind} keyboard="Enter" gamepad="A" label="Zoom / Fit" />

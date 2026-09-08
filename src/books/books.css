@@ -26,9 +26,16 @@
 .books-empty{padding:2vw;margin:0}
 .books-footer{font-size:clamp(14px,1.12vw,36px);gap:1.6vw}
 .books-footer button:hover{background:none}
-.book-reader .bonus-strip-heading h1{display:flex;justify-content:space-between;padding-right:2vw}
-.book-reader .bonus-strip-heading h1>span{font-weight:400;font-size:.8em}
-.book-toolbar{position:absolute;left:0;right:0;top:11.5vh;height:7vh;min-height:52px;display:flex;justify-content:space-between;align-items:center;gap:1vw;padding:.5vh 2vw;border-bottom:.1vw solid #222;font-size:clamp(16px,1.15vw,38px);background:#d6d5d0}
+.book-controls-overlay{position:absolute;z-index:3;top:1.8vh;left:2vw;right:2vw;background:rgb(25 25 25/.96);color:#fff;border:1px solid #777;box-shadow:0 .3vh .7vw #0004;padding:1.2vh 1vw 1vh}
+.book-reader-heading h1{display:flex;justify-content:space-between;align-items:center;gap:2vw;margin:0 0 .8vh;font-size:clamp(18px,1.25vw,40px);line-height:1.4;font-weight:400}
+.book-reader-heading h1>span{font-size:.85em}
+.book-toolbar{display:flex;justify-content:space-between;align-items:center;gap:1vw;font-size:clamp(16px,1.15vw,38px)}
+.book-controls-overlay,.book-controls-footer{opacity:0;pointer-events:none;transition:opacity 180ms ease-out}
+.book-controls-overlay[data-visible=true],.book-controls-footer[data-visible=true],.book-controls-overlay:focus-within,.book-controls-footer:focus-within{opacity:1;pointer-events:auto}
+.book-reader .book-controls-footer{z-index:3;inset:auto 2vw 1.8vh auto;max-width:96vw;height:auto;min-height:58px;padding:.65vh 1.2vw;background:rgb(25 25 25/.96);border:1px solid #777;box-shadow:0 .3vh .7vw #0004}
+.book-reader .book-controls-footer .control-hint{white-space:nowrap}
+.book-reader .book-toolbar button{color:#111;min-height:44px}
+.book-reader .book-toolbar button:focus-visible,.book-reader .book-toolbar input:focus-visible{outline-color:#e1d48e;outline-offset:3px}
 .book-toolbar button,.book-contents-panel header button,.book-status button{border:.1vw solid #555;background:#fff;padding:.5vh 1vw;font-size:inherit}
 .book-page-navigation,.book-zoom-controls,.book-page-navigation form{display:flex;align-items:center;gap:.65vw}
 .book-page-navigation form{margin:0 1vw;white-space:nowrap}
@@ -36,7 +43,7 @@
 .book-page-navigation input::-webkit-inner-spin-button{appearance:none}
 .book-zoom-controls>span{min-width:3.2em;text-align:center;font-variant-numeric:tabular-nums}
 .book-zoom-controls button{min-width:2.4em}
-.book-content-area{position:absolute;inset:max(18.5vh,calc(11.5vh + 52px)) 0 7.3vh;background:#a8a8a4;overflow:hidden}
+.book-content-area{position:absolute;inset:0;background:#a8a8a4;overflow:hidden}
 .book-viewport{position:absolute;inset:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#70673a #c9c8c1;overscroll-behavior:contain;outline-offset:-3px}
 .book-image-canvas{position:relative;min-width:100%;min-height:100%;overflow:hidden;background:#fff}
 .book-spread{width:100%;height:100%;display:block;object-fit:contain;user-select:none}
@@ -47,8 +54,8 @@
 .book-status p{font-size:clamp(18px,1.3vw,42px);line-height:1.6;max-width:65ch;overflow-wrap:anywhere}
 .book-status button{font-size:clamp(20px,1.5vw,48px);padding:1vh 2vw;margin-top:2vh}
 .book-loading-line{width:24vw;height:.25vh;min-height:3px;background:var(--bonus-accent);margin-top:3vh;animation:book-loading 1.5s ease-in-out infinite}
-.book-save-error{position:absolute;left:0;bottom:0;margin:0;padding:.7vw 2vw;background:#2b2b2b;color:#fff;font-size:clamp(16px,1.1vw,36px)}
-.book-contents-panel{position:absolute;inset:0 auto 0 0;width:54vw;background:#fff;border-right:.13vw solid #333;box-shadow:.3vw .3vh .8vw #0003;display:flex;flex-direction:column}
+.book-save-error{position:absolute;left:2vw;bottom:10vh;margin:0;padding:.7vw 2vw;background:#2b2b2b;color:#fff;font-size:clamp(16px,1.1vw,36px)}
+.book-contents-panel{position:absolute;z-index:4;inset:1.8vh auto 10vh 2vw;width:54vw;background:#fff;border:.13vw solid #333;box-shadow:.3vw .3vh .8vw #0003;display:flex;flex-direction:column}
 .book-contents-panel header{display:flex;align-items:center;justify-content:space-between;padding:1.6vh 1.8vw;border-bottom:.1vw solid #111;background:#d6d5d0;font-size:clamp(18px,1.3vw,42px)}
 .book-contents-panel h2{font-size:inherit;font-weight:400;margin:0}
 .book-contents-list{overflow:auto;scrollbar-width:thin;scrollbar-color:#70673a transparent;flex:1}
@@ -63,5 +70,6 @@
 .book-script-column{min-width:0;white-space:pre-wrap}
 .book-script-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center top;pointer-events:none}
 @keyframes book-loading{50%{opacity:.35}}
-@media(prefers-reduced-motion:reduce){.book-loading-line{animation:none}}
-@media(max-width:1000px){.books-library-body{inset-inline:3vw;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}.books-details{padding:3vh 2vw}.book-toolbar{padding-inline:1vw}.book-page-navigation form{margin-inline:0}.book-contents-panel{width:75vw}.books-footer{gap:1vw}.book-reader .books-footer .control-hint:nth-child(2){display:none}.book-screenplay{padding:1.5em}.book-script-leaves{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.book-loading-line{animation:none}.book-controls-overlay,.book-controls-footer{transition:none}}
+@media(max-width:1000px){.books-library-body{inset-inline:3vw;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}.books-details{padding:3vh 2vw}.book-toolbar{flex-wrap:wrap;justify-content:center;gap:.6vh 1vw}.book-toolbar>button:first-child{margin-right:auto}.book-zoom-controls{margin-left:auto}.book-page-navigation form{margin-inline:0}.book-contents-panel{width:75vw}.books-footer{gap:1vw}.book-reader .books-footer .control-hint:nth-child(2){display:none}.book-screenplay{padding:1.5em}.book-script-leaves{grid-template-columns:1fr}}
+@media(max-width:700px){.book-toolbar{font-size:16px}.book-page-navigation{order:2;justify-content:center;width:100%}.book-controls-overlay{padding:1vh 2vw}.book-reader-heading h1{font-size:18px}.book-reader .book-controls-footer{left:2vw;justify-content:space-between;font-size:14px;gap:8px}.book-controls-footer>.control-hint:nth-child(3),.book-controls-footer>.control-hint:nth-child(4){display:none}.book-contents-panel{width:90vw}}
