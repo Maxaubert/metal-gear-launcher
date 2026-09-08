@@ -23,6 +23,7 @@ import { minimizeForLaunch, restoreAfterLaunch } from "./launch/windowTransition
 import { checkForUpdate } from "./update";
 import { settingsGameId, settingsReadRequest, saveSettingsRequest } from "@shared/settings";
 import { getGameSettings, saveGameSettings } from "./settings/service";
+import { readMenuSounds } from "./music/sounds";
 
 const execAsync = promisify(exec);
 
@@ -206,6 +207,13 @@ if (!gotSingleInstanceLock) {
       } catch (e) {
         return err(asError(e));
       }
+    });
+
+    ipcMain.handle("hub:sounds:get", async (_event, arg) => {
+      try {
+        z.undefined().parse(arg);
+        return ok(await readMenuSounds(dataDir()));
+      } catch (e) { return err(asError(e)); }
     });
 
     ipcMain.handle("hub:settings:get", async (_event, arg) => {

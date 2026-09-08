@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { HubApi } from "@shared/ipc";
 
 const api: HubApi = {
+  getMenuSounds: () => ipcRenderer.invoke("hub:sounds:get"),
   getGameSettings: (gameId, accountId) => ipcRenderer.invoke("hub:settings:get", { gameId, accountId }),
   saveGameSettings: (request) => ipcRenderer.invoke("hub:settings:save", request),
   saveMenuMusic: (request) => ipcRenderer.invoke("hub:music:save", request),

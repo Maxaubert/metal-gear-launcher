@@ -76,6 +76,22 @@ priority; absent files fall back to the extracted original menu theme.
 
 Music files stay on your PC and are not included with the installer.
 
+Menu effects are also local. Place WAV files named `navigate`, `select`, `back`, `options`,
+`adjust` and `start` in `%LOCALAPPDATA%\MGSMasterHub\sounds\` (with the `.wav` extension).
+They play across all game menus and settings, using the hub's saved volume. The hub decodes
+them before showing the menus; missing or invalid files leave that action silent.
+`vr.wav` is reserved for a future VR Missions entry.
+
+To import the supplied 30-second labeled MGS sound reference, install FFmpeg and run:
+
+```powershell
+pwsh -File scripts/import-menu-sounds.ps1 -Source 'C:\path\mgs-menu-sounds(audio only).mp4'
+```
+
+This importer uses the reference's labeled timestamps. Other recordings need their own cuts.
+The original Master Collection launcher effects differ from this reference, so they are not
+silently substituted. Restart the hub after replacing effect files.
+
 ## `--game` flag
 
 Launch straight into one game, skipping the hub's own selection screen:
