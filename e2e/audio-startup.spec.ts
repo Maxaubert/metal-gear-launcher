@@ -76,16 +76,19 @@ test("broken initial music offers Retry while later track failures keep menus mo
     await page.keyboard.press("Escape");
 
     await writeFile(join(fixture.data, "assets", "mgs2", "bgm.wav"), "broken subsequent track");
-    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs2").click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
     const screen = await page.getByTestId("game-screen").elementHandle();
     await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.error?.code)).toBe(4);
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     expect(await screen!.evaluate(element => element.isConnected)).toBe(true);
     // Fast switches cancel stale playback and finish on the most recently selected game.
-    await page.keyboard.press("ArrowRight");
-    await page.keyboard.press("ArrowLeft");
-    await page.keyboard.press("ArrowLeft");
+    for (const direction of ["ArrowRight", "ArrowLeft", "ArrowLeft"]) {
+      await page.keyboard.press("Tab");
+      await page.keyboard.press(direction);
+      await page.keyboard.press("Enter");
+    }
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
     await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => !element.paused && element.currentSrc.includes("mgs1/bgm.wav"))).toBe(true);
     expect(await node!.evaluate(element => element.isConnected)).toBe(true);

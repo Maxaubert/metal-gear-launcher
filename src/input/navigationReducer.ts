@@ -52,12 +52,6 @@ export function navigate(s: NavState, a: Action): NavState {
       return { ...s, item: wrap(s.item - 1, s.menuLength) };
     case "down":
       return { ...s, item: wrap(s.item + 1, s.menuLength) };
-    case "left":
-    case "prevGame":
-      return { ...s, game: wrap(s.game - 1, s.gameCount), item: 0 };
-    case "right":
-    case "nextGame":
-      return { ...s, game: wrap(s.game + 1, s.gameCount), item: 0 };
     case "menu":
       return { ...s, screen: "selection", item: s.game };
     default:

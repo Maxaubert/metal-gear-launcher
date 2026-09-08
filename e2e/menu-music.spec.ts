@@ -7,6 +7,7 @@ test("Menu Music saves and discards hub-only preferences without native settings
   const root = await mkdtemp(join(tmpdir(), "hub-menu-music-e2e-"));
   const data = join(root, "hub"), steam = join(root, "steam");
   await cp(join(__dirname, "fixtures", "assets"), join(data, "assets"), { recursive: true });
+  await writeFile(join(data, "config.json"), JSON.stringify({ volume: 0.7 }));
   await cp(join(__dirname, "fixtures", "steam"), steam, { recursive: true });
   await writeFile(join(steam, "steamapps", "libraryfolders.vdf"), `"libraryfolders" { "0" { "path" "${steam.replaceAll("\\", "/")}" } }`);
   const manifestPath = join(data, "assets", "mg12", "manifest.json");
@@ -77,7 +78,7 @@ test("Menu Music saves and discards hub-only preferences without native settings
     await page.getByTestId("tile-mg12").click();
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
-    await expect(page.getByText(/No menu music has been extracted/).first()).toBeVisible();
+    await expect(page.getByText(/No menu music is available/).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);
     await app.close();
     app = await electron.launch(options);

@@ -74,12 +74,11 @@
 .settings-screen[data-detail="true"] .controller-row.has-value .settings-row-label { width: 41%; }
 .settings-current { width: 29.5%; display: flex; align-items: center; justify-content: center; font-size: 2.7vh; }
 .settings-screen[data-game="mgs1"][data-detail="true"]::before { right: 43vw; }
-.settings-screen[data-game="mgs1"][data-detail="true"] .settings-list { left: 5.2vw; right: 43vw; top: 11.57vh; }
+.settings-screen[data-game="mgs1"][data-detail="true"] .settings-list { right: 43vw; }
 .settings-screen[data-game="mgs1"][data-detail="true"] .settings-row { font-size: 2.59vh; }
 .settings-screen[data-game="mgs1"][data-category="Audio"] .settings-row.has-value .settings-row-label { width: 45%; }
-.settings-screen[data-category="Community Fixes"] .settings-row.has-value { height: auto; min-height: 6vh; font-size: 2.35vh; }
+.settings-screen[data-game][data-category="Community Fixes"] .settings-row { height: auto; min-height: 5.55vh; font-size: 2.9vh; }
 .settings-screen[data-category="Community Fixes"] .settings-row.has-value .settings-row-label { padding-block: .6vh; }
-.settings-screen[data-category="Community Fixes"] .settings-value output { font-size: 2.1vh; }
 .settings-screen[data-game="mgspw"][data-detail="true"] .settings-row.focused { color: #000; }
 .controller-preview { display: inline-flex; gap: 1.45vw; align-items: center; }
 .controller-preview > span { display: inline-flex; align-items: center; justify-content: center; height: 2.6vh; min-width: 1.45vw; font: 700 1.7vh Arial, sans-serif; background: var(--ink); color: var(--paper); }
@@ -126,4 +125,12 @@
 .settings-screen[data-detail="true"] .settings-help { top: 86vh; height: 6.7vh; max-height: 6.7vh; }
 .settings-screen[data-detail="true"] .settings-row.read-only { background: #a3a3a3; color: #808080; border-color: #62635f; }
 .settings-screen[data-detail="true"] .settings-row.read-only button:disabled { opacity: 1; }
-.settings-screen[data-category="Community Fixes"] .settings-help { font-size: 2.1vh; padding-top: .6vh; }
+.settings-screen[data-game][data-category="Community Fixes"] .settings-list { left: 5.5vw; right: 30.9vw; top: 12.7vh; scrollbar-gutter: stable; }
+.settings-screen[data-game][data-category="Community Fixes"]::before { right: 30.9vw; }
+.settings-screen[data-game][data-category="Menu Music"]::before { right: 5.6vw; }
+.settings-screen[data-game][data-category="Menu Music"] .settings-list { left: 5.5vw; right: 5.6vw; top: 12.7vh; scrollbar-gutter: stable; }
+.settings-screen[data-game][data-category="Menu Music"] .settings-row { height: auto; min-height: 5.55vh; font-size: 2.9vh; }
+.settings-screen[data-category="Menu Music"] .settings-row-label { display: flex; align-items: center; gap: 1vw; padding-block: .6vh; white-space: normal; line-height: 1.3; }
+.settings-screen[data-category="Menu Music"] .music-track-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.settings-screen[data-category="Menu Music"] .settings-selected { float: none; flex: none; }
+.settings-screen:not([data-detail="true"]) .settings-list { max-height: none; overflow: visible; }

@@ -8,6 +8,13 @@ export function isGameId(id: string): id is GameId {
   return GAME_IDS.includes(id);
 }
 
+/** Browsing tabs does not replace the last game the user actually launched. */
+export function startGameFor(argv: string[], config: { lastLaunchedGame?: string; lastGame?: string }): GameId | undefined {
+  return parseCliGame(argv)
+    ?? (config.lastLaunchedGame && isGameId(config.lastLaunchedGame) ? config.lastLaunchedGame : undefined)
+    ?? (config.lastGame && isGameId(config.lastGame) ? config.lastGame : undefined);
+}
+
 /** Reads a `--game <id>` or `--game=<id>` argument out of `argv`. Returns null when the flag
  * is absent or names something other than a recognised game pack id. */
 export function parseCliGame(argv: string[]): GameId | null {

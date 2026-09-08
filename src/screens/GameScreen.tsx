@@ -24,7 +24,9 @@ export type GameScreenProps = {
   quitItem: number;
   lastInputKind: InputKind;
   onSelectMenuItem: (index: number) => void;
+  onHoverMenuItem: (index: number) => void;
   onQuitSelect: (index: number) => void;
+  onHoverQuitItem: (index: number) => void;
   onRetryExtract: () => void;
 };
 
@@ -42,7 +44,9 @@ export default function GameScreen({
   quitItem,
   lastInputKind,
   onSelectMenuItem,
+  onHoverMenuItem,
   onQuitSelect,
+  onHoverQuitItem,
   onRetryExtract,
 }: GameScreenProps) {
   const { pack, assetUrls } = game;
@@ -92,7 +96,7 @@ export default function GameScreen({
         </div>
       )}
 
-      <ul className="menu">
+      <ul className="menu" role="menu" aria-label="Game menu">
         <li
           className="menu-bar"
           aria-hidden
@@ -101,9 +105,14 @@ export default function GameScreen({
         {pack.menu.map((key, index) => (
           <li
             key={key}
+            role="menuitem"
+            tabIndex={-1}
+            aria-current={index === menuItem ? "true" : undefined}
             data-testid={`menu-item-${key}`}
             className={[index === menuItem ? "focused" : "", key === "quit" ? "quit" : ""].filter(Boolean).join(" ")}
             onClick={() => onSelectMenuItem(index)}
+            onPointerMove={(event) => { if (event.pointerType !== "touch" && !quitOpen && !launching) onHoverMenuItem(index); }}
+            onFocus={() => { if (!quitOpen && !launching) onHoverMenuItem(index); }}
           >
             {MENU_LABELS[key]}
           </li>
@@ -120,12 +129,17 @@ export default function GameScreen({
 
       {quitOpen && (
         <div className="overlay">
-          <div className="overlay-panel">
+          <div className="overlay-panel" role="dialog" aria-modal="true" aria-label="Quit game">
             {(["Quit", "Cancel"] as const).map((label, index) => (
               <div
                 key={label}
+                role="button"
+                tabIndex={-1}
+                aria-current={quitItem === index ? "true" : undefined}
                 className={quitItem === index ? "focused" : undefined}
                 onClick={() => onQuitSelect(index)}
+                onPointerMove={(event) => { if (event.pointerType !== "touch") onHoverQuitItem(index); }}
+                onFocus={() => onHoverQuitItem(index)}
                 style={{ height: "3rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--ink)", cursor: "pointer" }}
               >
                 {label}

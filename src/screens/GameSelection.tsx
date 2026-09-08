@@ -8,6 +8,7 @@ export type GameSelectionProps = {
   focusIndex: number;
   lastInputKind: InputKind;
   onSelect: (index: number) => void;
+  onFocusItem: (index: number) => void;
 };
 
 /**
@@ -20,7 +21,7 @@ export type GameSelectionProps = {
  * screen - but stays visually marked (dashed border, dimmed cover, greyed label) so the list still
  * shows which games need Steam install/extraction.
  */
-export default function GameSelection({ games, focusIndex, lastInputKind, onSelect }: GameSelectionProps) {
+export default function GameSelection({ games, focusIndex, lastInputKind, onSelect, onFocusItem }: GameSelectionProps) {
   const focused = games[focusIndex];
   if (!focused) return null;
 
@@ -43,14 +44,19 @@ export default function GameSelection({ games, focusIndex, lastInputKind, onSele
         <span className="label">Game Selection</span>
       </div>
 
-      <ul className="selection-list">
+      <ul className="selection-list" role="menu" aria-label="Game selection">
         {games.map((g, index) => (
           <li
             key={g.pack.id}
+            role="menuitem"
+            tabIndex={-1}
+            aria-current={index === focusIndex ? "true" : undefined}
             data-testid={`tile-${g.pack.id}`}
             data-focused={index === focusIndex ? "true" : undefined}
             className={`tile${index === focusIndex ? " focused" : ""}${g.installed ? "" : " not-installed"}`}
             onClick={() => onSelect(index)}
+            onPointerMove={(event) => { if (event.pointerType !== "touch") onFocusItem(index); }}
+            onFocus={() => onFocusItem(index)}
           >
             {g.assetUrls.mainVisual && <img className="tile-cover" src={g.assetUrls.mainVisual} alt="" />}
             <span className="tile-scrim" aria-hidden="true" />

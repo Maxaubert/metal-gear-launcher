@@ -13,7 +13,7 @@ import SettingsScreen from "../settings/SettingsScreen";
 import PersistentBackdrop from "../screens/PersistentBackdrop";
 import { useGameSettingsCache } from "../settings/useGameSettingsCache";
 import { preloadPresentation } from "./preloadPresentation";
-import { resolveMenuMusic, type MenuMusicSelections } from "@shared/menuMusic";
+import { resolveMenuMusic, type MenuMusicLibrary, type MenuMusicSelections } from "@shared/menuMusic";
 
 const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
 const LAUNCH_MESSAGE_MS = 3000;
@@ -23,8 +23,10 @@ const MAX_PADS = 4;
 // `GameSelection` is handled as a local pseudo-action here rather than by extending its
 // `Action` union.
 type SelectGame = { type: "selectGame"; index: number };
+type FocusItem = { type: "focusItem"; index: number };
 
-function reduceNav(state: NavState, action: Action | SelectGame): NavState {
+function reduceNav(state: NavState, action: Action | SelectGame | FocusItem): NavState {
+  if (typeof action === "object" && action.type === "focusItem") return { ...state, item: action.index };
   if (typeof action === "object") return { ...state, screen: "hub", game: action.index, item: 0 };
   return navigate(state, action);
 }
@@ -57,6 +59,9 @@ export default function HubProvider() {
   const [progress, setProgress] = useState<Record<string, ExtractProgress>>({});
   const [volume, setVolume] = useState(0.6);
   const [musicSelections, setMusicSelections] = useState<MenuMusicSelections>({});
+  const [musicLibraries, setMusicLibraries] = useState<Partial<Record<string, MenuMusicLibrary>>>({});
+  const [musicPreview, setMusicPreview] = useState<string>();
+  const [mutedStartupGame, setMutedStartupGame] = useState<string>();
   const [configLoaded, setConfigLoaded] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
@@ -132,14 +137,15 @@ export default function HubProvider() {
   const currentGame: GameState | undefined = games[nav.game];
   const needsFirstRun = Boolean(hubState && !hubState.steamPath) || games.some((g) => g.installed && (!g.assets || g.stale));
   const ready = Boolean(hubState && preparedState === hubState && startedState === hubState);
-  const musicUrl = configLoaded && !needsFirstRun && currentGame
-    ? resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id]) : undefined;
-  const music = useMenuMusic(musicUrl, volume, musicAttempt);
+  const musicUrl = configLoaded && !needsFirstRun && currentGame && musicLibraries[currentGame.pack.id]
+    ? musicPreview ?? (mutedStartupGame === currentGame.pack.id ? undefined : resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id], musicLibraries[currentGame.pack.id])) : undefined;
+  const music = useMenuMusic(musicUrl, volume, musicAttempt, Boolean(musicPreview));
   const startupError = preparationError || (!ready ? music.error : "");
   // Keep a completed startup latched while later tracks buffer or fail. This conditional
   // state adjustment finishes before React commits the newly visible menu.
   if (hubState && preparedState === hubState && music.ready && startedState !== hubState) setStartedState(hubState);
-  const startupRowCount = games.some(game => game.installed) ? 2 : 1;
+  const startupActions = ["Retry", ...(games.some(game => game.installed) ? ["Re-extract Artwork"] : []), ...(music.error ? ["Continue Without Music"] : [])];
+  const startupRowCount = startupActions.length;
 
   useEffect(() => {
     if (startupError) startupButtons.current[Math.min(startupItem, startupRowCount - 1)]?.focus();
@@ -151,6 +157,13 @@ export default function HubProvider() {
     void Promise.all([
       settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
       preloadPresentation(hubState.games),
+      Promise.all(hubState.games.map(async game => {
+        const result = await window.hub.getMenuMusic(game.pack.id);
+        if (!result.ok) throw new Error(result.error);
+        return result.value;
+      })).then(libraries => {
+        if (!cancelled) setMusicLibraries(Object.fromEntries(libraries.map(library => [library.gameId, library])));
+      }),
     ]).then(() => {
       if (cancelled) return;
       setPreparedState(hubState);
@@ -159,13 +172,6 @@ export default function HubProvider() {
   }, [hubState, needsFirstRun, settingsCache, configLoaded]);
 
   useEffect(() => { if (ready) void window.hub.ready(); }, [ready]);
-
-  // Remembers the current game so the next launch with no `--game` argument opens on it.
-  useEffect(() => {
-    const id = currentGame?.pack.id;
-    if (!id) return;
-    void window.hub.setConfig({ lastGame: id });
-  }, [currentGame?.pack.id]);
 
   // Theme: the current game's colours become CSS custom properties on <html>.
   useEffect(() => {
@@ -212,6 +218,7 @@ export default function HubProvider() {
         setStartupError("");
         setVolume(config.value.volume);
         setMusicSelections(config.value.menuMusic ?? {});
+        setMutedStartupGame(undefined);
         setConfigLoaded(true);
         setMusicAttempt(attempt => attempt + 1);
         for (const game of r.value.games) settingsCache.invalidate(game.pack.id);
@@ -224,6 +231,7 @@ export default function HubProvider() {
     setStartupError("");
     setStartupItem(0);
     if (index === 0) void refreshState();
+    else if (startupActions[index] === "Continue Without Music") setMutedStartupGame(currentGame?.pack.id);
     else {
       setFirstRunItem(0);
       setProgress({});
@@ -330,9 +338,10 @@ export default function HubProvider() {
   // `lastInputKind` (Task 14) is threaded down to `GameScreen`'s footer hints - `useNavigation`
   // must stay a single call site (it owns the keydown/gamepad listeners), so this is the only
   // place a consumer can read it.
-  const { lastInputKind } = useNavigation(onAction);
+  const { lastInputKind, focusByMouse } = useNavigation(onAction);
+  const hoverItem = (index: number) => { focusByMouse(index); rawDispatch({ type: "focusItem", index }); };
 
-  const updateBanner = updateInfo && (
+  const updateBanner = updateInfo && !settingsOpen && (
     <div
       data-testid="update-banner"
       style={{
@@ -347,7 +356,7 @@ export default function HubProvider() {
 
   if (!hubState || startupError || (!needsFirstRun && !ready)) return <div className="startup-screen" data-testid="startup-screen">
     <p role="status">{startupError || "Loading…"}</p>
-    {startupError && ["Retry", ...(startupRowCount > 1 ? ["Re-extract Artwork"] : [])].map((label, index) => <button key={label}
+    {startupError && startupActions.map((label, index) => <button key={label}
       ref={button => { startupButtons.current[index] = button; }} className={startupItem === index ? "focused" : undefined}
       onFocus={() => setStartupItem(index)} onMouseEnter={() => setStartupItem(index)} onClick={() => recoverStartup(index)}>{label}</button>)}
   </div>;
@@ -360,6 +369,7 @@ export default function HubProvider() {
           steamPath={hubState.steamPath}
           progress={progress}
           focusIndex={firstRunItem}
+          onFocusItem={index => { focusByMouse(index); setFirstRunItem(index); }}
           extracting={extractingAll}
           onPickFolder={() => void handlePickFolder()}
           onStart={() => void handleStartExtraction()}
@@ -380,7 +390,10 @@ export default function HubProvider() {
         <PersistentBackdrop game={displayedGame} view={settingsOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail} />
         {settingsOpen ? (
           <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
-            musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={setMusicSelections}
+            musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={selections => { setMusicSelections(selections); setMutedStartupGame(undefined); }}
+            musicLibrary={musicLibraries[currentGame.pack.id]!} onMusicPreview={setMusicPreview}
+            musicError={music.error}
+            onMusicLibraryChanged={library => setMusicLibraries(previous => ({ ...previous, [library.gameId]: library }))}
             onClose={() => {
               setSettingsOpen(false);
               setSettingsDetail(false);
@@ -393,6 +406,7 @@ export default function HubProvider() {
           <GameSelection
             games={games}
             focusIndex={nav.item}
+            onFocusItem={hoverItem}
             lastInputKind={lastInputKind}
             onSelect={(index) => dispatch({ type: "selectGame", index })}
           />
@@ -405,6 +419,8 @@ export default function HubProvider() {
             quitItem={quitItem}
             lastInputKind={lastInputKind}
             onSelectMenuItem={(index) => void handleMenuChoice(currentGame.pack.menu[index] ?? "start")}
+            onHoverMenuItem={hoverItem}
+            onHoverQuitItem={index => { focusByMouse(index); setQuitItem(index); }}
             onQuitSelect={handleQuitChoice}
             onRetryExtract={() => void handleRetryExtract()}
           />
