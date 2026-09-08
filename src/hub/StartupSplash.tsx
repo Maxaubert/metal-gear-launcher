@@ -17,7 +17,6 @@ export default function StartupSplash({ exiting, progress, error, actions, selec
   const [logoFailed, setLogoFailed] = useState(false);
 
   return <main className="startup-screen startup-splash" data-testid="startup-screen" data-error={Boolean(error)} data-exiting={exiting} aria-busy={!error}>
-    <div className="startup-frame" aria-hidden="true" />
     <section className="startup-content" aria-label="MGS Master Hub startup">
       <div className="startup-brand">
         {logoFailed ? <div className="startup-brand-fallback">METAL GEAR SOLID</div>

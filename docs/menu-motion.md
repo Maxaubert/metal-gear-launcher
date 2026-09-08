@@ -6,7 +6,7 @@ the old and new game artwork. Focus and confirmation remain immediate. Rapid inp
 the in-flight reveal rather than queuing transitions. Main and Options navigation retain the
 same mounted backdrop. Reduced motion switches artwork and the bracket immediately.
 
-Startup uses a black and red splash with an original neutral METAL GEAR SOLID wordmark and
+Startup uses a white splash with dark branding, a red progress bar, no decorative frame, and an original neutral METAL GEAR SOLID wordmark with
 readable hub branding. Content fades in over 400 ms. The splash remains for at least four seconds
 and until artwork, settings and audio are ready. Its bar fills toward 90% during the opening,
 reaches 100% only when preparation completes, and stays complete briefly before the 400 ms exit.

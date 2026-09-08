@@ -5,8 +5,8 @@
   place-content: normal;
   padding: 5vh 7vw;
   overflow: auto;
-  background: #000;
-  color: #f6f6f3;
+  background: #fff;
+  color: #111;
   /* Startup must not swap typefaces while the games' extracted fonts load. */
   font-family: "Segoe UI", sans-serif;
   z-index: 200;
@@ -14,31 +14,10 @@
 }
 
 .startup-splash[data-exiting="true"] { animation: startup-exit 240ms ease-in-out 160ms both; }
-.startup-splash[data-exiting="true"] :is(.startup-content, .startup-frame) {
+.startup-splash[data-exiting="true"] .startup-content {
   animation: startup-exit 160ms ease-in both;
 }
 .startup-splash[data-error="true"] { animation: none; }
-
-.startup-frame {
-  position: absolute;
-  inset: 4vh 3vw;
-  border-block: 1px solid #343638;
-  pointer-events: none;
-  animation: startup-reveal 400ms ease-out both;
-}
-
-.startup-frame::before,
-.startup-frame::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  width: 5vw;
-  height: 3px;
-  background: #e50019;
-}
-
-.startup-frame::before { top: -1px; }
-.startup-frame::after { bottom: -1px; left: auto; right: 0; }
 
 .startup-content {
   position: relative;
@@ -78,12 +57,12 @@
   mask-mode: luminance;
   mask-size: 100% 100%;
   mask-repeat: no-repeat;
-  filter: grayscale(1) contrast(2);
+  filter: grayscale(1) contrast(2) invert(1);
 }
 
 .startup-title {
   margin: 3vh 0 0;
-  color: #f6f6f3;
+  color: #111;
   font-size: clamp(20px, 2.8vh, 62px);
   font-weight: 400;
   letter-spacing: .2em;
@@ -103,7 +82,7 @@
   height: max(3px, .3vh);
   overflow: hidden;
   margin: 0 auto 2.2vh;
-  background: #37393b;
+  background: #d4d4d4;
 }
 
 .startup-loading-rail span {
@@ -131,11 +110,11 @@
 .startup-splash .startup-actions button {
   min-height: 6vh;
   padding: 1vh 1.7vw;
-  border: 1px solid #b7babd;
-  color: #f6f6f3;
+  border: 1px solid #666;
+  color: #111;
   font: inherit;
   font-size: clamp(20px, 2.5vh, 56px);
-  background: #000;
+  background: #fff;
   cursor: pointer;
 }
 
@@ -151,8 +130,8 @@
 @keyframes startup-exit { from { opacity: 1; } to { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .startup-content, .startup-frame, .startup-loading-rail span,
-  .startup-splash[data-exiting="true"] :is(.startup-content, .startup-frame),
+  .startup-content, .startup-loading-rail span,
+  .startup-splash[data-exiting="true"] .startup-content,
   .startup-splash[data-exiting="true"] { animation: none; }
   .startup-loading-rail span { transition: none; }
 }
