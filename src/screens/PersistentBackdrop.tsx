@@ -1,18 +1,87 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import type { GameState } from "@shared/ipc";
 import { layoutVars, themeVars } from "../theme/theme";
 import SettingsOverviewBackdrop from "../settings/SettingsOverviewBackdrop";
 import ScreenBackdrop from "./ScreenBackdrop";
+import "./selectionMotion.css";
+
+const WIPE_DURATION = 360;
+type Layer = { key: number; game: GameState };
 
 export default function PersistentBackdrop({ game, view, detail }: {
   game: GameState;
   view: "main" | "selection" | "settings";
   detail: boolean;
 }) {
-  return <div className={`screen persistent-backdrop${view === "settings" ? " settings-screen" : ""}`}
-    data-testid="scene-backdrop" data-game={game.pack.id} data-layout="v2" data-view={view}
-    hidden={view === "settings" && detail} aria-hidden="true"
-    style={{ ...themeVars(game.pack.theme), ...layoutVars(game.pack.id) }}>
-    <ScreenBackdrop pack={game.pack} assetUrls={game.assetUrls} />
-    {view === "settings" && <SettingsOverviewBackdrop game={game} />}
-  </div>;
+  const [layers, setLayers] = useState<Layer[]>([{ key: 0, game }]);
+  const nodes = useRef(new Map<number, HTMLDivElement>());
+  const animations = useRef(new Map<number, Animation>());
+  const deadline = useRef<number | null>(null);
+  const current = layers[layers.length - 1]!;
+  if (current.game.pack.id !== game.pack.id) {
+    const next = { key: current.key + 1, game };
+    setLayers(view === "selection" ? [...layers, next] : [next]);
+  }
+
+  useLayoutEffect(() => {
+    const activeAnimations = animations.current;
+    const finish = () => {
+      for (const animation of activeAnimations.values()) {
+        animation.onfinish = null;
+        animation.cancel();
+      }
+      activeAnimations.clear();
+      deadline.current = null;
+      setLayers(value => value.length > 1 ? [value[value.length - 1]!] : value);
+    };
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (layers.length < 2 || view !== "selection" || media.matches) { finish(); return; }
+
+    // Keep each interrupted layer at its visible wipe position. A new layer starts
+    // above that composition, so previously unrevealed artwork cannot flash through.
+    for (const animation of activeAnimations.values()) {
+      animation.onfinish = null;
+      animation.pause();
+    }
+    deadline.current ??= performance.now() + WIPE_DURATION;
+    const remaining = deadline.current - performance.now();
+    if (remaining <= 0) { finish(); return; }
+    const animation = nodes.current.get(current.key)?.animate([
+      { clipPath: "inset(0 100% 0 0)" },
+      { clipPath: "inset(0 0% 0 0)" },
+    ], { duration: remaining, easing: "cubic-bezier(.22,.8,.25,1)", fill: "both" });
+    if (!animation) { finish(); return; }
+    activeAnimations.set(current.key, animation);
+    animation.onfinish = finish;
+    // A held key cannot keep old layers alive by restarting the deadline.
+    const timer = window.setTimeout(finish, remaining);
+    const reduce = () => { if (media.matches) finish(); };
+    media.addEventListener("change", reduce);
+    return () => {
+      animation.onfinish = null;
+      if (activeAnimations.get(current.key) === animation) animation.pause();
+      window.clearTimeout(timer);
+      media.removeEventListener("change", reduce);
+    };
+  }, [current.key, layers, view]);
+
+  useLayoutEffect(() => {
+    const activeAnimations = animations.current;
+    return () => { for (const animation of activeAnimations.values()) animation.cancel(); };
+  }, []);
+
+  return <>{layers.map(layer => {
+    const outgoing = layer.key !== current.key;
+    const displayed = outgoing ? layer.game : game;
+    const layerView = outgoing ? "selection" : view;
+    return <div key={layer.key}
+      ref={node => { if (node) nodes.current.set(layer.key, node); else nodes.current.delete(layer.key); }}
+      className={`screen persistent-backdrop${outgoing ? " scene-outgoing" : ""}${layerView === "settings" ? " settings-screen" : ""}`}
+      data-testid={outgoing ? "outgoing-scene" : "scene-backdrop"} data-game={displayed.pack.id} data-layout="v2" data-view={layerView}
+      hidden={outgoing ? view !== "selection" : view === "settings" && detail} aria-hidden="true"
+      style={{ ...themeVars(displayed.pack.theme), ...layoutVars(displayed.pack.id) }}>
+      <ScreenBackdrop pack={displayed.pack} assetUrls={displayed.assetUrls} />
+      {layerView === "settings" && <SettingsOverviewBackdrop game={displayed} />}
+    </div>;
+  })}</>;
 }

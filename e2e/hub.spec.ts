@@ -141,10 +141,10 @@ test.describe("hub", () => {
         await expect(page.getByTestId("tile-mgs2").locator(".tile-number")).toHaveText("2");
         await expect(page.getByTestId("tile-mgspw")).toBeInViewport({ ratio: 1 });
         if (id === "mgs4" || id === "mgspw") {
-          // The label sits on black, while its numeral sits inside the red end cap.
+          // The bracket replaces the filled end cap, so both labels need contrast on black.
           const selected = page.getByTestId(`tile-${id}`);
           await expect(selected.locator(".tile-title")).toHaveCSS("color", "rgb(255, 255, 255)");
-          await expect(selected.locator(".tile-number")).toHaveCSS("color", "rgb(0, 0, 0)");
+          await expect(selected.locator(".tile-number")).not.toHaveCSS("color", "rgb(0, 0, 0)");
         }
         await page.keyboard.press("Escape");
       }

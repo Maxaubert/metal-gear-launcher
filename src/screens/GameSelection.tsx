@@ -1,7 +1,9 @@
+import type { CSSProperties } from "react";
 import type { GameState } from "@shared/ipc";
 import type { InputKind } from "../input/useNavigation";
 import { themeVars, layoutVars } from "../theme/theme";
 import FooterHints from "./FooterHints";
+import "./selectionMotion.css";
 
 export type GameSelectionProps = {
   games: GameState[];
@@ -44,6 +46,8 @@ export default function GameSelection({ games, focusIndex, lastInputKind, onSele
         <span className="label">Game Selection</span>
       </div>
 
+      <div className="selection-marker" aria-hidden="true"
+        style={{ "--selection-index": focusIndex } as CSSProperties} />
       <ul className="selection-list" role="menu" aria-label="Game selection">
         {games.map((g, index) => (
           <li

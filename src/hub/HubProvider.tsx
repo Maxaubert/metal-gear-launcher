@@ -14,6 +14,7 @@ import SettingsScreen from "../settings/SettingsScreen";
 import PersistentBackdrop from "../screens/PersistentBackdrop";
 import { useGameSettingsCache } from "../settings/useGameSettingsCache";
 import { preloadPresentation } from "./preloadPresentation";
+import StartupSplash from "./StartupSplash";
 import { resolveMenuMusic, type MenuMusicLibrary, type MenuMusicSelections } from "@shared/menuMusic";
 
 const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
@@ -402,12 +403,9 @@ export default function HubProvider() {
     </div>
   );
 
-  if (!hubState || startupError || !soundsReady || (!needsFirstRun && !ready)) return <div className="startup-screen" data-testid="startup-screen">
-    <p role="status">{startupError || "Loading…"}</p>
-    {startupError && startupActions.map((label, index) => <button key={label}
-      ref={button => { startupButtons.current[index] = button; }} className={startupItem === index ? "focused" : undefined}
-      onFocus={() => setStartupItem(index)} onMouseEnter={() => setStartupItem(index)} onClick={() => recoverStartup(index)}>{label}</button>)}
-  </div>;
+  if (!hubState || startupError || !soundsReady || (!needsFirstRun && !ready)) return <StartupSplash
+    games={games} error={startupError} actions={startupActions} selectedAction={startupItem}
+    buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />;
 
   if (needsFirstRun) {
     return (
