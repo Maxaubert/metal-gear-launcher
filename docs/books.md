@@ -30,9 +30,12 @@ installations trigger preparation of the remaining content. Reading positions do
 the completion record. The full collection can require several gigabytes of local image cache.
 
 Decoded files live under `%LOCALAPPDATA%\MGSMasterHub\book-cache`. Source installation,
-build, file size, modification time and decoder version identify cache entries. Cached files
+build, source file size/modification time and decoder content identify cache entries. Cached files
 are validated, incomplete output is discarded, and corrupt entries are rebuilt. Concurrent
 requests for the same entry share one extraction. Warm pages need no decoder process.
+Decoder EXE and VERSION files use content digests, so installer timestamp changes do not
+invalidate prepared content. Moving from the older timestamp identities requires one
+preparation pass; subsequent reinstalls reuse the cache when tool contents are unchanged.
 
 While reading, the launcher preloads and decodes nearby pages with at most two active reads.
 The retained page window has a 128 MiB image budget; the displayed page and in-flight decoding

@@ -6,7 +6,7 @@ import { discoverBooks, type BookInstall } from "../books/discovery";
 import { discoverBonus, type BonusInstall } from "../bonus/discovery";
 import { filesIn } from "../books/cache";
 import { toolPaths } from "../extract/tools";
-import { sourceFingerprint, stampFiles, type FileStamp } from "./snapshot";
+import { sourceFingerprint, stampExtractor, stampFiles, type FileStamp } from "./snapshot";
 
 export interface PreparationInventory {
   games: { pack: Pack; install: Install }[];
@@ -44,10 +44,12 @@ export async function inspectLibrary(steamPath: string | null, dataDir: string):
     cacheRoots.push(join(dataDir, "bonus", install.id));
     sources.push(...await optionalFiles(join(install.path, "windata")));
   }
-  if (games.length || books.length || bonus.length) {
-    for (const tool of Object.values(toolPaths())) sources.push(tool, join(tool, "..", "VERSION"));
-  }
   const records = await stampFiles(sources);
+  if (games.length || books.length || bonus.length) {
+    const tools = Object.values(toolPaths()).flatMap(tool => [tool, join(tool, "..", "VERSION")]);
+    records.push(...await Promise.all([...new Set(tools)].sort().map(stampExtractor)));
+    records.sort((left, right) => left.file.localeCompare(right.file));
+  }
   const identity = { games: games.map(({ pack, install }) => ({ pack, install })), books: books.map(({ gameId, build, path, roots }) => ({ gameId, build, path, roots })), bonus };
   return { games, books, bonus, sources: records, fingerprint: sourceFingerprint(identity, records), cacheRoots };
 }

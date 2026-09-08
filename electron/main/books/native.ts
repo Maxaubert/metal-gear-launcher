@@ -9,6 +9,7 @@ import { isFile, metadataSource, type BookInstall } from "./discovery";
 import type { BookRequest } from "@shared/books";
 import { withBookDecoderSlot } from "./decoders";
 import { rememberBookFile } from "./memory";
+import { decoderIdentity } from "../extract/identity";
 
 export type NativeRow = Record<string, unknown> & { pageNo: number };
 const rowsSchema = z.object({ data: z.array(z.object({ pageNo: z.number().int().nonnegative() }).passthrough()).min(1).max(20000) });
@@ -32,7 +33,7 @@ export class NativeBooks {
 
   private async identity(source: string, type: string): Promise<string> {
     const tool = this.install.gameId === "mgs1" ? toolPaths().psbDecompile : toolPaths().assetStudio;
-    return JSON.stringify([3, this.install.build, type, await fileIdentity(source), await fileIdentity(tool)]);
+    return JSON.stringify([3, this.install.build, type, await fileIdentity(source), await decoderIdentity(tool)]);
   }
 
   private async m2Table(): Promise<Map<string, { source: string; offset: number; size: number }>> {

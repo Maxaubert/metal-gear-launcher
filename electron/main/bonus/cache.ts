@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } from "
 import { basename, join } from "node:path";
 import { decodeManifest, decompileM2File, sliceArchiveFile, type FileEntry } from "../extract/m2";
 import { toolPaths } from "../extract/tools";
+import { decoderIdentity } from "../extract/identity";
 import type { BonusInstall } from "./discovery";
 
 export interface DecodedBonus { json: Record<string, unknown>; directory: string }
@@ -11,8 +12,9 @@ export class BonusCache {
   constructor(readonly install: BonusInstall, readonly directory: string) {}
 
   static async open(install: BonusInstall, dataDir: string): Promise<BonusCache> {
-    const identities = await Promise.all([join(install.path, "windata/alldata.psb.m"), join(install.path, "windata/alldata.bin"), toolPaths().psbDecompile]
+    const identities = await Promise.all([join(install.path, "windata/alldata.psb.m"), join(install.path, "windata/alldata.bin")]
       .map(async file => { const info = await stat(file); return `${file}:${info.size}:${info.mtimeMs}`; }));
+    identities.push(await decoderIdentity(toolPaths().psbDecompile));
     const key = createHash("sha256").update(JSON.stringify([2, install.build, identities])).digest("hex").slice(0, 24);
     const directory = join(dataDir, "bonus", install.id, key);
     await mkdir(directory, { recursive: true });
