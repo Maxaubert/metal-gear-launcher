@@ -3,12 +3,14 @@ import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { menuMusicSelections } from "../../shared/menuMusic";
+import { settingsGameId } from "../../shared/settings";
 import { configFile as defaultConfigFile } from "./paths";
 
 export const configSchema = z.object({
   steamPath: z.string().min(1).optional(),
   volume: z.number().min(0).max(1).default(0.6),
   lastGame: z.string().min(1).optional(),
+  lastLaunchedGame: settingsGameId.optional(),
   menuMusic: menuMusicSelections.optional(),
 });
 export type Config = z.infer<typeof configSchema>;

@@ -10,6 +10,7 @@ export type FirstRunProps = {
   extracting: boolean;
   onPickFolder: () => void;
   onStart: () => void;
+  onFocusItem: (index: number) => void;
 };
 
 /**
@@ -17,7 +18,7 @@ export type FirstRunProps = {
  * cache is stale. Lists a progress bar per installed game and a "Start" row that kicks
  * off `extract("all")`; when Steam couldn't be found, a folder-picker row appears above it.
  */
-export default function FirstRun({ games, steamPath, progress, focusIndex, extracting, onPickFolder, onStart }: FirstRunProps) {
+export default function FirstRun({ games, steamPath, progress, focusIndex, extracting, onPickFolder, onStart, onFocusItem }: FirstRunProps) {
   const rows: { label: string; onSelect: () => void }[] = [];
   if (!steamPath) rows.push({ label: "Locate Steam folder", onSelect: onPickFolder });
   rows.push({ label: extracting ? "Extracting..." : "Start", onSelect: onStart });
@@ -62,8 +63,13 @@ export default function FirstRun({ games, steamPath, progress, focusIndex, extra
           {rows.map((row, index) => (
             <div
               key={row.label}
+              role="button"
+              tabIndex={-1}
+              aria-current={index === focusIndex ? "true" : undefined}
               className={index === focusIndex ? "focused" : undefined}
               onClick={row.onSelect}
+              onPointerMove={(event) => { if (event.pointerType !== "touch") onFocusItem(index); }}
+              onFocus={() => onFocusItem(index)}
               style={{
                 height: "3rem", display: "flex", alignItems: "center", justifyContent: "center",
                 border: "1px solid color-mix(in srgb, var(--ink) 40%, transparent)", cursor: "pointer", fontSize: "1.1rem",

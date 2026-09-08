@@ -20,17 +20,18 @@ function fade(audio: HTMLAudioElement, from: number, to: number, onDone?: () => 
 }
 
 /** Resolves only after buffering and playback start, including when the volume is zero. */
-function playWhenReady(audio: HTMLAudioElement, url: string, signal: AbortSignal): Promise<void> {
+function playWhenReady(audio: HTMLAudioElement, url: string, signal: AbortSignal, preview: boolean): Promise<void> {
   return new Promise((resolve, reject) => {
+    const readyEvent = preview ? "canplay" : "canplaythrough";
     let starting = false;
     const finish = (error?: Error) => {
       window.clearTimeout(timer);
-      audio.removeEventListener("canplaythrough", play);
+      audio.removeEventListener(readyEvent, play);
       audio.removeEventListener("error", failed);
       signal.removeEventListener("abort", aborted);
       if (error) reject(error); else resolve();
     };
-    const failed = () => finish(new Error("Could not load menu music. Please retry or re-extract artwork."));
+    const failed = () => finish(new Error("Could not load menu music. Check the selected audio file or choose another track."));
     const aborted = () => finish(new DOMException("Music changed", "AbortError"));
     const play = () => {
       if (starting) return;
@@ -38,7 +39,7 @@ function playWhenReady(audio: HTMLAudioElement, url: string, signal: AbortSignal
       void audio.play().then(() => finish(), () => finish(new Error("Could not start menu music. Please retry.")));
     };
     const timer = window.setTimeout(() => finish(new Error("Menu music loading timed out. Please retry.")), 15000);
-    audio.addEventListener("canplaythrough", play);
+    audio.addEventListener(readyEvent, play);
     audio.addEventListener("error", failed);
     signal.addEventListener("abort", aborted, { once: true });
     audio.src = url;
@@ -49,10 +50,15 @@ function playWhenReady(audio: HTMLAudioElement, url: string, signal: AbortSignal
 type PlaybackState = { url?: string; attempt: number; ready: boolean; error: string };
 
 /** Starts automatically, then fades between games without restarting on menu navigation. */
-export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0): { ready: boolean; error: string } {
+export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0, preview = false): { ready: boolean; error: string } {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const volumeRef = useRef(volume);
+  const previewRef = useRef(preview);
   const [state, setState] = useState<PlaybackState>({ attempt: -1, ready: false, error: "" });
+
+  useEffect(() => {
+    previewRef.current = preview;
+  }, [preview]);
 
   useEffect(() => {
     volumeRef.current = volume;
@@ -81,7 +87,8 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
     const controller = new AbortController();
     let cancelled = false;
     let cancelFade = () => {};
-    const switching = Boolean(audio.getAttribute("src")) && !audio.paused;
+    // Song browsing changes the source immediately, without the game-switch fade delay.
+    const switching = !previewRef.current && Boolean(audio.getAttribute("src")) && !audio.paused;
     const start = async () => {
       audio.pause();
       if (!bgmUrl) {
@@ -96,7 +103,7 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
         // Chromium can retain a failed media resource even after load(); Retry must
         // request the repaired file again instead of reusing that failed resource.
         if (attempt) source.searchParams.set("musicAttempt", String(attempt));
-        await playWhenReady(audio, source.href, controller.signal);
+        await playWhenReady(audio, source.href, controller.signal, previewRef.current);
         if (cancelled) return;
         if (switching) cancelFade = fade(audio, 0, volumeRef.current, () => { audio.volume = volumeRef.current; });
         setState({ url: bgmUrl, attempt, ready: true, error: "" });

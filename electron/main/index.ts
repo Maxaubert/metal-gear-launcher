@@ -10,17 +10,18 @@ import { loadPacks, PACK_ORDER } from "@shared/packs";
 import { ASSET_PROTOCOL } from "@shared/ipc";
 import type { GameState, HubState, Result } from "@shared/ipc";
 import "./log";
-import { isGameId, parseCliGame } from "./cli";
+import { parseCliGame, startGameFor } from "./cli";
 import { assetsDir, dataDir } from "./paths";
 import { configSchema, readConfig, writeConfig } from "./config";
-import { menuMusicRequest } from "../../shared/menuMusic";
+import { MUSIC_PROTOCOL } from "../../shared/menuMusic";
+import { ensureMenuMusicFolder, getMenuMusicLibrary, MUSIC_CONTENT_TYPES, resolveMenuMusicFile, validateMenuMusicSelection } from "./music/library";
 import { findSteamRoot, listLibraries } from "./steam/library";
 import { resolveInstall } from "./steam/resolve";
 import { extractGame, isStale, readManifest, readToolVersions } from "./extract/extractor";
 import { launchGame } from "./launch/launcher";
 import { minimizeForLaunch, restoreAfterLaunch } from "./launch/windowTransition";
 import { checkForUpdate } from "./update";
-import { settingsReadRequest, saveSettingsRequest } from "@shared/settings";
+import { settingsGameId, settingsReadRequest, saveSettingsRequest } from "@shared/settings";
 import { getGameSettings, saveGameSettings } from "./settings/service";
 
 const execAsync = promisify(exec);
@@ -30,6 +31,7 @@ const execAsync = promisify(exec);
 // Segoe/Arial chain instead of the extracted Rodin font.
 protocol.registerSchemesAsPrivileged([
   { scheme: ASSET_PROTOCOL, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
+  { scheme: MUSIC_PROTOCOL, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
 ]);
 
 // `.ttf`-named font assets are actually OpenType CFF (`OTTO` magic), not TrueType, per
@@ -116,7 +118,7 @@ async function buildState(): Promise<HubState> {
       stale: install !== null && isStale(manifest, install, tools, pack.assetRevision),
     });
   }
-  const startGame = parseCliGame(process.argv) ?? (config.lastGame && isGameId(config.lastGame) ? config.lastGame : undefined);
+  const startGame = startGameFor(process.argv, config);
   return { steamPath: steamRoot, games, startGame };
 }
 
@@ -163,6 +165,19 @@ if (!gotSingleInstanceLock) {
     // Fired once at boot, not per-window: the renderer reads the result via `hub:getUpdate`
     // (already resolved or resolving by the time it asks, so no push/race to worry about).
     const updateCheck = checkForUpdate(app.getVersion());
+
+    protocol.handle(MUSIC_PROTOCOL, async (req) => {
+      try {
+        const file = await resolveMenuMusicFile(dataDir(), req.url);
+        const upstream = await net.fetch(pathToFileURL(file).toString(), { headers: req.headers });
+        if (!upstream.ok || !upstream.body) return upstream;
+        const headers = new Headers(upstream.headers);
+        headers.set("Access-Control-Allow-Origin", "*");
+        headers.set("Content-Type", MUSIC_CONTENT_TYPES[extname(file).toLowerCase()]!);
+        headers.set("Cache-Control", "no-store");
+        return new Response(upstream.body, { status: upstream.status, headers });
+      } catch { return new Response("Music file is unavailable.", { status: 404 }); }
+    });
 
     protocol.handle(ASSET_PROTOCOL, async (req) => {
       const u = new URL(req.url); // hub-asset://mgs3/mainVisual.png
@@ -252,7 +267,7 @@ if (!gotSingleInstanceLock) {
 
     ipcMain.handle("hub:config:set", async (_e, arg) => {
       try {
-        const patch = configSchema.omit({ menuMusic: true }).partial().strict().parse(arg);
+        const patch = configSchema.omit({ menuMusic: true, lastLaunchedGame: true }).partial().strict().parse(arg);
         return ok(await writeConfig(patch));
       } catch (e) {
         return err(asError(e));
@@ -261,8 +276,21 @@ if (!gotSingleInstanceLock) {
 
     ipcMain.handle("hub:music:save", async (_e, arg) => {
       try {
-        const { gameId, themeId } = menuMusicRequest.parse(arg);
+        const { gameId, themeId } = await validateMenuMusicSelection(dataDir(), arg);
         return ok(await writeConfig({ menuMusic: { [gameId]: themeId } }));
+      } catch (e) { return err(asError(e)); }
+    });
+
+    ipcMain.handle("hub:music:get", async (_e, arg) => {
+      try { return ok(await getMenuMusicLibrary(dataDir(), settingsGameId.parse(arg))); }
+      catch (e) { return err(asError(e)); }
+    });
+
+    ipcMain.handle("hub:music:openFolder", async (_e, arg) => {
+      try {
+        const folder = await ensureMenuMusicFolder(dataDir(), settingsGameId.parse(arg));
+        const error = await shell.openPath(folder);
+        return error ? err(error) : ok(undefined);
       } catch (e) { return err(asError(e)); }
     });
 
@@ -297,6 +325,7 @@ if (!gotSingleInstanceLock) {
         if (!install) return err("not installed");
 
         const result = await launchGame(pack, install, { spawn, openExternal: shell.openExternal });
+        await writeConfig({ lastLaunchedGame: gameId });
         const wasFullScreen = mainWindow ? minimizeForLaunch(mainWindow) : false;
         const filter = result.via === "exe" && result.pid
           ? `PID eq ${result.pid}`

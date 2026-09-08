@@ -3,6 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readConfig, writeConfig } from "../electron/main/config";
+import { startGameFor } from "../electron/main/cli";
+import { musicFileId } from "../electron/main/music/library";
 
 describe("config", () => {
   let dir: string;
@@ -53,5 +55,16 @@ describe("config", () => {
     await expect(writeConfig({ menuMusic: { mgs2: "mgs3-original" } }, file)).rejects.toThrow();
     await expect(writeConfig({ menuMusic: { mgs2: "https://example.com/music.mp3" } }, file)).rejects.toThrow();
     expect(await readConfig(file)).toEqual({ volume: 0.2 });
+  });
+
+  it("preserves local music IDs even when their files are temporarily unavailable", async () => {
+    const id = musicFileId("mgs2", "Theme.flac");
+    await writeConfig({ lastGame: "mgs1", lastLaunchedGame: "mgs3", menuMusic: { mgs2: id }, volume: 0.4 }, file);
+    const config = await readConfig(file);
+    expect(config.menuMusic?.mgs2).toBe(id);
+    expect(startGameFor([], config)).toBe("mgs3");
+    expect(startGameFor(["--game", "mgs4"], config)).toBe("mgs4");
+    expect(startGameFor([], { lastGame: "mgs2" })).toBe("mgs2");
+    expect(startGameFor([], { lastGame: "invalid" })).toBeUndefined();
   });
 });

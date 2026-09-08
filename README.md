@@ -35,6 +35,9 @@ a game updates or the bundled extraction tools change.
 
 ## Controls
 
+The hub opens on the last game you successfully launched. Browsing other game tabs does not
+change this preference; `--game` still overrides it for a particular launch.
+
 | Input | Action |
 |---|---|
 | Left stick / D-pad, arrow keys | Move focus |
@@ -44,6 +47,34 @@ a game updates or the bundled extraction tools change.
 | Start, Tab | Open game selection |
 | Y, R key | Retry a failed extraction (shown only when a game's art is missing) |
 | Y, Y key (when shown) | Open the release page for an available update |
+
+Moving the mouse over a menu item highlights it without activating it. Keyboard and gamepad
+navigation take over when you use them.
+
+## Menu music
+
+Open **Options > Menu Music > Open Music Folder** for a game's local music library. Add FLAC,
+MP3, WAV, OGG or M4A files, then choose **Refresh Music**. Tracks appear under their filenames
+without extensions. The folders are `%LOCALAPPDATA%\MGSMasterHub\music\<game-id>\`.
+
+Moving through the song list previews each track immediately. Confirm a song and choose
+**Save Changes** to keep it. Leaving the list or discarding changes restores the saved theme.
+Renaming or removing a selected file makes the hub fall back to an available default.
+The opening menu waits for its music to start before appearing.
+
+When present, these filenames provide the initial defaults. An explicit saved choice takes
+priority; absent files fall back to the extracted original menu theme.
+
+| Game folder | Default filename |
+| --- | --- |
+| `mg12` | `Zanzibar Breeze (Opening BGM 2).flac` |
+| `mgs1` | `Introduction.flac` |
+| `mgs2` | `Metal Gear Solid Main Theme.flac` |
+| `mgs3` | `Snake Eater.flac` |
+| `mgs4` | `Old Snake (Title).flac` |
+| `mgspw` | `Heavens Divide.flac` |
+
+Music files stay on your PC and are not included with the installer.
 
 ## `--game` flag
 

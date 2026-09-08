@@ -19,6 +19,23 @@ describe("checkForUpdate", () => {
     expect(await checkForUpdate("0.1.0", fetchImpl)).toBeNull();
   });
 
+  it.each([
+    ["0.3.0", "v0.2.0", false],
+    ["0.9.0", "v0.10.0", true],
+    ["0.10.0", "v0.9.0", false],
+    ["1.0.0", "v0.99.99", false],
+    ["0.3.0", "v0.3.1", true],
+    ["0.3.0", "v0.4.0-beta.1", false],
+    ["0.3.0-beta.1", "v0.3.0", true],
+    ["0.3.0+local", "v0.3.0+release", false],
+    ["0.3.0", "latest", false],
+    ["0.3.0", "v0.04.0", false],
+    ["invalid", "v0.4.0", false],
+  ])("compares installed %s with tag %s numerically (update=%s)", async (current, latest, update) => {
+    const result = await checkForUpdate(current, fakeFetch({ tag_name: latest, html_url: "https://example.com/release" }));
+    expect(result !== null).toBe(update);
+  });
+
   it("returns null on a non-ok response instead of throwing", async () => {
     const fetchImpl = fakeFetch({}, false);
     expect(await checkForUpdate("0.1.0", fetchImpl)).toBeNull();

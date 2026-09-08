@@ -4,7 +4,7 @@ import type { AssetManifest, Progress } from "../electron/main/extract/extractor
 import type { GameId } from "../electron/main/cli";
 import type { UpdateInfo } from "../electron/main/update";
 import type { GameSettings, SaveSettingsRequest } from "./settings";
-import type { MenuMusicRequest } from "./menuMusic";
+import type { MenuMusicLibrary, MenuMusicRequest } from "./menuMusic";
 
 export const ASSET_PROTOCOL = "hub-asset";
 
@@ -31,7 +31,7 @@ export type HubState = {
   steamPath: string | null;
   games: GameState[];
   // The game to show on first render: the `--game` CLI argument if one was given, else the
-  // last game the user was on (`Config.lastGame`), else undefined (defaults to index 0).
+  // last successfully launched game, legacy lastGame, then the first game.
   startGame?: GameId;
 };
 
@@ -41,6 +41,8 @@ export interface HubApi {
   getGameSettings(gameId: GameId, accountId?: string): Promise<Result<GameSettings>>;
   saveGameSettings(request: SaveSettingsRequest): Promise<Result<GameSettings>>;
   saveMenuMusic(request: MenuMusicRequest): Promise<Result<Config>>;
+  getMenuMusic(gameId: GameId): Promise<Result<MenuMusicLibrary>>;
+  openMenuMusicFolder(gameId: GameId): Promise<Result<void>>;
   getState(): Promise<Result<HubState>>;
   extract(target: ExtractTarget): Promise<Result<HubState>>;
   onExtractProgress(cb: (p: Progress) => void): () => void;
@@ -66,7 +68,7 @@ export interface HubApi {
   // Opens the release page for the update `getUpdate` reported, in the system browser.
   openUpdate(): Promise<Result<void>>;
   getConfig(): Promise<Result<Config>>;
-  setConfig(patch: Partial<Omit<Config, "menuMusic">>): Promise<Result<Config>>;
+  setConfig(patch: Partial<Omit<Config, "menuMusic" | "lastLaunchedGame">>): Promise<Result<Config>>;
   pickFolder(): Promise<Result<string>>;
   // Task 14's `HUB_SHOOT` real-asset screenshot mode: the renderer calls this once packs and
   // asset state have loaded, so main knows it is safe to start driving the game-by-game
