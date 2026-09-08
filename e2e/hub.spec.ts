@@ -35,6 +35,8 @@ test.describe("hub", () => {
     });
     page = await app.firstWindow();
     await page.setViewportSize({ width: 1920, height: 1080 });
+    await expect(page.getByTestId("game-screen")).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     (page as any).dataDir = data;
   });
 

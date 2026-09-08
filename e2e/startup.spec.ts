@@ -38,6 +38,7 @@ test("startup preloads another game's settings and warm Options preserve cached 
   try {
     const page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mg12");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     // MGS2 has never been opened. Its startup snapshot must already contain volume10.
     await writeFile(config, launcherSettings(8));
     await page.keyboard.press("Tab");
@@ -62,6 +63,7 @@ test("startup preloads another game's settings and warm Options preserve cached 
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
 
     // An additional disk change distinguishes a warm cache hit from another IPC read.
     await writeFile(config, launcherSettings(6));
@@ -115,6 +117,7 @@ test("keyboard Retry rediscovers a repaired artwork manifest instead of reusing 
     await writeFile(manifestPath, JSON.stringify(manifest));
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mg12");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
   } finally {
     await app.close();

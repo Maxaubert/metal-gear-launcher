@@ -20,6 +20,7 @@ test("pointer focus follows every game menu without activating, and keyboard tak
     const page = await app.firstWindow();
     await page.setViewportSize({ width: 1920, height: 1080 });
     await expect(page.getByTestId("game-screen")).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     for (const id of ["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]) {
       await page.keyboard.press("Tab");
       const tile = page.getByTestId(`tile-${id}`);
@@ -78,6 +79,8 @@ test("first-run rows respond to pointer focus without starting extraction", asyn
     const page = await app.firstWindow();
     const start = page.getByRole("button", { name: "Start", exact: true });
     const locate = page.getByRole("button", { name: "Locate Steam folder", exact: true });
+    await expect(start).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await start.hover();
     await expect(start).toHaveAttribute("aria-current", "true");
     await expect(page.getByText("Extracting...", { exact: true })).toHaveCount(0);

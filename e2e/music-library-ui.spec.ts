@@ -21,6 +21,7 @@ test("music filenames preview on focus, save explicitly, and refresh without res
     let page = await app.firstWindow();
     await page.setViewportSize({ width: 1920, height: 1080 });
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     const library = await page.evaluate(() => window.hub.getMenuMusic("mgs1"));
     if (!library.ok) throw new Error(library.error);
     const firstId = library.value.themes.find(theme => theme.label === labels[0])!.id;
@@ -67,6 +68,7 @@ test("music filenames preview on focus, save explicitly, and refresh without res
     app = await electron.launch(options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(lastId));
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();

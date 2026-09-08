@@ -27,6 +27,7 @@ test("Menu Music saves and discards hub-only preferences without native settings
   try {
     let page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     // A music-only save must never depend on the native transaction API.
     await app.evaluate(({ ipcMain }) => {
       ipcMain.removeHandler("hub:settings:save");
@@ -84,6 +85,7 @@ test("Menu Music saves and discards hub-only preferences without native settings
     app = await electron.launch(options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     await page.getByRole("button", { name: "Original Menu Theme", exact: true }).click();

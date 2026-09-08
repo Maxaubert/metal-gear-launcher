@@ -59,6 +59,7 @@ test("menu sounds follow semantic actions once, with no passive or ineffective-i
     });
     await page.reload();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.mouse.move(0, 0);
     async function expectSounds(expected: MenuSound[]) {
       await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));

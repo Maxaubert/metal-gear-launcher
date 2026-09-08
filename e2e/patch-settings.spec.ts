@@ -30,6 +30,7 @@ test("detected patch initialization is deliberate and saves only into a throwawa
   try {
     const page = await app.firstWindow();
     await page.getByTestId("game-screen").waitFor();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs2").click();
     await page.getByTestId("menu-item-options").click();

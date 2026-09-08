@@ -50,6 +50,7 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
   try {
     const page = await app.firstWindow();
     await page.getByTestId("game-screen").waitFor();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs3").click();
     await page.getByTestId("menu-item-options").click();

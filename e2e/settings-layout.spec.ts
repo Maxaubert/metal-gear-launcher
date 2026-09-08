@@ -41,6 +41,7 @@ test("settings headings and row origins stay fixed across native and hub categor
     }, settings);
     await page.reload();
     await expect(page.getByTestId("game-screen")).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
 
     for (const width of [1920, 3840]) {
       await page.setViewportSize({ width, height: width * 9 / 16 });

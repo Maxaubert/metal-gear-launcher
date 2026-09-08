@@ -15,6 +15,7 @@ import PersistentBackdrop from "../screens/PersistentBackdrop";
 import { useGameSettingsCache } from "../settings/useGameSettingsCache";
 import { preloadPresentation } from "./preloadPresentation";
 import StartupSplash from "./StartupSplash";
+import { useStartupPresentation } from "./useStartupPresentation";
 import { resolveMenuMusic, type MenuMusicLibrary, type MenuMusicSelections } from "@shared/menuMusic";
 
 const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
@@ -168,6 +169,8 @@ export default function HubProvider() {
     return () => { cancelled = true; };
   }, [configLoaded]);
   const startupError = preparationError || (!ready ? music.error : "");
+  const canReveal = Boolean(hubState && !startupError && soundsReady && (needsFirstRun || ready));
+  const startup = useStartupPresentation(canReveal);
   // Keep a completed startup latched while later tracks buffer or fail. This conditional
   // state adjustment finishes before React commits the newly visible menu.
   if (hubState && preparedState === hubState && music.ready && startedState !== hubState) setStartedState(hubState);
@@ -199,7 +202,7 @@ export default function HubProvider() {
     return () => { cancelled = true; };
   }, [hubState, needsFirstRun, settingsCache, configLoaded]);
 
-  useEffect(() => { if (ready) void window.hub.ready(); }, [ready]);
+  useEffect(() => { if (ready && !startup.visible) void window.hub.ready(); }, [ready, startup.visible]);
 
   // Theme: the current game's colours become CSS custom properties on <html>.
   useEffect(() => {
@@ -213,7 +216,7 @@ export default function HubProvider() {
   // Y/retry effect (same button, same polling shape) since both are global "press Y for the
   // thing the footer/overlay is telling you about" affordances rather than menu navigation.
   useEffect(() => {
-    if (!updateInfo || settingsOpen) return;
+    if (!updateInfo || settingsOpen || startup.visible) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "KeyY") void window.hub.openUpdate();
     };
@@ -236,7 +239,7 @@ export default function HubProvider() {
       window.removeEventListener("keydown", onKeyDown);
       cancelAnimationFrame(frame);
     };
-  }, [updateInfo, settingsOpen]);
+  }, [updateInfo, settingsOpen, startup.visible]);
 
   async function refreshState(): Promise<void> {
     try {
@@ -302,7 +305,7 @@ export default function HubProvider() {
   }
 
   async function handleRetryExtract(): Promise<void> {
-    if (!currentGame) return;
+    if (!currentGame || startup.visible) return;
     await window.hub.extract(currentGame.pack.id);
     await refreshState();
   }
@@ -335,7 +338,7 @@ export default function HubProvider() {
 
   const onAction = (action: Action) => {
     if (quitting.current) return;
-    if (startupError || !soundsReady || (!ready && !needsFirstRun)) {
+    if (startup.visible) {
       if (startupError) {
         if (action === "up" || action === "down") setStartupItem(index => (index + (action === "up" ? startupRowCount - 1 : 1)) % startupRowCount);
         else if (action === "confirm") recoverStartup(Math.min(startupItem, startupRowCount - 1));
@@ -403,12 +406,9 @@ export default function HubProvider() {
     </div>
   );
 
-  if (!hubState || startupError || !soundsReady || (!needsFirstRun && !ready)) return <StartupSplash
-    games={games} error={startupError} actions={startupActions} selectedAction={startupItem}
-    buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />;
-
-  if (needsFirstRun) {
-    return (
+  let content;
+  if (needsFirstRun && hubState && soundsReady) {
+    content = (
       <>
         <FirstRun
           games={games}
@@ -423,58 +423,64 @@ export default function HubProvider() {
         {updateBanner}
       </>
     );
+  } else if (currentGame && ready) {
+    // The backdrop has one stable mount. Navigation replaces only the foreground menus.
+    const displayedGame = nav.screen === "selection" ? (games[nav.item] ?? currentGame) : currentGame;
+
+    content = (
+      <>
+        <div style={{ position: "absolute", inset: 0 }}>
+          <PersistentBackdrop game={displayedGame} view={settingsOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail} />
+          {settingsOpen ? (
+            <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
+              musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={selections => { setMusicSelections(selections); setMutedStartupGame(undefined); }}
+              musicLibrary={musicLibraries[currentGame.pack.id]!} onMusicPreview={setMusicPreview}
+              musicError={music.error}
+              onMusicLibraryChanged={library => setMusicLibraries(previous => ({ ...previous, [library.gameId]: library }))}
+              onClose={() => {
+                setSettingsOpen(false);
+                setSettingsDetail(false);
+                if (pendingNavigation.current) {
+                  dispatch(pendingNavigation.current);
+                  pendingNavigation.current = null;
+                }
+              }} />
+          ) : nav.screen === "selection" ? (
+            <GameSelection
+              games={games}
+              focusIndex={nav.item}
+              onFocusItem={hoverItem}
+              lastInputKind={lastInputKind}
+              onSelect={(index) => userDispatch({ type: "selectGame", index })}
+            />
+          ) : currentGame.installed ? (
+            <GameScreen
+              game={currentGame}
+              menuItem={nav.item}
+              launching={launching}
+              quitOpen={quitOpen}
+              quitItem={quitItem}
+              lastInputKind={lastInputKind}
+              onSelectMenuItem={(index) => void handleMenuChoice(currentGame.pack.menu[index] ?? "start")}
+              onHoverMenuItem={hoverItem}
+              onHoverQuitItem={index => { focusByMouse(index); focusQuit(index); }}
+              onQuitSelect={index => void handleQuitChoice(index)}
+              onRetryExtract={() => void handleRetryExtract()}
+            />
+          ) : (
+            <NotInstalled game={currentGame} onInstall={() => { void playMenuSound("select"); void window.hub.launch(currentGame.pack.id, { install: true }); }} />
+          )}
+        </div>
+        {updateBanner}
+      </>
+    );
   }
 
-  if (!currentGame) return <div className="screen-root" />;
-
-  // The backdrop has one stable mount. Navigation replaces only the foreground menus.
-  const displayedGame = nav.screen === "selection" ? (games[nav.item] ?? currentGame) : currentGame;
-
-  return (
-    <>
-      <div style={{ position: "absolute", inset: 0 }}>
-        <PersistentBackdrop game={displayedGame} view={settingsOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail} />
-        {settingsOpen ? (
-          <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
-            musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={selections => { setMusicSelections(selections); setMutedStartupGame(undefined); }}
-            musicLibrary={musicLibraries[currentGame.pack.id]!} onMusicPreview={setMusicPreview}
-            musicError={music.error}
-            onMusicLibraryChanged={library => setMusicLibraries(previous => ({ ...previous, [library.gameId]: library }))}
-            onClose={() => {
-              setSettingsOpen(false);
-              setSettingsDetail(false);
-              if (pendingNavigation.current) {
-                dispatch(pendingNavigation.current);
-                pendingNavigation.current = null;
-              }
-            }} />
-        ) : nav.screen === "selection" ? (
-          <GameSelection
-            games={games}
-            focusIndex={nav.item}
-            onFocusItem={hoverItem}
-            lastInputKind={lastInputKind}
-            onSelect={(index) => userDispatch({ type: "selectGame", index })}
-          />
-        ) : currentGame.installed ? (
-          <GameScreen
-            game={currentGame}
-            menuItem={nav.item}
-            launching={launching}
-            quitOpen={quitOpen}
-            quitItem={quitItem}
-            lastInputKind={lastInputKind}
-            onSelectMenuItem={(index) => void handleMenuChoice(currentGame.pack.menu[index] ?? "start")}
-            onHoverMenuItem={hoverItem}
-            onHoverQuitItem={index => { focusByMouse(index); focusQuit(index); }}
-            onQuitSelect={index => void handleQuitChoice(index)}
-            onRetryExtract={() => void handleRetryExtract()}
-          />
-        ) : (
-          <NotInstalled game={currentGame} onInstall={() => { void playMenuSound("select"); void window.hub.launch(currentGame.pack.id, { install: true }); }} />
-        )}
-      </div>
-      {updateBanner}
-    </>
-  );
+  return <>
+    <div data-testid="hub-content" inert={startup.visible} aria-hidden={startup.visible || undefined}>
+      {content}
+    </div>
+    {startup.visible && <StartupSplash error={startupError} actions={startupActions} selectedAction={startupItem}
+      exiting={startup.exiting} buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />}
+  </>;
 }

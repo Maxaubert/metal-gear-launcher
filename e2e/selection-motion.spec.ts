@@ -13,6 +13,7 @@ test("selection motion is interruptible, keeps rows fixed, and respects reduced 
   try {
     const page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     for (const size of [{ width: 1920, height: 1080 }, { width: 3840, height: 2160 }]) {
       await page.setViewportSize(size);

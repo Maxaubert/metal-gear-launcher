@@ -24,6 +24,7 @@ test("a partial Unicode library needs no community fixes and uses its separate d
     } });
     const page = await app.firstWindow();
     await expect(page.getByText("Not installed", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".tile.not-installed")).toHaveCount(5);
     await page.getByTestId("tile-mgs3").click();
@@ -54,6 +55,7 @@ test("a fresh empty Steam install opens without artwork or font caches", async (
     } });
     const page = await app.firstWindow();
     await expect(page.getByText("Not installed", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".tile.not-installed")).toHaveCount(6);
     await expect(page.locator(".tile-cover")).toHaveCount(0);
@@ -75,6 +77,7 @@ test("missing Steam can be located manually and a first installed game requests 
     } });
     const page = await app.firstWindow();
     await expect(page.getByText("Locate Steam folder", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await cp(join(__dirname, "fixtures", "steam", "steamapps", "common", "MGS3"), join(steam, "steamapps", "common", "MGS3"), { recursive: true });
     await writeFile(join(steam, "steam.exe"), "synthetic fixture");
     await writeFile(join(steam, "steamapps", "appmanifest_2131650.acf"), '"AppState" { "installdir" "MGS3" "buildid" "100004" }');
@@ -83,6 +86,7 @@ test("missing Steam can be located manually and a first installed game requests 
     // Reload to follow the same state path as the folder-picker's successful callback.
     await page.reload();
     await expect(page.getByRole("heading", { name: "Preparing your games", exact: true })).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await expect(page.getByText("Locate Steam folder", { exact: true })).toHaveCount(0);
     await expect(page.getByText("MGS3", { exact: true })).toBeVisible();
     await expect(page.getByText("0%", { exact: true })).toBeVisible();

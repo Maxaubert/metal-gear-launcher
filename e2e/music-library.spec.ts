@@ -54,6 +54,7 @@ test("local filenames preview on focus, save independently, survive restart and 
   try {
     let page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await expectPlaying(page, "mgs2/bgm.wav");
     const result = await page.evaluate(() => window.hub.getMenuMusic("mgs2"));
     if (!result.ok) throw new Error(result.error);
@@ -97,6 +98,7 @@ test("local filenames preview on focus, save independently, survive restart and 
     app = await electron.launch(f.options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await expectPlaying(page, first.id);
     await openMusic(page);
     await page.getByRole("button", { name: second.label, exact: true }).hover();
@@ -109,6 +111,7 @@ test("local filenames preview on focus, save independently, survive restart and 
     app = await electron.launch(f.options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await expectPlaying(page, "mgs2/bgm.wav");
     await openMusic(page);
     await expect(page.getByRole("button", { name: first.label, exact: true })).toHaveCount(0);
@@ -123,6 +126,7 @@ test("startup remembers successful game launches instead of browsed tabs or inst
   try {
     let page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs2").click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
@@ -130,6 +134,7 @@ test("startup remembers successful game launches instead of browsed tabs or inst
     app = await electron.launch(f.options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs2").click();
     await page.getByTestId("menu-item-start").click();
@@ -139,6 +144,7 @@ test("startup remembers successful game launches instead of browsed tabs or inst
     app = await electron.launch(f.options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs3").click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
@@ -157,6 +163,7 @@ test("startup remembers successful game launches instead of browsed tabs or inst
     app = await electron.launch(f.options);
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
   } finally { await app.close(); await cleanup(f.root); }
 });
 
@@ -172,6 +179,7 @@ test("a corrupt selected custom track can be bypassed and replaced from Menu Mus
     await expect(page.getByTestId("game-screen")).toHaveCount(0);
     await page.getByRole("button", { name: "Continue Without Music", exact: true }).click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await openMusic(page);
     await page.getByRole("button", { name: "Original Menu Theme", exact: true }).click();
     await page.getByRole("button", { name: "Save Changes", exact: true }).click();
