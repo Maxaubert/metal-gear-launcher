@@ -46,11 +46,16 @@ export default function PersistentBackdrop({ game, view, detail }: {
     deadline.current ??= performance.now() + WIPE_DURATION;
     const remaining = deadline.current - performance.now();
     if (remaining <= 0) { finish(); return; }
-    const animation = nodes.current.get(current.key)?.animate([
+    // React can restart this effect for the same layer (for example when pointer
+    // input changes the footer). Resume its wipe instead of replacing the map entry
+    // and leaving an untracked, paused clip mask behind on the same DOM node.
+    const existing = activeAnimations.get(current.key);
+    const animation = existing ?? nodes.current.get(current.key)?.animate([
       { clipPath: "inset(0 100% 0 0)" },
       { clipPath: "inset(0 0% 0 0)" },
     ], { duration: remaining, easing: "cubic-bezier(.22,.8,.25,1)", fill: "both" });
     if (!animation) { finish(); return; }
+    if (existing) animation.play();
     activeAnimations.set(current.key, animation);
     animation.onfinish = finish;
     // A held key cannot keep old layers alive by restarting the deadline.
