@@ -110,7 +110,7 @@ test.describe("hub", () => {
       for (const id of ["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]) {
         await page.keyboard.press("Tab");
         await page.getByTestId(`tile-${id}`).click();
-        if (id !== "mgs1") await expect(page.locator(".header-year-art").first()).toBeVisible();
+        await expect(page.locator(".header-year-art").first()).toBeVisible();
         const lastDescription = await page.locator(".description").last().boundingBox();
         const menu = await page.locator(".menu").boundingBox();
         expect(lastDescription!.y + lastDescription!.height).toBeLessThan(menu!.y);
@@ -158,6 +158,34 @@ test.describe("hub", () => {
           await page.keyboard.press(direction);
         }
       }
+    }
+  });
+
+  test("MGS1 shares MGS2 and MGS3 right-panel type and rule styling", async () => {
+    for (const width of [1920, 3840]) {
+      await page.setViewportSize({ width, height: width * 9 / 16 });
+      const panels = [];
+      for (const id of ["mgs1", "mgs2", "mgs3"]) {
+        await page.keyboard.press("Tab");
+        await page.getByTestId(`tile-${id}`).click();
+        // Descriptions must use live text rather than magnified bitmap lettering.
+        await expect(page.locator(".description [data-native-sprite]")).toHaveCount(0);
+        panels.push(await page.evaluate(() => {
+          const style = (selector: string, pseudo?: string) => getComputedStyle(document.querySelector(selector)!, pseudo);
+          const description = style(".description"), hints = style(".hints"), divider = style(".divider");
+          const head = style(".head"), separator = style(".menu", "::before");
+          return {
+            description: [description.fontFamily, description.fontSize, description.lineHeight, description.color, description.right],
+            hints: [hints.fontFamily, hints.fontWeight, hints.fontSize],
+            divider: [divider.width, divider.backgroundColor],
+            header: [head.height, head.borderBottomWidth, head.borderBottomColor],
+            year: style(".header-year-art").height, subtitle: style(".header-subtitle-art").height,
+            separator: [separator.content, separator.borderTopWidth, separator.borderTopColor],
+          };
+        }));
+      }
+      expect(panels[0]).toEqual(panels[1]);
+      expect(panels[0]).toEqual(panels[2]);
     }
   });
 

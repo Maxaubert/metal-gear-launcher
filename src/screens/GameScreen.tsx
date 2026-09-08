@@ -4,8 +4,6 @@ import type { Pack } from "@shared/packs";
 import type { InputKind } from "../input/useNavigation";
 import { themeVars, layoutVars } from "../theme/theme";
 import FooterHints from "./FooterHints";
-import Mgs1NativeText from "../typography/Mgs1NativeText";
-import { MGS1_TEXT_SPRITES } from "../typography/mgs1Typography";
 
 export type MenuKey = Pack["menu"][number];
 
@@ -90,7 +88,7 @@ export default function GameScreen({
           ScreenBackdrop, one per chapter, instead of this single pack-level one. */}
       {!pack.chapters && (
         <div key={`${pack.id}-desc`} className="fade-in-fast">
-          <p className="description">{pack.id === "mgs1" ? <Mgs1NativeText assetUrls={assetUrls} text={pack.description} sprite={MGS1_TEXT_SPRITES.story} /> : pack.description}</p>
+          <p className="description">{pack.description}</p>
         </div>
       )}
 

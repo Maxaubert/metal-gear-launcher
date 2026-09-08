@@ -2,8 +2,7 @@ import type { CSSProperties } from "react";
 import type { GameState } from "@shared/ipc";
 import type { Pack } from "@shared/packs";
 import PeaceWalkerMotion from "./PeaceWalkerMotion";
-import Mgs1NativeText from "../typography/Mgs1NativeText";
-import { MGS1_TEXT_SPRITES } from "../typography/mgs1Typography";
+import HeaderArtwork, { type HeaderArtworkSource } from "./HeaderArtwork";
 
 // D2 (round 5): per-pack override of `.main-visual`'s box so the key art can bleed past the
 // bottom edge like the originals (spec 4.7's `visualFit` pack field). `undefined` when the pack
@@ -48,14 +47,14 @@ export type ScreenBackdropProps = {
   assetUrls: GameState["assetUrls"];
 };
 
-type HeaderMarkProps = { serialLines: string[]; indexLabel: string; src?: string };
+type HeaderMarkProps = { serialLines: string[]; indexLabel: string; src?: string; artwork?: HeaderArtworkSource };
 
 // The header's serial-lines + barcode + index + accent "!" block (spec 4.7) - shared by the
 // single header and each of a `chapters` pack's two headers (defect 4: MG1&2 repeats this mark
 // once per chapter, both carrying the same pack-level `indexLabel`).
-function HeaderMark({ serialLines, indexLabel, src }: HeaderMarkProps) {
-  if (src) return <div className="header-mark-art" aria-hidden="true">
-    <img src={src} alt="" />
+function HeaderMark({ serialLines, indexLabel, src, artwork }: HeaderMarkProps) {
+  if (artwork || src) return <div className="header-mark-art" aria-hidden="true">
+    <HeaderArtwork artwork={artwork ?? { src: src! }} />
     <span className="header-bang">!</span>
   </div>;
   return (
@@ -102,6 +101,19 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
   const visualStyle = visualFitStyle(pack.visualFit);
   const bgEffectStyle = bgEffectFitStyle(pack.bgEffectFit);
   const serialLines = [hexDigits(pack.steam.appId, 24), hexDigits(pack.steam.appId + 1, 24), hexDigits(pack.steam.appId + 2, 24)];
+  // MGS1 stores these original elements together. Crop their measured regions into the
+  // same year, two-line subtitle, and mark boxes used by the other single-game menus.
+  const nativeHeader = pack.id === "mgs1" ? assetUrls.settingsHeader : undefined;
+  const headerYear: HeaderArtworkSource | undefined = nativeHeader ? { src: nativeHeader,
+    crop: { x: 0, y: 0, width: 148, height: 88, sourceWidth: 212, sourceHeight: 116 } }
+    : assetUrls.headerYear ? { src: assetUrls.headerYear } : undefined;
+  const headerSubtitle: HeaderArtworkSource | undefined = nativeHeader ? { src: nativeHeader,
+    crop: { x: 0, y: 98, width: 212, height: 47, sourceWidth: 212, sourceHeight: 116 } }
+    : assetUrls.headerSubtitle ? { src: assetUrls.headerSubtitle } : undefined;
+  const headerMark: HeaderArtworkSource | undefined = pack.id === "mgs1" && assetUrls.settingsTimeline
+    ? { src: assetUrls.settingsTimeline, crop: { x: 420, y: 335, width: 309, height: 124,
+      sourceWidth: 760, sourceHeight: 981, cutout: { x: 675, y: 340, width: 30, height: 90 } } }
+    : undefined;
 
   return (
     <>
@@ -184,15 +196,13 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
         <div key={`${pack.id}-head`} className="fade-in-fast">
           <header className="head">
             <span className="tick" />
-            {pack.id === "mgs1" && assetUrls.nativeTextAtlas ? <h1 className="mgs1-native-main-header">
-              <Mgs1NativeText assetUrls={assetUrls} text={`${pack.yearLabel} ${pack.subtitle}`} sprite={MGS1_TEXT_SPRITES.yearAndSubtitle} />
-            </h1> : <h1 className="year">{assetUrls.headerYear ? <img className="header-year-art" src={assetUrls.headerYear} alt={pack.yearLabel} /> : pack.yearLabel}</h1>}
-            {!(pack.id === "mgs1" && assetUrls.nativeTextAtlas) && <p className="subtitle">
-              {assetUrls.headerSubtitle ? <img className="header-subtitle-art" src={assetUrls.headerSubtitle} alt={pack.subtitle} /> : pack.subtitle.split(" / ").map((line) => (
+            <h1 className="year">{headerYear ? <HeaderArtwork className="header-year-art" artwork={headerYear} label={pack.yearLabel} /> : pack.yearLabel}</h1>
+            <p className="subtitle">
+              {headerSubtitle ? <HeaderArtwork className="header-subtitle-art" artwork={headerSubtitle} label={pack.subtitle} /> : pack.subtitle.split(" / ").map((line) => (
                 <span key={line}>{line}</span>
               ))}
-            </p>}
-            {!(pack.id === "mgs1" && assetUrls.nativeTextAtlas) && <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} src={assetUrls.headerMark} />}
+            </p>
+            <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} src={assetUrls.headerMark} artwork={headerMark} />
           </header>
         </div>
       )}

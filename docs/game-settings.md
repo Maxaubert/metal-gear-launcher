@@ -6,8 +6,9 @@ patches separately, with their version and configuration status.
 
 Startup prepares installed games' settings, decodes menu artwork, and loads native fonts before
 showing the launcher. Main, Game Selection and Options share a persistent background, so menu
-navigation does not remount the portrait or restart its fade. MGS1 uses extracted static lettering
-and its original English bitmap font; the other games share their identical extracted font files.
+navigation does not remount the portrait or restart its fade. Main menu descriptions, buttons
+and hints share the extracted Unity font files. MGS1 Options retains its extracted static lettering
+and original English bitmap font.
 
 Main launcher buttons share the native Unity menu style across all six games, including MGS1:
 700 by 60 pixels with a 70-pixel row pitch and 32-pixel labels on a 1920 by 1080 canvas.
@@ -15,6 +16,8 @@ Each game retains its reference highlight color. These dimensions scale
 with the viewport instead of growing MGS1's rows to fill unused space.
 
 The single-game pages share a common year-header and menu anchor when switching games.
+MGS1, MGS2 and MGS3 also share description sizing, footer typography and rule weights.
+MGS1's combined header artwork is cropped into the shared year, subtitle and barcode boxes.
 MG/MG2 retains its separate two-chapter composition.
 
 Menu Music selects the hub background theme independently for each game. Its catalog currently
