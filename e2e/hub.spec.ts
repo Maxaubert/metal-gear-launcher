@@ -107,13 +107,23 @@ test.describe("hub", () => {
   test("reference menus keep descriptions clear and all selection entries reachable at HD and 4K", async () => {
     for (const width of [1920, 3840]) {
       await page.setViewportSize({ width, height: width * 9 / 16 });
-      for (const id of ["mg12", "mgs2", "mgs3", "mgs4", "mgspw"]) {
+      for (const id of ["mg12", "mgs1", "mgs2", "mgs3", "mgs4", "mgspw"]) {
         await page.keyboard.press("Tab");
         await page.getByTestId(`tile-${id}`).click();
-        await expect(page.locator(".header-year-art").first()).toBeVisible();
+        if (id !== "mgs1") await expect(page.locator(".header-year-art").first()).toBeVisible();
         const lastDescription = await page.locator(".description").last().boundingBox();
         const menu = await page.locator(".menu").boundingBox();
         expect(lastDescription!.y + lastDescription!.height).toBeLessThan(menu!.y);
+        // Native references share 700x60 rows at a 70px pitch, normalized to 1080p.
+        const button = await page.getByTestId("menu-item-options").boundingBox();
+        const previous = await page.getByTestId("menu-item-gameSelection").boundingBox();
+        const scale = width / 1920;
+        expect(button!.x / scale).toBeCloseTo(1208, 0);
+        expect(button!.width / scale).toBeCloseTo(700, 0);
+        expect(button!.height / scale).toBeCloseTo(60, 0);
+        expect((button!.y - previous!.y) / scale).toBeCloseTo(70, 0);
+        await expect(page.getByTestId("menu-item-options")).toHaveCSS("font-size", `${32 * scale}px`);
+        await expect(page.getByTestId("menu-item-start")).toHaveCSS("box-shadow", "none");
         await page.keyboard.press("Tab");
         await expect(page.getByTestId("tile-mg12").locator(".tile-number")).toHaveCount(0);
         await expect(page.getByTestId("tile-mgs2").locator(".tile-number")).toHaveText("2");

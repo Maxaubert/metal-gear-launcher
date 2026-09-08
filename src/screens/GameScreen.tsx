@@ -107,7 +107,7 @@ export default function GameScreen({
             className={[index === menuItem ? "focused" : "", key === "quit" ? "quit" : ""].filter(Boolean).join(" ")}
             onClick={() => onSelectMenuItem(index)}
           >
-            {pack.id === "mgs1" ? <Mgs1NativeText assetUrls={assetUrls} text={MENU_LABELS[key]} /> : MENU_LABELS[key]}
+            {MENU_LABELS[key]}
           </li>
         ))}
       </ul>

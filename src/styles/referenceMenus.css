@@ -45,8 +45,11 @@
   color: #585858;
   line-height: 0;
 }
-.screen[data-game="mgs1"] .menu li { font-size: 2.9vh; }
-.screen[data-game="mgs1"] .menu { top: 50.3vh; }
+.screen[data-game="mgs1"] .menu { top: 50.3vh; --accent: #d60001; }
+.screen[data-game="mg12"] .menu { --accent: #013686; }
+.screen[data-game="mgs3"] .menu { --accent: #79a036; }
+.screen[data-game="mgs4"] .menu { --accent: #e20000; }
+.screen[data-game="mgspw"] .menu { --accent: #fdd000; }
 
 .screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .ground {
   background-image: linear-gradient(to right, var(--paper-left), var(--paper) 62%);
@@ -88,13 +91,6 @@
   height: 100vh;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li {
-  border-width: 0.08vw;
-  padding-left: 0.9vw;
-  font-size: 2.9vh;
-  box-shadow: none;
-}
-
 .screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .year,
 .screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .subtitle {
   margin-left: 0;
@@ -134,7 +130,6 @@
 }
 
 .screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .description,
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li,
 .screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .hints {
   font-family: "MenuEnglish", "Rodin", sans-serif;
   font-weight: 400;
@@ -195,18 +190,6 @@
   position: absolute;
   top: 26.5vh;
   width: 100%;
-}
-
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu .menu-bar {
-  left: -1.9vw;
-  width: 0.3vw;
-  border: 0;
-  padding: 0;
-}
-
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li.focused {
-  margin-left: -1.3vw;
-  padding-left: 2.2vw;
 }
 
 .screen:is([data-game="mgs2"], [data-game="mgs3"]) .head .subtitle {

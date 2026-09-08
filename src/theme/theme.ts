@@ -33,13 +33,15 @@ export function themeVars(theme: ThemeColors): Record<string, string> {
  * pack, so this takes no arguments.
  */
 export function layoutVars(gameId?: string): Record<string, string> {
+  // Native launcher rows use a 60px height and 70px pitch on a 1080p canvas.
+  const rows = { "--row-h": "5.555556vh", "--row-gap": "0.925926vh" };
   if (gameId === "mg12" || gameId === "mgs2" || gameId === "mgs3" || gameId === "mgs4" || gameId === "mgspw") {
     return {
       "--left-zone": "62.2vw", "--divider-x": "62.2vw",
       "--col-x": "63.5vw", "--col-right": "99.4vw",
       "--header-top": gameId === "mg12" ? "3vh" : "8vh",
       "--desc-top": "25vh", "--menu-top": gameId === "mg12" ? "55vh" : "48.6vh",
-      "--row-h": "5.5vh", "--row-gap": "1vh", "--hint-baseline": "96vh",
+      ...rows, "--hint-baseline": "96vh",
     };
   }
   return {
@@ -47,20 +49,7 @@ export function layoutVars(gameId?: string): Record<string, string> {
     "--divider-x": "61.5vw",
     "--col-x": "63vw",
     "--col-right": "97.5vw",
-    // Round 8 critique finding 6: with only 3 MVP menu rows (start/gameSelection/quit), the
-    // block ended around 58vh, leaving a large empty gap down to the footer hints where the
-    // reference's own (longer) menu fills the column. Scaled by ~1.4x per the critique's own
-    // estimate rather than inventing extra rows a launcher has no use for.
-    "--row-h": "7.84vh",
-    "--row-gap": "1.54vh",
-    // Round 9 critique finding 1: MGS1's description (the longest real one) was clamping mid-
-    // word ("...within the game's...") where it used to render in full. The true 16:9 canvas
-    // fixed in round 8 made every `vh`-sized value (including the description's own 2.2vh font)
-    // larger in absolute pixels without changing the `vw`-sized column width, so the same text
-    // now wraps one line longer than before. Reclaimed 3vh from the menu's own start rather than
-    // shrinking the font (menu rows already grew taller this round; starting 3vh later still
-    // leaves them well clear of the footer hints, and happens to help the separate "menu block
-    // stops too early" finding rather than fight it).
+    ...rows,
     "--menu-top": "46vh",
     "--header-top": "5vh",
     "--desc-top": "22vh",

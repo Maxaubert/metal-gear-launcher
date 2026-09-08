@@ -9,6 +9,11 @@ showing the launcher. Main, Game Selection and Options share a persistent backgr
 navigation does not remount the portrait or restart its fade. MGS1 uses extracted static lettering
 and its original English bitmap font; the other games share their identical extracted font files.
 
+Main launcher buttons share the native Unity menu style across all six games, including MGS1:
+700 by 60 pixels with a 70-pixel row pitch and 32-pixel labels on a 1920 by 1080 canvas.
+Each game retains its reference menu position and highlight color. These dimensions scale
+with the viewport instead of growing MGS1's rows to fill unused space.
+
 Options opens from the prepared settings snapshot. Reload and Discard explicitly reread the
 files, and saving still checks for external changes before writing. Failed startup preparation
 offers Retry and artwork re-extraction with keyboard, mouse and controller navigation. Cached

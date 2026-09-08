@@ -45,11 +45,6 @@
 
 .screen[data-game="mgspw"] .menu li.focused {
   color: #000;
-  padding-left: 1.6vw;
-}
-
-.screen[data-game="mgspw"] .menu li:not(.focused):not(.menu-bar) {
-  margin-left: -0.6vw;
 }
 
 .screen[data-game="mgspw"] .tile.focused .tile-number {
