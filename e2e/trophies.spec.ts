@@ -18,10 +18,11 @@ test("individual trophies show source percentages and unlock state, navigate com
       let calls = 0;
       ipcMain.handle("hub:achievements:get", (_event, request) => {
         calls++;
+        if (calls === 1) return { ok: true, value: { gameId: request.gameId, sources: [] } };
         const achievements = Array.from({ length: 12 }, (_, i) => ({ id: `trophy-${i}`, name: `Trophy ${i + 1}`, description: `Description for trophy ${i + 1}.`, unlocked: i === 0 ? true : i === 1 ? false : null,
           percent: i === 0 ? 0 : i === 1 ? .04 : i === 2 ? null : 45.8, hidden: false }));
         return { ok: true, value: { gameId: request.gameId, sources: [{ id: "steam:2131640", platform: "steam", label: "Steam", status: "ready", personalStatus: "available", updatedAt: 1700000000000,
-          stale: calls > 1, message: calls > 1 ? "Showing cached trophies." : undefined, achievements },
+          stale: calls > 2, message: calls > 2 ? "Showing cached trophies." : undefined, achievements },
           { id: "gog:1", platform: "gog", label: "GOG Galaxy", status: "ready", personalStatus: "unavailable", updatedAt: 1700000000000, stale: true,
             achievements: [{ ...achievements[0], name: "Galaxy Trophy", unlocked: null, percent: 34.88 }] }] } };
       });
@@ -30,7 +31,10 @@ test("individual trophies show source percentages and unlock state, navigate com
     await page.getByTestId("menu-item-trophies").click();
     const screen = page.getByTestId("trophies-screen");
     await expect(screen).toBeVisible();
+    await expect(screen).toContainText("No trophy data is available for this edition.");
+    await screen.getByRole("button", { name: "Refresh", exact: true }).click();
     await expect(screen.locator(".trophy-row")).toHaveCount(12);
+    await expect(screen.locator(".hints")).toContainText("Platform");
     await expect(screen.locator(".trophy-row").nth(0)).toContainText("0%");
     await expect(screen.locator(".trophy-row").nth(1)).toContainText("<0.1%");
     await expect(screen.locator(".trophy-row").nth(2)).toContainText("Unavailable");

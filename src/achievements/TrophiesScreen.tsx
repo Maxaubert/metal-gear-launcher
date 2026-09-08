@@ -3,7 +3,7 @@ import type { GameState } from "@shared/ipc";
 import { achievementIconUrl, type AchievementsSnapshot } from "@shared/achievements";
 import type { Action } from "../input/navigationReducer";
 import type { InputKind } from "../input/useNavigation";
-import FooterHints from "../screens/FooterHints";
+import FooterHints, { ControlHint } from "../screens/FooterHints";
 import { themeVars } from "../theme/theme";
 import { playMenuSound } from "../audio/menuSounds";
 import "./trophies.css";
@@ -16,9 +16,13 @@ export function percentLabel(percent: number | null): string {
 }
 function TrophyIcon({ url }: { url?: string }) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const safe = achievementIconUrl(url);
-  return safe && !failed ? <img src={safe} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
-    : <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 7h20v13c0 8-5 12-10 12s-10-4-10-12V7ZM14 11H7v6c0 5 3 8 8 8m19-14h7v6c0 5-3 8-8 8M24 32v8m-9 2h18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>;
+  return <>
+    {!loaded && <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 7h20v13c0 8-5 12-10 12s-10-4-10-12V7ZM14 11H7v6c0 5 3 8 8 8m19-14h7v6c0 5-3 8-8 8M24 32v8m-9 2h18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>}
+    {safe && !failed && <img src={safe} alt="" loading="lazy" referrerPolicy="no-referrer" style={{ opacity: loaded ? 1 : 0 }}
+      onLoad={() => setLoaded(true)} onError={() => setFailed(true)} />}
+  </>;
 }
 
 export default function TrophiesScreen({ game, lastInputKind, onClose, actionRef }: Props) {
@@ -107,6 +111,8 @@ export default function TrophiesScreen({ game, lastInputKind, onClose, actionRef
       <button className={focus === trophies.length + 1 ? "focused" : ""} onPointerMove={event => { if (event.pointerType !== "touch") focusRow(trophies.length + 1); }} onFocus={() => focusRow(trophies.length + 1)} onClick={close}>Back</button>
     </div>
     <p className="settings-help" role={error ? "alert" : "status"}>{error || source?.message || (source ? `${source.stale ? "Cached data" : "Checked"} · ${new Date(source.updatedAt).toLocaleString()}` : "Trophies come directly from Steam or GOG Galaxy's local cache.")}</p>
-    <FooterHints lastInputKind={lastInputKind} />
+    <FooterHints lastInputKind={lastInputKind}>
+      {(snapshot?.sources.length ?? 0) > 1 && <ControlHint lastInputKind={lastInputKind} keyboard={["←", "→"]} gamepad="L" label="Platform" />}
+    </FooterHints>
   </section>;
 }
