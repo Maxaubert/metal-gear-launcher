@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it } from "vitest";
-import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { discoverBonus } from "../electron/main/bonus/discovery";
@@ -29,7 +29,7 @@ it("serves only opaque registered files, rejecting traversal and later replaceme
   await writeFile(file, "movie fixture");
   const url = await allowBonusFile(file, root, "video/mp4");
   expect(url).toMatch(/^hub-bonus:\/\/media\/[a-f0-9]{64}$/);
-  expect(await resolveBonusFile(url)).toEqual({ file, contentType: "video/mp4" });
+  expect(await resolveBonusFile(url)).toEqual({ file: await realpath(file), contentType: "video/mp4" });
   for (const candidate of [url + "?file=secret", url + "/../other", url.replace("/media/", "/media/%2e%2e/"), "file:///secret", "hub-bonus://media/" + "0".repeat(64)]) {
     await expect(resolveBonusFile(candidate)).rejects.toThrow();
   }

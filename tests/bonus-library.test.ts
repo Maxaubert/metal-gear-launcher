@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 const native = vi.hoisted(() => ({ decode: vi.fn() }));
@@ -36,7 +36,7 @@ it("coalesces scans, maps native labels and chapters, and excludes uninstalled t
   expect(library.tracks[0]).toMatchObject({ title: "01 Theme", duration: 233 });
   expect(library.videos).toHaveLength(1);
   expect(library.videos[0]).toMatchObject({ language: "en", chapters: [0, 123.45, 350], artworkUrl: "fixture-art" });
-  expect((await resolveBonusFile(library.videos[0]!.url)).file).toBe(join(install, "windata/dlc/2501700/opaque-video"));
+  expect((await resolveBonusFile(library.videos[0]!.url)).file).toBe(await realpath(join(install, "windata/dlc/2501700/opaque-video")));
   expect(library.warnings).toEqual([]);
 });
 
