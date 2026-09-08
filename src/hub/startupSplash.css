@@ -5,7 +5,7 @@
   place-content: normal;
   padding: 5vh 7vw;
   overflow: auto;
-  background: #08090a;
+  background: #000;
   color: #f6f6f3;
   /* Startup must not swap typefaces while the games' extracted fonts load. */
   font-family: "Segoe UI", sans-serif;
@@ -136,7 +136,7 @@
   color: #f6f6f3;
   font: inherit;
   font-size: clamp(20px, 2.5vh, 56px);
-  background: #08090a;
+  background: #000;
   cursor: pointer;
 }
 
