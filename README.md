@@ -57,10 +57,15 @@ Open **Options > Menu Music > Open Music Folder** for a game's local music libra
 MP3, WAV, OGG or M4A files, then choose **Refresh Music**. Tracks appear under their filenames
 without extensions. The folders are `%LOCALAPPDATA%\MGSMasterHub\music\<game-id>\`.
 
-Moving through the song list previews each track immediately. Confirm a song and choose
-**Save Changes** to keep it. Leaving the list or discarding changes restores the saved theme.
+Moving through the song list previews each track immediately. Confirm a song to save it
+automatically. Leaving the list restores the last confirmed theme.
 Renaming or removing a selected file makes the hub fall back to an available default.
 The opening menu waits for its music to start before appearing.
+
+Options save changes automatically. Rapid edits are serialized, and leaving a settings page
+waits for pending writes. If a game or another app changes the same settings file, the hub keeps
+your pending edit and offers recovery instead of overwriting the external change. Keyboard
+hints use keycaps; controller hints retain controller buttons.
 
 When present, these filenames provide the initial defaults. An explicit saved choice takes
 priority; absent files fall back to the extracted original menu theme.

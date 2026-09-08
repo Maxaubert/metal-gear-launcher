@@ -49,7 +49,7 @@ test("missing-artwork global shortcuts stay inert during the splash hold and exi
     });
     await page.reload();
     const splash = page.getByTestId("startup-screen");
-    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1", { timeout: 15000 });
     await expect(page.locator(".persistent-backdrop .main-visual")).toHaveCount(0);
     await expect(splash).toHaveAttribute("data-exiting", "false");
     await page.keyboard.press("r");

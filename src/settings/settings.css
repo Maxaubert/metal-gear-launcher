@@ -30,13 +30,7 @@
 .settings-screen[data-game="mgspw"] .settings-row.focused { color: #000; }
 .settings-notice { font-size: 2.35vh; line-height: 1.5; padding: 0 .5vw; }
 .settings-help { position: absolute; left: var(--settings-x); right: 1vw; bottom: 12vh; font-size: 1.9vh; line-height: 1.35; max-height: 7.5vh; overflow-y: auto; }
-.settings-actions { position: absolute; left: var(--settings-x); right: 1vw; bottom: 6.5vh; display: flex; justify-content: flex-end; gap: .5vw; }
-.settings-actions button { font: inherit; font-size: 1.8vh; color: inherit; background: var(--paper); border: .15vh solid var(--ink); padding: .7vh .7vw; cursor: pointer; }
-.settings-actions button.focused { background: var(--accent); color: #fff; }
 .settings-hints { position: absolute; right: 1vw; bottom: 1.5vh; font-size: 1.7vh; }
-.settings-discard > div { background: var(--paper); color: var(--ink); padding: 2vh 2vw; border: .2vh solid var(--ink); }
-.settings-discard button { display: block; width: 100%; margin: 1vh 0; padding: 1vh; font: inherit; border: .15vh solid var(--ink); color: inherit; background: transparent; }
-.settings-discard button.focused { background: var(--accent); color: #fff; }
 .settings-selected { float: right; padding-right: .5vw; }
 .settings-screen[data-detail="true"] { color: var(--ink); background: linear-gradient(to bottom, #2d2d2d 0 5.6%, #fff 5.6% 9.45%, #303030 9.45% 11.05%, #dcdcda 11.05% 93.6%, #2d2d2d 93.6%); }
 .settings-screen[data-detail="true"]::before { content: ""; position: absolute; top: 12.2vh; bottom: 13vh; left: 4.7vw; right: 30.9vw; border: .1vh solid #a7a8a4; border-bottom: 0; }
@@ -52,9 +46,6 @@
 .settings-screen[data-detail="true"] .settings-value output { font-size: 2.7vh; }
 .settings-screen[data-detail="true"] .settings-value button { font-size: 2vh; }
 .settings-screen[data-detail="true"] .settings-help { left: 0; right: 0; top: 87vh; bottom: auto; height: 6.6vh; max-height: 6.6vh; border-top: .13vh solid #777; padding: 1.2vh 5.6vw; font-size: 2.6vh; white-space: pre-line; }
-.settings-screen[data-detail="true"] .settings-actions { left: 5.6vw; right: auto; bottom: 1.3vh; gap: 1vw; }
-.settings-screen[data-detail="true"] .settings-actions button { background: transparent; color: #fff; font-size: 1.9vh; padding: .5vh .7vw; border-color: #888; }
-.settings-screen[data-detail="true"] .settings-actions button.focused { background: var(--accent); }
 .settings-screen[data-detail="true"] .settings-hints { color: #fff; bottom: 1.7vh; font-size: 1.65vh; }
 .settings-screen[data-category="Language"] .settings-list { right: 57.3vw; }
 .settings-screen[data-category="Language"]::before { right: 57.3vw; }
@@ -134,3 +125,12 @@
 .settings-screen[data-category="Menu Music"] .music-track-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .settings-screen[data-category="Menu Music"] .settings-selected { float: none; flex: none; }
 .settings-screen:not([data-detail="true"]) .settings-list { max-height: none; overflow: visible; }
+
+.settings-hints { display: flex; align-items: center; gap: 1.5vw; }
+.settings-screen[data-detail="true"] .settings-hints { --hint-ink: #fff; --hint-paper: #080808; }
+.settings-recovery { position: absolute; left: var(--settings-x); right: 1vw; bottom: 7vh; display: flex; gap: 1vw; justify-content: flex-end; }
+.settings-recovery button { font: inherit; font-size: 1.8vh; color: inherit; background: var(--paper); border: .15vh solid var(--ink); padding: .7vh .7vw; cursor: pointer; }
+.settings-recovery button.focused { background: var(--accent); color: #fff; }
+.settings-screen[data-detail="true"] .settings-recovery { left: 5.6vw; right: auto; bottom: 7.5vh; }
+.settings-screen:has(.settings-recovery)[data-detail="true"] .settings-help { top: 81vh; height: 5vh; max-height: 5vh; }
+.settings-screen:has(.settings-recovery)[data-detail="true"] .settings-list { max-height: 66vh; }

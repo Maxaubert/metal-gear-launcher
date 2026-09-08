@@ -630,18 +630,44 @@ body {
   color: color-mix(in srgb, var(--ink) 70%, transparent);
 }
 
-.hints .glyph {
+.control-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: .6vw;
+  white-space: nowrap;
+}
+
+.control-hint-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: .2vh;
+  flex: none;
+  color: var(--hint-ink, var(--ink));
+}
+
+.control-keycap,
+.control-gamepad {
   display: inline-grid;
   place-items: center;
-  width: 2.6vh;
+  min-width: 2.6vh;
   height: 2.6vh;
-  margin-right: 0.6vw;
+  font: 600 1.6vh/1 "Segoe UI", sans-serif;
+}
+
+.control-keycap {
+  padding: 0 .5vh;
+  border: .12vh solid currentColor;
+  border-bottom-width: .3vh;
+  border-radius: .3vh;
+  background: transparent;
+}
+
+.control-gamepad {
+  width: 2.6vh;
   border-radius: 50%;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--hint-ink, var(--ink));
+  color: var(--hint-paper, var(--paper));
   font-style: normal;
-  font-size: 1.6vh;
-  font-weight: 700;
 }
 
 .overlay {

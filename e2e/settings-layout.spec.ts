@@ -74,7 +74,7 @@ test("settings headings and row origins stay fixed across native and hub categor
           if (!bounds) throw new Error(`${id} ${category} row is missing`);
           rowOrigin ??= { x: bounds.x, y: bounds.y };
           expect({ x: bounds.x, y: bounds.y }, `${id} ${category} row origin at ${width}`).toEqual(rowOrigin);
-          const back = page.getByRole("button", { name: "Back", exact: true });
+          const back = page.locator(".settings-hints");
           await expect(back.locator("img, canvas, svg")).toHaveCount(0);
 
           if (category === "Menu Music") {

@@ -31,12 +31,21 @@ test("menu sounds follow semantic actions once, with no passive or ineffective-i
   try {
     const page = await app.firstWindow();
     await app.evaluate(({ ipcMain }) => {
-      ipcMain.removeHandler("hub:settings:get");
-      ipcMain.handle("hub:settings:get", (_event, { gameId }: { gameId: string }) => ({ ok: true, value: {
-        gameId, accounts: [], revision: "0".repeat(64), sections: [{ id: "native", title: "Game", kind: "native", status: "ready", fields: [
-          { id: "volume", label: "Game Volume", category: "Audio", kind: "range", value: 10, min: 0, max: 10, step: 1 },
+      let volume = 10;
+      let revision = 0;
+      const snapshot = (gameId: string) => ({
+        gameId, accounts: [], revision: String(revision).padStart(64, "0"), sections: [{ id: "native", title: "Game", kind: "native", status: "ready", fields: [
+          { id: "volume", label: "Game Volume", category: "Audio", kind: "range", value: volume, min: 0, max: 10, step: 1 },
         ] }],
-      } }));
+      });
+      ipcMain.removeHandler("hub:settings:get");
+      ipcMain.handle("hub:settings:get", (_event, { gameId }: { gameId: string }) => ({ ok: true, value: snapshot(gameId) }));
+      ipcMain.removeHandler("hub:settings:save");
+      ipcMain.handle("hub:settings:save", (_event, request: { gameId: string; changes: { value: number }[] }) => {
+        volume = request.changes[0]!.value;
+        revision++;
+        return { ok: true, value: snapshot(request.gameId) };
+      });
       Object.assign(globalThis, { quitTimes: [] as number[] });
       ipcMain.removeHandler("hub:quit");
       ipcMain.handle("hub:quit", () => {
@@ -97,6 +106,7 @@ test("menu sounds follow semantic actions once, with no passive or ineffective-i
     await expectSounds(["adjust"]);
     await page.keyboard.press("Escape");
     await expectSounds(["back"]);
+    await expect(page.getByRole("heading", { name: "Options", exact: true })).toBeVisible();
     await page.keyboard.press("ArrowDown");
     await expectSounds(["navigate"]);
     await page.keyboard.press("Enter");
@@ -109,12 +119,10 @@ test("menu sounds follow semantic actions once, with no passive or ineffective-i
     await expectSounds([]);
     await page.keyboard.press("Escape");
     await expectSounds(["back"]);
+    await expect(page.getByRole("heading", { name: "Options", exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
     await expectSounds(["back"]);
-    await page.keyboard.press("ArrowDown");
-    await expectSounds(["navigate"]);
-    await page.keyboard.press("Enter");
-    await expectSounds(["back"]);
+    await expect(page.getByTestId("settings-screen")).toHaveCount(0);
     await page.keyboard.press("ArrowUp");
     await expectSounds(["navigate"]);
     await page.keyboard.press("Enter");

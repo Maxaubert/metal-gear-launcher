@@ -85,14 +85,8 @@ test("local filenames preview on focus, save independently, survive restart and 
     await page.getByRole("button", { name: first.label, exact: true }).hover();
     await page.keyboard.press("Enter");
     await page.getByRole("button", { name: second.label, exact: true }).hover();
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expectPlaying(page, "mgs2/bgm.wav");
-    expect(JSON.parse(await readFile(join(f.data, "config.json"), "utf8")).menuMusic.mgs2).toBe("mgs2-original");
-
-    await page.getByRole("button", { name: first.label, exact: true }).hover();
-    await page.keyboard.press("Enter");
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
-    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expectPlaying(page, first.id);
     expect(JSON.parse(await readFile(join(f.data, "config.json"), "utf8")).menuMusic.mgs2).toBe(first.id);
     await app.close();
     app = await electron.launch(f.options);
@@ -182,7 +176,6 @@ test("a corrupt selected custom track can be bypassed and replaced from Menu Mus
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await openMusic(page);
     await page.getByRole("button", { name: "Original Menu Theme", exact: true }).click();
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
     await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");

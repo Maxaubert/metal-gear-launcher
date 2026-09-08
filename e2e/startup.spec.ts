@@ -54,10 +54,9 @@ test("startup preloads another game's settings and warm Options preserve cached 
 
     // Saving a draft from this cached revision must still detect the external change.
     await page.getByRole("button", { name: "Decrease Main Menu Volume", exact: true }).click();
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
     await expect(page.getByText(/Settings changed outside the hub/)).toBeVisible();
     expect(await readFile(config, "utf8")).toBe(launcherSettings(8));
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
+    await page.getByRole("button", { name: "Use Current Settings", exact: true }).click();
     await expect(volume).toHaveText("8");
     await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
