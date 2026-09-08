@@ -34,6 +34,14 @@ build, file size, modification time and decoder version identify cache entries. 
 are validated, incomplete output is discarded, and corrupt entries are rebuilt. Concurrent
 requests for the same entry share one extraction. Warm pages need no decoder process.
 
+While reading, the launcher preloads and decodes nearby pages with at most two active reads.
+The retained page window has a 128 MiB image budget; the displayed page and in-flight decoding
+can add to that. A cached turn updates immediately. For a distant jump, the previous page stays
+visible until the requested page is ready, and newer navigation takes priority over queued
+preloads. Closing a book cancels its image work. Only successfully displayed pages are saved.
+Parsed native metadata and validated hashes are also reused in bounded memory caches, with
+file identity checks preserving repair when the installed source or cached output changes.
+
 Reading positions are saved separately for each game, book and language after the page has
 loaded successfully. The reader offers a contents list, direct page entry, Previous/Next,
 zoom, Fit and pointer panning. Pages occupy the full window. Floating controls fade after 2.5

@@ -14,13 +14,19 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
   const [contents, setContents] = useState(false);
   const [contentFocus, setContentFocus] = useState(0);
   const [pageInput, setPageInput] = useState<string | null>(null);
+  const [slowPage, setSlowPage] = useState<number | null>(null);
+  useEffect(() => {
+    if (!reader.loading || !reader.page) return;
+    const timer = window.setTimeout(() => setSlowPage(reader.pageIndex), 250);
+    return () => window.clearTimeout(timer);
+  }, [reader.loading, reader.pageIndex, reader.page]);
   const controls = useBookControls(contents || reader.loading || Boolean(reader.error) || Boolean(reader.saveError));
   const viewport = useRef<HTMLDivElement>(null);
   const contentsList = useRef<HTMLDivElement>(null);
   const document = reader.document;
   function changePage(index: number) {
     if (!document || index < 0 || index >= document.pageCount || index === reader.pageIndex) return;
-    void playMenuSound("navigate"); reader.goTo(index); setPageInput(null); setContents(false);
+    void playMenuSound("navigate"); setSlowPage(null); reader.goTo(index); setPageInput(null); setContents(false);
   }
   function changeZoom(amount: number) { setZoom(value => Math.round(Math.min(3, Math.max(1, value + amount)) * 100) / 100); }
   function back() { void playMenuSound("back"); if (contents) setContents(false); else onClose(); }
@@ -85,8 +91,9 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
     </nav>
     </div>
     <section className="book-content-area">
-      {reader.page && !reader.loading && <BookViewport page={reader.page} zoom={zoom} language={request.language} viewport={viewport} />}
-      {reader.loading && <div className="book-status" role="status"><h2>{document ? "Loading page…" : "Opening book…"}</h2><p>Loading the original page.</p><div className="book-loading-line" /></div>}
+      {reader.page && <BookViewport page={reader.page} zoom={zoom} language={request.language} viewport={viewport} />}
+      {reader.loading && !reader.page && <div className="book-status" role="status"><h2>{document ? "Loading page…" : "Opening book…"}</h2><p>Loading the original page.</p><div className="book-loading-line" /></div>}
+      {reader.loading && reader.page && slowPage === reader.pageIndex && <p className="book-page-pending" role="status">Loading page {reader.pageIndex + 1}…</p>}
       {reader.error && <div className="book-status" role="alert"><h2>This book could not be opened</h2><p>{reader.error}</p><button data-testid="book-retry" onClick={reader.retry}>Try Again</button></div>}
       {reader.saveError && <p className="book-save-error" role="status">{reader.saveError} Reopen the book to try again.</p>}
       {contents && <section className="book-contents-panel" aria-label="Contents"><header><h2>Contents</h2><button onClick={() => setContents(false)}>Close</button></header>

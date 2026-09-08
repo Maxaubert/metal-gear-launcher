@@ -78,14 +78,14 @@ test('books are discovered before opening, load pages on demand, navigate, recov
     await expect.poll(async () => (await state()).progress['mgs1-master-en']).toBe(2);
     await page.getByTestId('book-back').click();
     await page.getByTestId('book-entry-mgs1-master').click();
-    await expect.poll(async () => (await state()).pages.at(-1)).toBe('mgs1-master-en:2');
+    await expect(page.getByTestId('book-page')).toHaveAttribute('aria-label', 'Book page 3');
     await page.getByTestId('book-contents').click();
     await page.getByRole('button', { name: 'Mission Briefing', exact: false }).click();
     await expect.poll(async () => (await state()).progress['mgs1-master-en']).toBe(3);
     await page.getByTestId('book-back').click();
     await page.getByRole('button', { name: '日本語', exact: true }).click();
     await page.getByTestId('book-entry-mgs1-master').click();
-    await expect.poll(async () => (await state()).pages.at(-1)).toBe('mgs1-master-jp:0');
+    await expect(page.getByTestId('book-page')).toHaveAttribute('aria-label', 'Book page 1');
     await page.getByTestId('book-back').click();
     await page.getByTestId('book-entry-mgs2-screenplay').click();
     await page.getByTestId('book-next').click();
