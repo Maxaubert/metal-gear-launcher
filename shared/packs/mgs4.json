@@ -1,0 +1,30 @@
+{
+  "id": "mgs4",
+  "title": "METAL GEAR SOLID 4: GUNS OF THE PATRIOTS",
+  "shortTitle": "MGS4",
+  "number": "4",
+  "releaseYear": 2008,
+  "indexLabel": "004",
+  "yearLabel": "2014",
+  "subtitle": "Guns of the Patriots Incident",
+  "description": "An episode depicting the struggle of an aged, weaker Solid\nSnake. This title presents a story centered around\nnear-future issues, such as a world governed by a war\neconomy, the supremacy of PMCs, and ID-managed conflict.\nSnake now finds himself having to make full use of the\nfive senses as he proceeds on this high-level infiltration\nmission, complete with OctoCamo that automatically blends\nin with its surroundings and a Threat Ring that senses\nnearby dangers. This marks the 6th entry in the Metal Gear\nseries.",
+  "theme": {"accent": "#ed0000", "ink": "#ffffff", "paper": "#000000"},
+  "steam": {"appId": 2492670, "installDir": "METAL GEAR SOLID 4"},
+  "launch": {"exe": "MGS4/mgs4.exe", "cwd": "MGS4", "env": {"SteamAppId": "2492670"}},
+  "assets": [
+    {"role": "mainVisual", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_bg_main_mgs4", "edge": "cut"},
+    {"role": "logo", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_logo_mgs4"},
+    {"role": "numbering", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_menu_dc_number_mgs4"},
+    {"role": "year", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_menu_txt_year_mgs4"},
+    {"role": "bgEffect", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/prefabs/mgs4/animator.prefab.bundle", "name": "ui_launcher_bg_sud_mgs4"},
+    {"role": "bgm", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_scenarioapp/mgs4/bgm/mg35_mgs4_sin.wav.bundle", "name": "MG35_mgs4_sin", "type": "AudioClip"},
+    {"role": "fontMedium", "source": "unity", "path": "Launcher/launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-M", "type": "Font"},
+    {"role": "fontBold", "source": "unity", "path": "Launcher/launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-B", "type": "Font"},
+    {"role": "headerYear", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/textures/mgs4menutext.spriteatlas.bundle", "name": "ui_launcher_menu_year_mgs4", "type": "Sprite"},
+    {"role": "headerSubtitle", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/textures/mgs4menutext.spriteatlas.bundle", "name": "ui_launcher_menu_incident_mgs4_en", "type": "Sprite"},
+    {"role": "headerMark", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs4_assets_launcher/textures/mgs4menutext.spriteatlas.bundle", "name": "ui_launcher_menu_barcode_mgs4", "type": "Sprite"},
+    {"role": "fontUi", "source": "unity", "path": "Launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/defaultlocalgroup_assets_launcher/fonts/mg_sansserif-md.otf.bundle", "name": "MG_SansSerif-Md", "type": "Font"}
+  ],
+  "visualFit": {"leftVw": 1.85, "widthVw": 70.72, "heightVh": 115, "anchor": "top"},
+  "assetRevision": 1
+}

@@ -153,6 +153,147 @@ and rendered by one generic settings screen. Files are written atomically with a
 comics folder), `logs\hub.log` (electron-log, rotated). No telemetry, no network calls except
 the update check against GitHub Releases.
 
+## 4.7 Visual layout (normalized across every game)
+
+Reference screenshots (owner-supplied, not committed): `.superpowers/sdd/2026-09-06-mvp-hub/reference/ref-8.png`
+(Vol.1 Bonus Content menu), `ref-9.png`/`ref-mgs3-b.png` (MGS3 menu, the latter the newer, better
+capture), `ref-10.png`/`ref-mgs1-b.png` (MGS1 menu), `ref-11.png` (HD Collection MGS3 title, a looser
+layout, for the "art floats into the background" feel), `ref-12.png`/`ref-mgs2-b.png` (MGS2 menu),
+`ref-13.png` (MGS1 Game Selection list), `ref-mg12.png` (MG1&2 menu - the first reference for this
+screen; it is structurally different from the rest, see the MG1&2 delta below).
+
+Every game screen uses the same geometry. Units are percentages of viewport width (W) and height (H) so
+1080p and 2160p look identical. The window is true fullscreen (`BrowserWindow.fullscreen`), never maximized.
+
+**Ground.** Paper colour from the pack with a halftone dot pattern (radial-gradient dots, spacing 0.55 vh,
+ink at 10 % alpha). No boxes, no panels: artwork sits directly on the paper and fades into it. A pack
+may set `theme.paperLeft` to tint the left zone only (a hard-stop gradient at the divider, behind the
+dots) while the right column stays paper-white - MGS3's reference shows a faint sage wash down the left
+that the plain shared `paper` colour can't express on its own.
+
+**Left zone (0 to 61 % W).**
+- Logo strip: the vertical logo texture at x = 0, height 100 % H, top aligned, `object-fit: contain`,
+  natural width (about 10 % W). Games without a vertical logo texture (MG1/MG2) render the title as
+  rotated Rodin bold text in the same slot, same height.
+- Main visual: bottom anchored (bottom 0), height 94 % H, left 11 % W, width 50 % W,
+  `object-fit: contain`, by default. A pack may override this box with a `visualFit` field
+  (`heightVh`, `leftVw`, `widthVw`, `anchor: "top" | "bottom"`) so its key art bleeds past the
+  bottom edge like the original menus (MGS1/MGS2/MGS3 all set one, sized past 100 % H so the
+  lower body/waist is cropped by the screen's own bottom edge instead of leaving empty paper
+  below it). Textures that are not pre-cut (rectangular launcher backgrounds for MGS4 and Peace
+  Walker) get a soft edge: `mask-image` with a radial gradient (opaque to 70 %, transparent at
+  100 %) plus a linear fade on the top 12 %. Pack flag `edge: "fade" | "cut"` per asset, default
+  `cut` - MGS1/MGS2/MGS3's cutout portraits are real alpha cutouts (MGS2's turned out to need the
+  bundle's `_gra` variant, not the flat `MainVisual` the pack originally pointed at - the latter is
+  fully opaque and was painting over the logo strip's right edge) and use `cut`; MGS4/Peace Walker's
+  uncut launcher backgrounds use `fade`, which also runs the extractor's aspect pre-crop
+  (`mainVisualFit.ts`) so the mask's top-edge fade actually reaches real pixels instead of empty
+  letterboxing.
+- Background effect: the bgEffect texture at 30 % opacity, width 58 % W, top left at (2 % W, 2 % H),
+  behind the main visual and the logo strip, by default. A pack may override this box with a
+  `bgEffectFit` field (`leftVw`, `topVh`, `widthVw`, `opacity`) - MGS3's reference shows a large
+  ghosted vehicle sketch bleeding across the header too, which needs a much wider, fainter box than
+  the shared default without changing MGS1/MGS2's already-correct layer.
+- Nothing in the left zone is interactive.
+
+**MG1&2 delta (structurally different from every other screen, spec `ref-mg12.png`).** A pack may
+declare `chapters: [{ yearLabel, title, description, gameTitle }, { ... }]` (exactly two). When set:
+- the left zone renders two stacked key-art panels, one per chapter, each 50 % H and the full 61 % W
+  wide (`mainVisual` on top, `mainVisual2` on the bottom) instead of one logo strip + floating main
+  visual; each panel carries its own bevelled logo wordmark (`logo` for the top panel, `logo2` for
+  the bottom - real launcher assets, e.g. MG1&2's `mg12logo.spriteatlas.bundle`, not rendered
+  text), rotated 90deg and left-aligned on its own art via the standard "translate to centre, then
+  rotate" transform idiom (round 8: a hand-chained translate/rotate/translate got the composition
+  order wrong and clipped the logo against the screen's top edge with zero headroom). Falls back
+  to `chapter.gameTitle` as plain rotated Rodin bold text (the same treatment the single-chapter
+  layout uses when a pack has no vertical logo texture) only if a chapter's logo asset is missing;
+- the right column renders one header + description block per chapter, stacked in a flex column
+  filling the same top-5%-to-menu-46% budget the single-chapter header+description normally has to
+  itself, so the menu still starts at the shared 46 % H line - each chapter header repeats the tick,
+  year, subtitle (the incident name, e.g. "Outer Heaven Uprising"), and the full serial/barcode/index
+  mark (scaled down to fit), all built from the one pack-level `indexLabel` and Steam app ID like the
+  single-chapter header;
+- the menu and footer hints below are unchanged.
+
+**Divider.** 1 px vertical rule at x = 61.5 % W, full height, ink at 25 % alpha.
+
+**Right column (63 % W to 97.5 % W).**
+- Ghosts (behind everything, non-interactive): the timeline texture (`year` role) at 32 % opacity,
+  height 88 % H starting at top 12 % H, left aligned at 63 % W - shifted down and shrunk from a
+  full-height 15 % layer so it sits beside the description/menu rather than rising into the
+  header and colliding with the subtitle; the ghost number (`numbering` role), when the pack has a
+  real numeral asset for it, at 34 % opacity, right aligned at 97.5 % W, top 2 % H, capped to a
+  16 % H by 10 % W box with `object-fit: contain` (round 9 - see below) rather than a bare
+  `height`. `numbering` is optional - MG1/2 and Peace Walker's launcher bundles have no dedicated
+  numeral texture, only the timeline, so those packs omit the asset entirely rather than press an
+  unrelated decorative texture into service. These CSS opacity figures (round 8) are a second,
+  multiplicative dimming pass on top of the extracted PNG's own alpha, already normalized into a
+  legible band by `ghostAlpha.ts` - at the earlier 10/14 % the combined result read as invisible
+  (critique finding 2: "the right column reads as a flat white field"), so they were raised until
+  the ghost layers are visible but still clearly secondary, matching the reference. Round 9: the
+  numbering role's own box also had to change, separately from opacity - the generic content-bbox
+  trim (round 8, section on extraction below) removed each numeral's transparent padding along
+  with everything else, so a bare `height` that used to render mostly empty space now rendered a
+  glyph large enough to run past the middle of the description and off the column's right edge.
+  Capping both dimensions with `object-fit: contain` keeps it a modest corner watermark regardless
+  of how tightly a given pack's numeral happens to be trimmed.
+- Header block, top 5 % H:
+  - a 0.35 vw wide, 2.5 vh tall ink tick at 63 % W followed by a 1 px rule 2 vw long (the bracket),
+  - the year: `pack.yearLabel` in Rodin bold, 8 vh tall, tight letter spacing, ink colour.
+    It carries the year the game's mission takes place, which is what the collection's own
+    menus show (2005 for MGS1, 2007-2009 for MGS2, 1964 for MGS3), not the release year,
+  - the subtitle under it: `pack.subtitle` split on ` / ` into one or two lines, Rodin bold 2.2 vh,
+    letter-spacing 0.02 em, ink at 85 %,
+  - on the far right of the same block, left to right: three decorative lines of hex-like serial
+    text (1.1 vh, monospace, ink at 45 %), a 12 vw wide barcode built from 24 alternating 1 to 3 px
+    ink bars with `pack.indexLabel` as `[ 00N ]` (a fixed per-pack label, not a computed position)
+    in a 1.9 vh monospace line immediately to its right on the same baseline, then an accent "!"
+    glyph (Rodin bold, 7 vh) flanked by two 2 px, 6 vh tall ink rules,
+  - a 1 px rule under the block from 63 % W to 97.5 % W, ink at 45 %.
+- Description: top 22 % H, Rodin regular 2.2 vh, line-height 1.32, ink at 85 %, max 8 lines (round
+  9: the longest real description, MGS1's, needs a full 8 lines at the true 16:9 canvas fixed in
+  round 8 - the same `vh`-sized font is larger in absolute pixels there than against the shorter-
+  than-requested capture the 7-line figure was originally tuned against, while the `vw`-sized
+  column width is unchanged, so it now wraps one line longer), no scroll, capped to the space
+  above the menu so a full-length description clips inside its own box rather than touching the
+  menu rows - a `-webkit-line-clamp` value is a hard cap independent of that box's `max-height`,
+  so both had to move together or the clamp alone would keep truncating regardless of headroom.
+- Menu list: top anchored at 46 % H (round 9, up from 43 % - reclaimed for the description above
+  rather than shrinking its font), directly under the description, rows growing downward; rows
+  7.84 vh tall with 1.54 vh gaps; each row is a 1 px ink border on paper at 70 % alpha, text Rodin
+  regular 2.9 vh, padding-left 1.4 vw; the focused row is filled with the accent colour, white
+  text, and a 0.45 vw accent bar flush against the row's left border (outside the box); the quit
+  row is uppercase "QUIT GAME". MVP rows: "Start Game", "Game Selection", "QUIT GAME". Rows greyed
+  (ink 35 %) when the game is not installed.
+- Footer hints: bottom right, baseline at 96 % H, 2.1 vh: a filled circle glyph with the button letter
+  (L, A, B) then the label ("Move cursor", "Confirm", "Back"); mouse and keyboard users see
+  "Arrows", "Enter", "Esc" instead when the last input was not a gamepad.
+
+**Game Selection.** Not a dark overlay (round 6 correction, matching `ref-13.png`): it is the same
+light game screen, sharing its ground/logo strip/main visual/header block with the live game
+screen via a `ScreenBackdrop` component, driven by the focused entry rather than the current
+game - moving the cursor swaps the left zone's art and the header to match. The description and
+menu are replaced by:
+- a small header row at top 22 % H: a short ink tick, "Game Selection" in Rodin bold 2.6 vh, a
+  1 px rule to the right edge of the column;
+- below it, a vertical list of banner tiles, one per game, filling the column down to the footer
+  hints: height 9.5 vh, 1 vh gap. Each tile shows the game's main visual as a `cover` background
+  (`object-position: center 30 %` to keep a face in frame) under a left-to-right paper-to-
+  transparent gradient so the label stays legible, the `shortTitle` in Rodin bold 2.8 vh ink on
+  the left, and the pack `number` in the entry's own accent colour at 3.2 vh on the right.
+  Focused: full brightness plus a 0.45 vw accent bar flush to the left edge; unfocused tiles are
+  only slightly desaturated (nothing dims). Not installed: 45 % opacity artwork, a dashed 1 px
+  border, and the label at 35 % ink.
+- the same small info block bottom left of the left zone as before: `title`, "Originally released
+  in <first year>" (pack field `releaseYear`), both 2.1 vh, ink at 70 %.
+- the same footer hints as the live game screen, with "Back" included.
+
+**Transitions.** Game change: crossfade 250 ms of the whole left zone and the ghosts; the right column
+text fades 150 ms. Menu focus change: the accent bar slides (120 ms). Music crossfades 300 ms.
+
+**Bonus content (phase 3 note).** The Bonus Content screen (ref-8) is a montage of vertical panels, one
+per game's key art, with a gold logo strip; the phase 3 plan builds it from the same asset roles.
+
 ## 5. Error handling
 
 - Steam not found: screen with a folder picker for the Steam root, retry.
@@ -173,8 +314,16 @@ the update check against GitHub Releases.
 - **E2E (Playwright, Electron):** boots the app with a fixture asset cache (small PNGs and a
   silent WAV committed under `e2e/fixtures/`), navigates with keyboard events between games,
   opens Game Selection, confirms Start Game calls a mocked launcher.
-- **Visual check:** Playwright screenshots of every game screen at 3840x2160 stored as
-  artifacts for review, not as a gate.
+- **Visual check:** `npm run shoot` (`scripts/shoot.mjs`) launches the real built app against the
+  user's own real Steam install and asset cache (not e2e's fixtures), drives it through every
+  game and Game Selection via the actual UI, and screenshots each at 3840x2160 into
+  `e2e/out/real/` for comparison against the owner's reference art - not a gate. Round 8: this
+  replaced an earlier mechanism that requested a 3840x2160 `BrowserWindow` and captured with
+  `webContents.capturePage()`, which Windows silently clamped to the desktop's work area at high
+  display scaling (measured 3843x2052, aspect 1.873, not 1.778) - since the whole layout is
+  expressed in vh/vw, that shorter-than-requested canvas shifted every vertical position the
+  layout computes. Playwright's CDP-driven `page.setViewportSize`/`page.screenshot` isn't subject
+  to that clamp; the script asserts each capture is exactly 3840x2160 before writing it.
 - CI (`ci.yml`): typecheck, lint, unit on PR and push to main. `release.yml` builds the NSIS
   installer and publishes `v<version>`.
 
@@ -187,3 +336,13 @@ own, output stays in their profile, and the README says so. Bundled tools: Asset
 ## 8. Naming
 
 Repo `mgs-master-hub`, product name "MGS Master Hub", installer `MGSMasterHub-Setup-x64-<version>.exe`.
+
+## 9. Phase 4 input: the owner's library
+
+4.8 GB. Not only comics: Comic Books (cbr, MGS 2004-2005 #01-12, Sons of Liberty 2005-2007 #00-12),
+Original Master Books (pdf per game incl. MG/MG2), Original Screenplays (pdf, plus Night Mode variants),
+Scenario Books (pdf, MGS1-4, PW), Manuals (pdf), Novels (pdf), Guides (pdf), Artbooks (pdf/cbz/cbr + 495
+loose jpg/png), Wallpaper Dump (mostly low-res), Information.docx (source links).
+Implications for the phase 4 plan: reader must handle pdf, cbz (zip) and cbr (rar: bundle unrar or 7z),
+a per-game "Library" menu with sections (Comics, Books, Manuals, Guides, Art) rather than a single
+"Comics" entry, and file-to-game mapping by filename keywords with a manual override file.

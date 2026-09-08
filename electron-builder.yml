@@ -1,0 +1,31 @@
+# electron-builder configuration: Windows NSIS installer.
+# `resources/tools` (fetched by `npm run fetch-tools`, never committed) ships as extraResources
+# so the extractor can spawn AssetStudioModCLI and FreeMote from the installed app the same way
+# it does in development from `resources/tools` directly.
+appId: com.maxaubert.mgsmasterhub
+productName: MGS Master Hub
+directories:
+  output: dist
+  buildResources: resources
+files:
+  - out/**
+  - package.json
+extraResources:
+  - from: resources/tools
+    to: tools
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icon.ico
+  artifactName: "MGSMasterHub-Setup-x64-${version}.exe"
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createStartMenuShortcut: true
+  shortcutName: MGS Master Hub
+publish:
+  provider: github
+  owner: Maxaubert
+  repo: mgs-master-hub

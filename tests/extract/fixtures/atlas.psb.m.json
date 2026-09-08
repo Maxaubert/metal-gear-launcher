@@ -1,0 +1,12 @@
+{
+  "source": {
+    "tex#000": {
+      "icon": {
+        "0012": { "left": 3310, "top": 1382, "width": 254, "height": 1080, "attr": 1, "originX": 127, "originY": 540 },
+        "0019": { "left": 1, "top": 1877, "width": 1130, "height": 1086, "attr": 0, "originX": 606, "originY": 542 }
+      },
+      "texture": "tex#000-texture.png",
+      "type": "PSD"
+    }
+  }
+}

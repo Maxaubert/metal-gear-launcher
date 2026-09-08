@@ -1,0 +1,129 @@
+.settings-screen { --settings-top: 43.35vh; --settings-x: 63.75vw; --settings-right: .7vw; font-family: "MenuEnglish", "Rodin", sans-serif; font-weight: 400; }
+.settings-screen[data-game="mgs1"] { --divider-x: 62.2vw; --header-top: 22.8vh; --col-x: 63.5vw; --col-right: 99.4vw; --settings-top: 38.4vh; --settings-x: 63.8vw; --settings-right: 0vw; }
+.settings-screen .chapter-description { display: none; }
+.settings-screen .chapters { height: 37vh; bottom: auto; }
+.settings-heading { position: absolute; top: var(--settings-top); left: var(--divider-x); right: 0; height: 4.1vh; border-block: .18vh solid var(--ink); padding: .15vh 1vw; font-size: 2.5vh; font-weight: 700; }
+.settings-heading > .settings-heading-marker { position: absolute; left: -.6vw; top: -.18vh; height: 4.1vh; width: .3vw; background: var(--ink); }
+.settings-list { position: absolute; left: var(--settings-x); right: var(--settings-right); top: calc(var(--settings-top) + 5.1vh); max-height: calc(86.5vh - var(--settings-top) - 5.1vh); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; padding: .15vh .25vw; }
+.settings-screen[data-detail="true"] .settings-list { max-height: calc(78vh - var(--settings-top) - 5.1vh); }
+.settings-row { position: relative; border: .16vh solid var(--ink); height: 5.5vh; margin-bottom: .9vh; display: flex; align-items: stretch; font-size: 2.85vh; background: transparent; }
+.settings-row.focused { box-shadow: none; border-color: var(--accent); background: var(--accent); }
+.settings-row.focused::before { content: ""; position: absolute; inset: -.18vh -.1vw -.18vh -.65vw; border-left: .3vw solid var(--accent); pointer-events: none; }
+.settings-row-label { font: inherit; color: inherit; padding: 0 .5vw; text-align: left; background: transparent; border: 0; flex: 1; min-width: 0; cursor: pointer; }
+.settings-row-label small { float: right; font-size: 1.6vh; margin: .6vh .4vw; }
+.settings-screen[data-game="mgs1"] .head { top: 22.8vh; }
+.settings-screen[data-game="mgs1"] .head .year { font-family: "Impact", sans-serif; font-size: 9.5vh; font-weight: 400; transform: scaleX(.68); transform-origin: left center; }
+.settings-screen[data-game="mgs1"] .head .subtitle { font-size: 1.9vh; }
+.settings-screen[data-game="mgs1"] .settings-row-label { font-weight: 400; }
+.settings-row.has-value { height: auto; min-height: 6vh; font-size: 2.3vh; }
+.settings-row.has-value .settings-row-label { width: 52%; flex: none; padding-block: .7vh; }
+.settings-value { display: flex; align-items: center; justify-content: space-between; flex: 1; min-width: 0; }
+.settings-value button { color: inherit; background: none; border: 0; font-size: 1.65vh; cursor: pointer; min-width: 1.6vw; height: 100%; }
+.settings-value output { text-align: center; font-size: 2vh; overflow-wrap: anywhere; }
+.settings-value .volume-bars { display: flex; gap: .2vw; flex: 1; height: 2.5vh; align-items: stretch; }
+.volume-bars > span { flex: 1; border: .12vh solid currentColor; }
+.volume-bars > span.filled { background: currentColor; }
+.settings-value .volume-mute { margin-left: .4vw; width: 2vw; }
+.settings-value input { min-width: 0; width: 100%; font: inherit; color: var(--ink); background: var(--paper); border: .1vh solid currentColor; }
+.settings-screen button:focus-visible, .settings-screen input:focus-visible { outline: .2vh solid var(--ink); outline-offset: -.4vh; }
+.settings-screen button:disabled { opacity: .6; cursor: default; }
+.settings-screen[data-game="mgspw"] .settings-row.focused { color: #000; }
+.settings-notice { font-size: 2.35vh; line-height: 1.5; padding: 0 .5vw; }
+.settings-help { position: absolute; left: var(--settings-x); right: 1vw; bottom: 12vh; font-size: 1.9vh; line-height: 1.35; max-height: 7.5vh; overflow-y: auto; }
+.settings-actions { position: absolute; left: var(--settings-x); right: 1vw; bottom: 6.5vh; display: flex; justify-content: flex-end; gap: .5vw; }
+.settings-actions button { font: inherit; font-size: 1.8vh; color: inherit; background: var(--paper); border: .15vh solid var(--ink); padding: .7vh .7vw; cursor: pointer; }
+.settings-actions button.focused { background: var(--accent); color: #fff; }
+.settings-hints { position: absolute; right: 1vw; bottom: 1.5vh; font-size: 1.7vh; }
+.settings-discard > div { background: var(--paper); color: var(--ink); padding: 2vh 2vw; border: .2vh solid var(--ink); }
+.settings-discard button { display: block; width: 100%; margin: 1vh 0; padding: 1vh; font: inherit; border: .15vh solid var(--ink); color: inherit; background: transparent; }
+.settings-discard button.focused { background: var(--accent); color: #fff; }
+.settings-selected { float: right; padding-right: .5vw; }
+.settings-screen[data-detail="true"] { color: var(--ink); background: linear-gradient(to bottom, #2d2d2d 0 5.6%, #fff 5.6% 9.45%, #303030 9.45% 11.05%, #dcdcda 11.05% 93.6%, #2d2d2d 93.6%); }
+.settings-screen[data-detail="true"]::before { content: ""; position: absolute; top: 12.2vh; bottom: 13vh; left: 4.7vw; right: 30.9vw; border: .1vh solid #a7a8a4; border-bottom: 0; }
+.settings-screen[data-detail="true"] .settings-heading { top: 5.6vh; left: 5.6vw; height: 3.85vh; padding: .2vh 0; border: 0; font-size: 2.6vh; line-height: 3.3vh; }
+.settings-screen[data-detail="true"] .settings-heading > .settings-heading-marker { display: none; }
+.settings-screen[data-detail="true"] .settings-list { top: 12.7vh; left: 5.5vw; right: 30.9vw; max-height: 72.7vh; padding: 0; }
+.settings-screen[data-detail="true"] .settings-row { height: 5.55vh; min-height: 5.55vh; margin-bottom: .9vh; font-size: 2.9vh; border: .1vh solid #171717; }
+.settings-screen[data-detail="true"] .settings-row-label { padding: 0 1vw; }
+.settings-screen[data-detail="true"] .settings-row.focused { color: #fff; border-color: var(--accent); }
+.settings-screen[data-detail="true"] .settings-row.focused::before { inset: -.1vh auto -.1vh -1vw; width: .4vw; border-left-width: .3vw; }
+.settings-screen[data-detail="true"] .settings-row.has-value .settings-row-label { padding-block: 0; width: 52%; }
+.settings-screen[data-detail="true"] .settings-value { padding-right: 1vw; gap: .5vw; }
+.settings-screen[data-detail="true"] .settings-value output { font-size: 2.7vh; }
+.settings-screen[data-detail="true"] .settings-value button { font-size: 2vh; }
+.settings-screen[data-detail="true"] .settings-help { left: 0; right: 0; top: 87vh; bottom: auto; height: 6.6vh; max-height: 6.6vh; border-top: .13vh solid #777; padding: 1.2vh 5.6vw; font-size: 2.6vh; white-space: pre-line; }
+.settings-screen[data-detail="true"] .settings-actions { left: 5.6vw; right: auto; bottom: 1.3vh; gap: 1vw; }
+.settings-screen[data-detail="true"] .settings-actions button { background: transparent; color: #fff; font-size: 1.9vh; padding: .5vh .7vw; border-color: #888; }
+.settings-screen[data-detail="true"] .settings-actions button.focused { background: var(--accent); }
+.settings-screen[data-detail="true"] .settings-hints { color: #fff; bottom: 1.7vh; font-size: 1.65vh; }
+.settings-screen[data-category="Language"] .settings-list { right: 57.3vw; }
+.settings-screen[data-category="Language"]::before { right: 57.3vw; }
+.settings-screen[data-category="Audio"] .settings-row.has-value .settings-row-label { width: 55%; }
+.settings-screen[data-category="Audio"] .settings-value { gap: .45vw; }
+.settings-value .volume-bars { height: 1.05vh; gap: .16vw; }
+.volume-bars > span { border: 0; background: #a2a39e; }
+.volume-bars > span.filled { background: currentColor; }
+.settings-value .volume-mute { margin: 0; padding: 0; flex: 0 0 1.5vw; min-width: 1.5vw; }
+.volume-mute svg { width: 1.5vw; height: 2.6vh; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.volume-number { font-size: 3vh; min-width: 2.5vw; }
+.settings-side-help { position: absolute; top: 12.7vh; left: 70.1vw; right: 3vw; bottom: 14vh; overflow-y: auto; font-size: 2.7vh; line-height: 1.35; white-space: pre-line; }
+.settings-screen:is([data-category="Button Icons"], [data-category="Button Settings"]) .settings-list { top: 15.75vh; right: 5.6vw; }
+.settings-screen:is([data-category="Button Icons"], [data-category="Button Settings"])::before { right: 5.6vw; background: linear-gradient(to right, transparent 41.4%, #afb0ab 41.4% 41.5%, transparent 41.5% 70.7%, #afb0ab 70.7% 70.8%, transparent 70.8%); }
+.settings-table-head { position: absolute; top: 11.5vh; left: 5.5vw; right: 5.6vw; display: grid; grid-template-columns: 41% 29.5% 29.5%; font-size: 2.7vh; text-align: center; }
+.settings-table-head span:first-child { text-align: left; padding-left: 1vw; }
+.settings-screen[data-detail="true"] .controller-row.has-value .settings-row-label { width: 41%; }
+.settings-current { width: 29.5%; display: flex; align-items: center; justify-content: center; font-size: 2.7vh; }
+.settings-screen[data-game="mgs1"][data-detail="true"]::before { right: 43vw; }
+.settings-screen[data-game="mgs1"][data-detail="true"] .settings-list { left: 5.2vw; right: 43vw; top: 11.57vh; }
+.settings-screen[data-game="mgs1"][data-detail="true"] .settings-row { font-size: 2.59vh; }
+.settings-screen[data-game="mgs1"][data-category="Audio"] .settings-row.has-value .settings-row-label { width: 45%; }
+.settings-screen[data-category="Community Fixes"] .settings-row.has-value { height: auto; min-height: 6vh; font-size: 2.35vh; }
+.settings-screen[data-category="Community Fixes"] .settings-row.has-value .settings-row-label { padding-block: .6vh; }
+.settings-screen[data-category="Community Fixes"] .settings-value output { font-size: 2.1vh; }
+.settings-screen[data-game="mgspw"][data-detail="true"] .settings-row.focused { color: #000; }
+.controller-preview { display: inline-flex; gap: 1.45vw; align-items: center; }
+.controller-preview > span { display: inline-flex; align-items: center; justify-content: center; height: 2.6vh; min-width: 1.45vw; font: 700 1.7vh Arial, sans-serif; background: var(--ink); color: var(--paper); }
+.focused .controller-preview > span { background: #fff; color: var(--accent); }
+.controller-preview .round-key { border-radius: 50%; }
+.controller-preview .shoulder-key { height: 1.8vh; border-radius: .1vw; font-size: 1.2vh; }
+.controller-preview .keyboard-key { font-size: 1.2vh; padding: 0 .15vw; }
+.settings-screen[data-game="mgspw"] .focused .controller-preview > span { background: #000; color: var(--accent); }
+.settings-screen[data-detail="true"]::before { border-color: #171717; border-right: .1vh solid #171717; }
+.settings-screen[data-detail="true"] .settings-list { overflow-x: visible; padding-left: 1vw; margin-left: -1vw; }
+.settings-screen[data-detail="true"] .settings-row { border-color: #171717; }
+.settings-screen[data-category="Screen"] .settings-row.has-value .settings-row-label { width: 64.5%; }
+.settings-screen[data-category="Screen"] .settings-value { padding-right: 1.5vw; }
+.settings-table-head { text-align: left; font-size: 1.65vh; top: 12.35vh; }
+.settings-table-head span { padding-left: .65vw; }
+.volume-icon-space { flex: 0 0 1.5vw; }
+.settings-screen[data-game="mgs1"][data-category="Language"] .settings-list { right: 57.3vw; }
+.settings-screen[data-game="mgs1"][data-category="Language"]::before { right: 57.3vw; }
+.settings-screen[data-game="mgs1"][data-category="Button Settings"] .settings-list { top: 15.75vh; right: 5.6vw; }
+.settings-screen[data-game="mgs1"][data-category="Button Settings"]::before { right: 5.6vw; }
+.settings-screen[data-detail="true"] .settings-heading { font-weight: 400; }
+.settings-heading { font-weight: 400; }
+.settings-list { padding-left: 1vw; margin-left: -1vw; }
+.settings-screen[data-detail="true"]::after { content: ""; position: absolute; pointer-events: none; left: 5.5vw; top: 12.2vh; bottom: 13vh; border-left: .1vh solid #171717; }
+.settings-current { justify-content: flex-start; padding-left: 2vw; }
+.controller-row .settings-value { justify-content: flex-start; padding-left: 1vw; }
+.controller-row .settings-value > button { opacity: 0; min-width: .7vw; width: .7vw; padding: 0; }
+.controller-row:hover .settings-value > button, .controller-row .settings-value > button:focus-visible { opacity: 1; }
+.settings-screen[data-category="Audio"] .settings-value { display: grid; grid-template-columns: 1.5vw 2.7vw 1.5vw minmax(0, 1fr) 1.5vw; gap: .6vw; }
+.settings-screen[data-detail="true"] .settings-value button { font-size: 2.65vh; }
+.settings-screen[data-category="Audio"] .volume-bars { gap: .25vw; }
+.settings-row-label small { font-size: 1.9vh; }
+.settings-screen:has(.settings-native-mgs1-header) .head { display: none; }
+.settings-native-mgs1-header img { position: absolute; object-fit: fill; }
+.settings-screen[data-game="mgs1"] .ghost-timeline { top: -7.685185vh; }
+.settings-year-subtitle { left: 63.542vw; top: 23.333vh; width: 11.042vw; height: 10.741vh; }
+.settings-screen[data-game="mgspw"] { --accent: #ffd400 !important; }
+.settings-screen[data-detail="true"] .settings-row { border-width: 1px; border-color: #080808; }
+.settings-screen[data-game="mgs4"] .settings-row.focused { color: #fff; }
+.settings-screen:is([data-game="mgs4"], [data-game="mgspw"])[data-category="Screen"] .settings-row.has-value .settings-row-label { width: 61%; }
+.settings-screen[data-category="Audio"] .settings-value { padding-right: 1.7vw; padding-left: .7vw; }
+.settings-screen[data-detail="true"] { background: linear-gradient(to bottom, #2d2d2d 0 5.6%, #fff 5.6% 9.45%, #303030 9.45% 11.05%, #dcdcda 11.05% 92.7%, #2d2d2d 92.7%); }
+.settings-screen[data-detail="true"]::before, .settings-screen[data-detail="true"]::after { bottom: 14vh; }
+.settings-screen[data-detail="true"] .settings-help { top: 86vh; height: 6.7vh; max-height: 6.7vh; }
+.settings-screen[data-detail="true"] .settings-row.read-only { background: #a3a3a3; color: #808080; border-color: #62635f; }
+.settings-screen[data-detail="true"] .settings-row.read-only button:disabled { opacity: 1; }
+.settings-screen[data-category="Community Fixes"] .settings-help { font-size: 2.1vh; padding-top: .6vh; }

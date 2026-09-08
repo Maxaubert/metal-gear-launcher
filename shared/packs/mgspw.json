@@ -1,0 +1,128 @@
+{
+  "id": "mgspw",
+  "title": "METAL GEAR SOLID: PEACE WALKER",
+  "shortTitle": "MGSPW",
+  "number": "PW",
+  "releaseYear": 2010,
+  "indexLabel": "0PW",
+  "yearLabel": "1974",
+  "subtitle": "Peace Walker Incident",
+  "description": "After the tragic loss of The Boss, Big Boss forms a private mercenary group and devises the Peace Walker Incident, in order to acquire a Metal Gear. This game not only features missions to infiltrate enemy strongholds, but also operational elements where players must manage and grow the facility known as Mother Base. Players can also go on co-op multiplayer missions.",
+  "theme": {
+    "accent": "#ffdc00",
+    "ink": "#ffffff",
+    "paper": "#000000"
+  },
+  "steam": {
+    "appId": 2492660,
+    "installDir": "MGS_PW"
+  },
+  "launch": {
+    "exe": "mgspw/METAL GEAR SOLID PEACE WALKER.exe",
+    "cwd": "mgspw",
+    "env": {
+      "SteamAppId": "2492660"
+    }
+  },
+  "assets": [
+    {
+      "role": "mainVisual",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle",
+      "name": "ui_launcher_bg_main_mgspw",
+      "edge": "cut"
+    },
+    {
+      "role": "logo",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle",
+      "name": "ui_launcher_logo_mgspw"
+    },
+    {
+      "role": "year",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle",
+      "name": "ui_launcher_menu_txt_year_mgspw"
+    },
+    {
+      "role": "bgEffect",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle",
+      "name": "ui_launcher_bg_sud_mgspw"
+    },
+    {
+      "role": "bgm",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_scenarioapp/mgspw/bgm/mg35_mgspw_entrygate.wav.bundle",
+      "name": "MG35_mgspw_Entry Gate",
+      "type": "AudioClip"
+    },
+    {
+      "role": "fontMedium",
+      "source": "unity",
+      "path": "launcher/launcher_Data/sharedassets0.assets",
+      "name": "MG-RodinProN-M",
+      "type": "Font"
+    },
+    {
+      "role": "fontBold",
+      "source": "unity",
+      "path": "launcher/launcher_Data/sharedassets0.assets",
+      "name": "MG-RodinProN-B",
+      "type": "Font"
+    },
+    {
+      "role": "headerYear",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/textures/mgspwmenutext.spriteatlas.bundle",
+      "name": "ui_launcher_menu_year_mgspw",
+      "type": "Sprite"
+    },
+    {
+      "role": "headerSubtitle",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/textures/mgspwmenutext.spriteatlas.bundle",
+      "name": "ui_launcher_menu_incident_mgspw_en",
+      "type": "Sprite"
+    },
+    {
+      "role": "headerMark",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/textures/mgspwmenutext.spriteatlas.bundle",
+      "name": "ui_launcher_menu_barcode_mgspw",
+      "type": "Sprite"
+    },
+    {
+      "role": "fontUi",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/defaultlocalgroup_assets_launcher/fonts/mg_sansserif-md.otf.bundle",
+      "name": "MG_SansSerif-Md",
+      "type": "Font"
+    },
+    {
+      "role": "reticle1",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle",
+      "name": "ui_launcher_eff_circle_1_mgspw"
+    },
+    {
+      "role": "reticle2",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle",
+      "name": "ui_launcher_eff_circle_2_mgspw"
+    },
+    {
+      "role": "reticle3",
+      "source": "unity",
+      "path": "launcher/launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgspw_assets_launcher/prefabs/mgspw/animator.prefab.bundle",
+      "name": "ui_launcher_eff_circle_3_mgspw"
+    }
+  ],
+  "visualFit": {
+    "leftVw": -8.161,
+    "widthVw": 68.325,
+    "heightVh": 188,
+    "anchor": "top"
+  },
+  "assetRevision": 1
+}

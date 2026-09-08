@@ -1,0 +1,32 @@
+{
+  "id": "mgs3",
+  "title": "METAL GEAR SOLID 3: SNAKE EATER",
+  "shortTitle": "MGS3",
+  "number": "3",
+  "releaseYear": 2004,
+  "indexLabel": "003",
+  "yearLabel": "1964",
+  "subtitle": "Virtuos Mission / Operation Snake Eater",
+  "description": "The story that tells the beginning of the epic saga. It covers the events of both Virtuous Mission and Operation Snake Eater, detailing how the man code-named Naked Snake earned the title of Big Boss. In addition to hiding in the shadows, players can use uniforms and face paint as camouflage to blend in with their surroundings.",
+  "theme": {"accent": "#7e9f32", "ink": "#111111", "paper": "#ffffff", "paperLeft": "#ecefdd"},
+  "steam": {"appId": 2131650, "installDir": "MGS3"},
+  "launch": {"exe": "METAL GEAR SOLID3.exe", "env": {"SteamAppId": "2131650"}},
+  "visualFit": {"leftVw": 1.2, "widthVw": 56.5, "heightVh": 120, "anchor": "top"},
+  "bgEffectFit": {"leftVw": 57, "topVh": 0, "widthVw": 67, "opacity": 0.3},
+  "assets": [
+    {"role": "mainVisual", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/prefabs/mgs3/animator.prefab.bundle", "name": "mgs3_mainvisual"},
+    {"role": "logo", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/prefabs/mgs3/animator.prefab.bundle", "name": "mgs3_logo"},
+    {"role": "numbering", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/prefabs/mgs3/animator.prefab.bundle", "name": "mgs3_numbering"},
+    {"role": "year", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/textures/mgs3menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_mgs3_year", "type": "Sprite"},
+    {"role": "bgEffect", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/prefabs/mgs3/animator.prefab.bundle", "name": "mgs3_metalgear_illust"},
+    {"role": "bgm", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/bgm/mgs3/mg35_mgs3_menu_lp.wav.bundle", "name": "MG35_mgs3_menu_lp", "type": "AudioClip"},
+    {"role": "fontMedium", "source": "unity", "path": "launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-M", "type": "Font"},
+    {"role": "fontBold", "source": "unity", "path": "launcher_Data/sharedassets0.assets", "name": "MG-RodinProN-B", "type": "Font"},
+    {"role": "headerYear", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/textures/mgs3menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_1964", "type": "Sprite"},
+    {"role": "headerSubtitle", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/textures/mgs3menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_1964_en", "type": "Sprite"},
+    {"role": "fontUi", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/defaultlocalgroup_assets_launcher/fonts/mg_sansserif-md.otf.bundle", "name": "MG_SansSerif-Md", "type": "Font"},
+    {"role": "headerMark", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/textures/mgs3menutext.spriteatlas.bundle", "name": "1964text", "type": "Sprite"},
+    {"role": "backgroundArt", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs3_assets_launcher/prefabs/mgs3/animator.prefab.bundle", "name": "mgs3_mainvisual_bg"}
+  ],
+  "assetRevision": 1
+}

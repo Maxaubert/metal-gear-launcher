@@ -1,0 +1,35 @@
+{
+  "gameId": "mg12",
+  "buildId": "100001",
+  "assetRevision": 3,
+  "toolVersions": {
+    "assetStudio": "v0.19.0",
+    "freemote": "v4.7.0"
+  },
+  "files": {
+    "mainVisual": "mainVisual.png",
+    "logo": "logo.png",
+    "numbering": "numbering.png",
+    "year": "year.png",
+    "bgEffect": "bgEffect.png",
+    "headerYear": "headerYear.png",
+    "headerSubtitle": "headerSubtitle.png",
+    "mainVisual2": "mainVisual2.png",
+    "logo2": "logo2.png",
+    "headerYear2": "headerYear2.png",
+    "headerSubtitle2": "headerSubtitle2.png",
+    "bgm": "bgm.wav",
+    "wallpaper1": "wallpaper1.png",
+    "wallpaper2": "wallpaper2.png",
+    "wallpaper3": "wallpaper3.png",
+    "wallpaper4": "wallpaper4.png",
+    "wallpaper5": "wallpaper5.png",
+    "wallpaper6": "wallpaper6.png",
+    "wallpaperDisplayArea": "wallpaperDisplayArea.png",
+    "settingsOverlay": "settingsOverlay.png",
+    "settingsGrid": "settingsGrid.png",
+    "settingsGridFine": "settingsGridFine.png",
+    "settingsGridBase": "settingsGridBase.png"
+  },
+  "failed": {}
+}

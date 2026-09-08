@@ -1,0 +1,20 @@
+{
+  "gameId": "mgs3",
+  "buildId": "100004",
+  "assetRevision": 1,
+  "toolVersions": {
+    "assetStudio": "v0.19.0",
+    "freemote": "v4.7.0"
+  },
+  "files": {
+    "mainVisual": "mainVisual.png",
+    "logo": "logo.png",
+    "numbering": "numbering.png",
+    "year": "year.png",
+    "bgEffect": "bgEffect.png",
+    "headerYear": "headerYear.png",
+    "headerSubtitle": "headerSubtitle.png",
+    "bgm": "bgm.wav"
+  },
+  "failed": {}
+}

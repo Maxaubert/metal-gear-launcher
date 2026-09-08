@@ -1,0 +1,26 @@
+{
+  "id": "mgs1", "title": "METAL GEAR SOLID", "shortTitle": "MGS1", "number": "1",
+  "releaseYear": 1998,
+  "indexLabel": "001",
+  "yearLabel": "2005", "subtitle": "Shadow Moses Incident",
+  "description": "In this game, Solid Snake comes out of retirement after living in seclusion in Alaska in order to take on a mission regarding Big Boss's corpse. It tells the tale of the infiltration mission that would later be known as the Shadow Moses Incident. The game featured many new ideas, such as the use of the controller's vibration function and various secrets hidden within the game's packaging.",
+  "theme": { "accent": "#d81f26", "ink": "#111111", "paper": "#fbfbf9" },
+  "steam": { "appId": 2131630, "installDir": "MGS1" },
+  "launch": { "exe": "METAL GEAR SOLID.exe", "env": { "SteamAppId": "2131630" } },
+  "visualFit": { "leftVw": 5.989583, "widthVw": 57.395833, "heightVh": 100.185185, "anchor": "top" },
+  "assetRevision": 2,
+  "assets": [
+    { "role": "nativeTextAtlas", "source": "m2", "file": "system/motion/txt_en.psb.m" },
+    { "role": "nativeTextMetrics", "source": "m2", "file": "system/motion/txt_en.psb.m", "format": "metrics" },
+    { "role": "nativeFontAtlas", "source": "m2", "file": "system/font/title_tsukugo_22pt.psb.m" },
+    { "role": "nativeFontMetrics", "source": "m2", "file": "system/font/title_tsukugo_22pt.psb.m", "format": "metrics" },
+    { "role": "mainVisual", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0019" },
+    { "role": "logo",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0012" },
+    { "role": "numbering",  "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0007" },
+    { "role": "year",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0015" },
+    { "role": "bgEffect",   "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0045" },
+    { "role": "bgm",        "source": "m2", "file": "system/sound/bgm_title.psb" },
+    { "role": "settingsHeader", "source": "m2", "file": "system/motion/txt_en.psb.m", "texture": "tex", "sprite": "0025" },
+    { "role": "settingsTimeline", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0015" }
+  ]
+}
