@@ -51,6 +51,18 @@ Moving the mouse over a menu item highlights it without activating it. Keyboard 
 navigation take over when you use them. Change games through **Game Selection**; arrows and
 shoulder buttons do not switch games from the main menu.
 
+## Trophies
+
+Open **Trophies** from a game's main menu to browse each achievement, its description,
+your unlock state, and the percentage of players who earned it. Steam data loads directly
+from Steam, with local stats and cached snapshots available when offline. No API key is needed.
+Private or unavailable unlock states are labeled explicitly.
+
+Matching GOG achievements appear as another source when GOG Galaxy has cached them locally.
+Open Galaxy to update its cache. An edition must support Galaxy achievements to provide that
+list; other storefronts are not connected yet. These trophy sources do not change the hub's
+Steam-based game installation and launch support. See [platform details](docs/achievements.md).
+
 ## Menu music
 
 Open **Options > Menu Music > Open Music Folder** for a game's local music library. Add FLAC,

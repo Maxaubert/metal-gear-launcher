@@ -91,7 +91,7 @@ export const packSchema = z.object({
   launch: z.object({ exe: z.string(), cwd: z.string().default("."), env: z.record(z.string()).default({}), steamOnly: z.boolean().default(false) }),
   assets: z.array(assetEntry).min(1),
   assetRevision: z.number().int().nonnegative().default(0),
-  menu: z.array(z.enum(["start", "gameSelection", "options", "quit"])).default(["start", "gameSelection", "options", "quit"]),
+  menu: z.array(z.enum(["start", "gameSelection", "options", "trophies", "quit"])).default(["start", "gameSelection", "options", "trophies", "quit"]),
   visualFit: visualFitSchema.optional(),
   bgEffectFit: bgEffectFitSchema.optional(),
   chapters: z.array(chapterSchema).length(2).optional(),

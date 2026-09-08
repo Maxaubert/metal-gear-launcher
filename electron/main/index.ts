@@ -24,6 +24,8 @@ import { checkForUpdate } from "./update";
 import { settingsGameId, settingsReadRequest, saveSettingsRequest } from "@shared/settings";
 import { getGameSettings, saveGameSettings } from "./settings/service";
 import { readMenuSounds } from "./music/sounds";
+import { achievementsRequest } from "@shared/achievements";
+import { getAchievements } from "./achievements/service";
 
 const execAsync = promisify(exec);
 
@@ -201,6 +203,15 @@ if (!gotSingleInstanceLock) {
       return new Response(upstream.body, { status: upstream.status, headers });
     });
 
+    ipcMain.handle("hub:achievements:get", async (_event, arg) => {
+      try {
+        const request = achievementsRequest.parse(arg);
+        const pack = loadPacks().find(pack => pack.id === request.gameId)!;
+        const config = await readConfig();
+        const steamRoot = await findSteamRoot(config.steamPath);
+        return ok(await getAchievements(pack, steamRoot, dataDir(), request.refresh));
+      } catch (error) { return err(asError(error)); }
+    });
     ipcMain.handle("hub:getState", async () => {
       try {
         return ok(await buildState());

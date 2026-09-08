@@ -6,6 +6,7 @@ import type { UpdateInfo } from "../electron/main/update";
 import type { GameSettings, SaveSettingsRequest } from "./settings";
 import type { MenuMusicLibrary, MenuMusicRequest } from "./menuMusic";
 import type { MenuSoundData } from "./menuSounds";
+import type { AchievementsRequest, AchievementsSnapshot } from "./achievements";
 
 export const ASSET_PROTOCOL = "hub-asset";
 
@@ -39,6 +40,7 @@ export type HubState = {
 export type ExtractTarget = "all" | Pack["id"];
 
 export interface HubApi {
+  getAchievements(request: AchievementsRequest): Promise<Result<AchievementsSnapshot>>;
   getMenuSounds(): Promise<Result<MenuSoundData>>;
   getGameSettings(gameId: GameId, accountId?: string): Promise<Result<GameSettings>>;
   saveGameSettings(request: SaveSettingsRequest): Promise<Result<GameSettings>>;

@@ -17,8 +17,9 @@ import { preloadPresentation } from "./preloadPresentation";
 import StartupSplash from "./StartupSplash";
 import { useStartupPresentation } from "./useStartupPresentation";
 import { resolveMenuMusic, type MenuMusicLibrary, type MenuMusicSelections } from "@shared/menuMusic";
+import TrophiesScreen from "../achievements/TrophiesScreen";
 
-const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
+const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 5, gameCount: PACK_ORDER.length };
 const LAUNCH_MESSAGE_MS = 3000;
 const MAX_PADS = 4;
 
@@ -50,6 +51,8 @@ export default function HubProvider() {
   const [nav, rawDispatch] = useReducer(reduceNav, INITIAL_NAV);
   const [quitOpen, setQuitOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [trophiesOpen, setTrophiesOpen] = useState(false);
+  const trophiesActionRef = useRef<((action: Action) => void) | null>(null);
   const [settingsDetail, setSettingsDetail] = useState(false);
   const settingsOpenRef = useRef(false);
   useEffect(() => { settingsOpenRef.current = settingsOpen; }, [settingsOpen]);
@@ -123,13 +126,13 @@ export default function HubProvider() {
       if (index >= 0) {
         const action: SelectGame = { type: "selectGame", index };
         if (settingsOpenRef.current) pendingNavigation.current = action;
-        else dispatch(action);
+        else { setTrophiesOpen(false); dispatch(action); }
       }
     });
     const offSelectionOpen = window.hub.onSelectionOpen(() => {
       if (!cancelled) {
         if (settingsOpenRef.current) pendingNavigation.current = "menu";
-        else dispatch("menu");
+        else { setTrophiesOpen(false); dispatch("menu"); }
       }
     });
     const off = window.hub.onExtractProgress((p: Progress) => {
@@ -216,7 +219,7 @@ export default function HubProvider() {
   // Y/retry effect (same button, same polling shape) since both are global "press Y for the
   // thing the footer/overlay is telling you about" affordances rather than menu navigation.
   useEffect(() => {
-    if (!updateInfo || settingsOpen || startup.visible) return;
+    if (!updateInfo || settingsOpen || trophiesOpen || startup.visible) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "KeyY") void window.hub.openUpdate();
     };
@@ -239,7 +242,7 @@ export default function HubProvider() {
       window.removeEventListener("keydown", onKeyDown);
       cancelAnimationFrame(frame);
     };
-  }, [updateInfo, settingsOpen, startup.visible]);
+  }, [updateInfo, settingsOpen, trophiesOpen, startup.visible]);
 
   async function refreshState(): Promise<void> {
     try {
@@ -283,6 +286,9 @@ export default function HubProvider() {
       void playMenuSound("options");
       setSettingsDetail(false);
       setSettingsOpen(true);
+    } else if (key === "trophies") {
+      void playMenuSound("select");
+      setTrophiesOpen(true);
     } else {
       void playMenuSound("select");
       setQuitItem(0);
@@ -349,6 +355,10 @@ export default function HubProvider() {
       settingsActionRef.current?.(action);
       return;
     }
+    if (trophiesOpen) {
+      trophiesActionRef.current?.(action);
+      return;
+    }
     if (needsFirstRun) {
       const rows = firstRunRows();
       if (action === "up" || action === "down") {
@@ -393,7 +403,7 @@ export default function HubProvider() {
     rawDispatch({ type: "focusItem", index });
   };
 
-  const updateBanner = updateInfo && !settingsOpen && (
+  const updateBanner = updateInfo && !settingsOpen && !trophiesOpen && (
     <div
       data-testid="update-banner"
       style={{
@@ -430,8 +440,9 @@ export default function HubProvider() {
     content = (
       <>
         <div style={{ position: "absolute", inset: 0 }}>
-          <PersistentBackdrop game={displayedGame} view={settingsOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail} />
-          {settingsOpen ? (
+          <PersistentBackdrop game={displayedGame} view={settingsOpen || trophiesOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail || trophiesOpen} />
+          {trophiesOpen ? <TrophiesScreen key={currentGame.pack.id} game={currentGame} lastInputKind={lastInputKind}
+            actionRef={trophiesActionRef} onClose={() => setTrophiesOpen(false)} /> : settingsOpen ? (
             <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
               musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={selections => { setMusicSelections(selections); setMutedStartupGame(undefined); }}
               musicLibrary={musicLibraries[currentGame.pack.id]!} onMusicPreview={setMusicPreview}
