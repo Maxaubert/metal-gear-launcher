@@ -18,7 +18,7 @@ $clips = @(
   @{ Name = 'back'; Start = 14.040; End = 15.600; Label = 'Exit' },
   @{ Name = 'options'; Start = 16.958; End = 19.000; Label = 'Briefing Files / Options' },
   @{ Name = 'adjust'; Start = 21.004; End = 21.850; Label = 'Options Select' },
-  @{ Name = 'vr'; Start = 28.492; End = 29.600; Label = 'VR Mission Select' }
+  @{ Name = 'vr'; Start = 25.655; End = 26.500; Label = 'VR Mission Select' }
 )
 foreach ($clip in $clips) {
   $destination = Join-Path $outputRoot ($clip.Name + '.wav')
