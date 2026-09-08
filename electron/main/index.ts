@@ -27,6 +27,9 @@ import { getGameSettings, saveGameSettings } from "./settings/service";
 import { readMenuSounds } from "./music/sounds";
 import { achievementsRequest } from "@shared/achievements";
 import { getAchievements } from "./achievements/service";
+import { getBonusLibrary } from "./bonus/library";
+import { resolveBonusFile } from "./bonus/media";
+import { bonusResponse } from "./bonus/response";
 
 const execAsync = promisify(exec);
 
@@ -43,6 +46,7 @@ app.setAppUserModelId("com.maxaubert.mgsmasterhub");
 protocol.registerSchemesAsPrivileged([
   { scheme: ASSET_PROTOCOL, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
   { scheme: MUSIC_PROTOCOL, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
+  { scheme: "hub-bonus", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
 ]);
 
 // `.ttf`-named font assets are actually OpenType CFF (`OTTO` magic), not TrueType, per
@@ -173,6 +177,20 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
+    protocol.handle("hub-bonus", async request => {
+      try {
+        if (request.method !== "GET" && request.method !== "HEAD") return new Response(null, { status: 405 });
+        const { file, contentType } = await resolveBonusFile(request.url);
+        return bonusResponse(request, file, contentType);
+      } catch { return new Response("Bonus content is unavailable. Refresh the library.", { status: 404 }); }
+    });
+    ipcMain.handle("hub:bonus:get", async (_event, arg) => {
+      try {
+        z.undefined().parse(arg);
+        const config = await readConfig();
+        return ok(await getBonusLibrary(await findSteamRoot(config.steamPath), dataDir()));
+      } catch (error) { return err(asError(error)); }
+    });
     // Fired once at boot, not per-window: the renderer reads the result via `hub:getUpdate`
     // (already resolved or resolving by the time it asks, so no push/race to worry about).
     const updateCheck = checkForUpdate(app.getVersion());

@@ -7,6 +7,7 @@ import "./selectionMotion.css";
 
 export type GameSelectionProps = {
   games: GameState[];
+  fallbackGame?: GameState;
   focusIndex: number;
   lastInputKind: InputKind;
   onSelect: (index: number) => void;
@@ -23,8 +24,9 @@ export type GameSelectionProps = {
  * screen - but stays visually marked (dashed border, dimmed cover, greyed label) so the list still
  * shows which games need Steam install/extraction.
  */
-export default function GameSelection({ games, focusIndex, lastInputKind, onSelect, onFocusItem }: GameSelectionProps) {
-  const focused = games[focusIndex];
+export default function GameSelection({ games, fallbackGame, focusIndex, lastInputKind, onSelect, onFocusItem }: GameSelectionProps) {
+  const bonusFocused = focusIndex === games.length;
+  const focused = games[focusIndex] ?? fallbackGame ?? games[0];
   if (!focused) return null;
 
   return (
@@ -32,13 +34,14 @@ export default function GameSelection({ games, focusIndex, lastInputKind, onSele
       className="screen"
       data-testid="game-selection"
       data-game={focused.pack.id}
+      data-bonus-focused={bonusFocused || undefined}
       data-layout="v2"
-      style={{ ...themeVars(focused.pack.theme), ...layoutVars(focused.pack.id) }}
+      style={{ ...themeVars(focused.pack.theme), ...layoutVars(focused.pack.id), "--selection-row-height": "8vh", ...(bonusFocused ? { "--accent": "#756a35" } : {}) } as CSSProperties}
     >
 
       <div className="selection-info">
-        <span className="title">{focused.pack.title}</span>
-        <span className="released">Originally released in {focused.pack.releaseYear}</span>
+        <span className="title">{bonusFocused ? "BONUS CONTENT" : focused.pack.title}</span>
+        <span className="released">{bonusFocused ? "Videos and Digital Soundtrack" : `Originally released in ${focused.pack.releaseYear}`}</span>
       </div>
 
       <div className="selection-header">
@@ -71,6 +74,13 @@ export default function GameSelection({ games, focusIndex, lastInputKind, onSele
             </span>}
           </li>
         ))}
+        <li role="menuitem" tabIndex={-1} data-testid="tile-bonus" aria-current={bonusFocused ? "true" : undefined}
+          data-focused={bonusFocused ? "true" : undefined} className={`tile bonus-tile${bonusFocused ? " focused" : ""}`}
+          onClick={() => onSelect(games.length)} onFocus={() => onFocusItem(games.length)}
+          onPointerMove={event => { if (event.pointerType !== "touch") onFocusItem(games.length); }}>
+          <span className="tile-scrim" aria-hidden="true" />
+          <span className="tile-title">BONUS CONTENT</span>
+        </li>
       </ul>
 
       <FooterHints lastInputKind={lastInputKind} />

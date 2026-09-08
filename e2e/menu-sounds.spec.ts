@@ -136,6 +136,15 @@ test("menu sounds follow semantic actions once, with no passive or ineffective-i
       await expectSounds(["select"]);
       await page.keyboard.press("ArrowRight");
       await expectSounds(["navigate"]);
+      if (await page.getByTestId("tile-bonus").getAttribute("data-focused") === "true") {
+        await page.keyboard.press("Enter");
+        await expectSounds(["select"]);
+        await expect(page.getByTestId("bonus-content")).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expectSounds(["back"]);
+        await page.keyboard.press("ArrowRight");
+        await expectSounds(["navigate"]);
+      }
       await page.keyboard.press("Enter");
       await expectSounds(["select"]);
       await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", game);

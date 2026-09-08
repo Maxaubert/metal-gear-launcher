@@ -777,7 +777,7 @@ body {
   padding: 0;
   list-style: none;
   display: grid;
-  grid-auto-rows: 9.5vh;
+  grid-auto-rows: var(--selection-row-height, 9.5vh);
   align-content: start;
   gap: 1vh;
   overflow: hidden;
@@ -785,7 +785,7 @@ body {
 
 .tile {
   position: relative;
-  height: 9.5vh;
+  height: var(--selection-row-height, 9.5vh);
   overflow: hidden;
   cursor: pointer;
 }

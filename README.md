@@ -66,6 +66,19 @@ Open Galaxy to update its cache. An edition must support Galaxy achievements to 
 list; other storefronts are not connected yet. These trophy sources do not change the hub's
 Steam-based game installation and launch support. See [platform details](docs/achievements.md).
 
+## Bonus Content
+
+Choose **Game Selection > Bonus Content** for one combined library of Vol.1 and Vol.2 extras.
+**Videos** plays installed Vol.1 Digital Graphic Novels with chapter selection.
+**Digital Soundtrack** combines the tracks available in your installed bonus-content apps.
+
+Steam library locations are detected automatically. Install the relevant Bonus Content app and
+its optional movie downloads through Steam first. Missing volumes or individual media files do
+not prevent the rest of the library from working. Retry refreshes detection after an installation.
+Small menu and sleeve images are extracted into the launcher's local cache; movies and tracks
+play directly from the Steam library without being copied. No bonus media ships with the launcher.
+Menu music pauses while Bonus Content is open and resumes when you leave.
+
 ## Menu music
 
 Open **Options > Menu Music > Open Music Folder** for a game's local music library. Add FLAC,
