@@ -1,5 +1,10 @@
 export type BonusVolume = "vol1" | "vol2";
 
+export interface BonusPresentation {
+  volume: BonusVolume | null;
+  artwork: Record<string, string>;
+}
+
 export interface BonusTrack {
   id: string;
   title: string;

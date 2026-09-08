@@ -3,6 +3,8 @@ import type { HubApi } from "@shared/ipc";
 
 const api: HubApi = {
   getBonusContent: () => ipcRenderer.invoke("hub:bonus:get"),
+  getBonusPresentation: () => ipcRenderer.invoke("hub:bonus:presentation"),
+  getBonusPlaylist: () => ipcRenderer.invoke("hub:bonus:playlist"),
   getAchievements: request => ipcRenderer.invoke("hub:achievements:get", request),
   getMenuSounds: () => ipcRenderer.invoke("hub:sounds:get"),
   getGameSettings: (gameId, accountId) => ipcRenderer.invoke("hub:settings:get", { gameId, accountId }),

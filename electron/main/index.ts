@@ -30,6 +30,8 @@ import { getAchievements } from "./achievements/service";
 import { getBonusLibrary } from "./bonus/library";
 import { resolveBonusFile } from "./bonus/media";
 import { bonusResponse } from "./bonus/response";
+import { getBonusPresentation } from "./bonus/presentation";
+import { getBonusPlaylist } from "./bonus/playlist";
 
 const execAsync = promisify(exec);
 
@@ -191,6 +193,20 @@ if (!gotSingleInstanceLock) {
         return ok(await getBonusLibrary(await findSteamRoot(config.steamPath), dataDir()));
       } catch (error) { return err(asError(error)); }
     });
+    ipcMain.handle("hub:bonus:presentation", async (_event, arg) => {
+      try {
+        z.undefined().parse(arg);
+        const config = await readConfig();
+        return ok(await getBonusPresentation(await findSteamRoot(config.steamPath), dataDir()));
+      } catch (error) { return err(asError(error)); }
+    });
+    ipcMain.handle("hub:bonus:playlist", async (_event, arg) => {
+      try {
+        z.undefined().parse(arg);
+        const config = await readConfig();
+        return ok(await getBonusPlaylist(dataDir(), await findSteamRoot(config.steamPath)));
+      } catch (error) { return err(asError(error)); }
+    });
     // Fired once at boot, not per-window: the renderer reads the result via `hub:getUpdate`
     // (already resolved or resolving by the time it asks, so no push/race to worry about).
     const updateCheck = checkForUpdate(app.getVersion());
@@ -198,13 +214,7 @@ if (!gotSingleInstanceLock) {
     protocol.handle(MUSIC_PROTOCOL, async (req) => {
       try {
         const file = await resolveMenuMusicFile(dataDir(), req.url);
-        const upstream = await net.fetch(pathToFileURL(file).toString(), { headers: req.headers });
-        if (!upstream.ok || !upstream.body) return upstream;
-        const headers = new Headers(upstream.headers);
-        headers.set("Access-Control-Allow-Origin", "*");
-        headers.set("Content-Type", MUSIC_CONTENT_TYPES[extname(file).toLowerCase()]!);
-        headers.set("Cache-Control", "no-store");
-        return new Response(upstream.body, { status: upstream.status, headers });
+        return bonusResponse(req, file, MUSIC_CONTENT_TYPES[extname(file).toLowerCase()]!);
       } catch { return new Response("Music file is unavailable.", { status: 404 }); }
     });
 

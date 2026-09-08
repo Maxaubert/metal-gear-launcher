@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import type { BonusLibrary } from "@shared/bonus";
+import type { BonusLibrary, BonusPresentation } from "@shared/bonus";
 import type { InputKind } from "../input/useNavigation";
 import { ControlHint } from "../screens/FooterHints";
 import { playMenuSound } from "../audio/menuSounds";
 import { useBonusActions, type BonusActionRef } from "./bonusMedia";
-import BonusArtwork from "./BonusArtwork";
+import { BonusBackdrop, BonusHeader } from "./BonusScene";
 import SoundtrackScreen from "./SoundtrackScreen";
 import BonusVideos from "./BonusVideos";
 import "./bonus.css";
 
-export type BonusContentScreenProps = { actionRef: BonusActionRef; lastInputKind: InputKind; onClose: () => void; volume: number };
+export type BonusContentScreenProps = { actionRef: BonusActionRef; lastInputKind: InputKind; onClose: () => void; volume: number;
+  presentation?: BonusPresentation; onPlaybackViewChange?: (open: boolean) => void };
 
 export default function BonusContentScreen(props: BonusContentScreenProps) {
   const [library, setLibrary] = useState<BonusLibrary>();
@@ -33,14 +34,18 @@ export default function BonusContentScreen(props: BonusContentScreenProps) {
   return <BonusHome {...props} library={library} loading={loading} error={error} retry={retry} open={setScreen} />;
 }
 
-function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error, retry, open }: BonusContentScreenProps & {
+function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error, retry, open, presentation }: BonusContentScreenProps & {
   library?: BonusLibrary; loading: boolean; error: string; retry: () => void; open: (screen: "music" | "videos") => void;
 }) {
   const [focus, setFocus] = useState(0);
   const focusRef = useRef(0);
-  const artVolume = library?.volumes.find(item => item.installed)?.id ?? "vol1";
-  const artwork = library && { ...library.artwork, ...Object.fromEntries(Object.entries(library.artwork)
-    .filter(([key]) => key.startsWith(`${artVolume}.`)).map(([key, value]) => [key.slice(artVolume.length + 1), value])) };
+  const artVolume = library?.volumes.find(item => item.installed && library.artwork[`${item.id}.mainVisual`])?.id
+    ?? presentation?.volume ?? library?.volumes.find(item => item.installed)?.id ?? "none";
+  const artwork = library ? {
+    ...(artVolume === presentation?.volume ? presentation.artwork : {}),
+    ...Object.fromEntries(Object.entries(library.artwork)
+      .filter(([key]) => key.startsWith(`${artVolume}.`)).map(([key, value]) => [key.slice(artVolume.length + 1), value])),
+  } : presentation?.artwork;
   const rows = [{ title: "Game Selection", action: onClose },
     ...(library?.videos.length ? [{ title: "Videos", action: () => open("videos") }] : []),
     ...(library?.tracks.length ? [{ title: "Digital Soundtrack", action: () => open("music") }] : []),
@@ -70,19 +75,6 @@ function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error,
     </div>
     <BonusHints lastInputKind={lastInputKind} onBack={() => activate(0)} />
   </main>;
-}
-
-export function BonusBackdrop({ artwork, hero, logo }: { artwork?: Record<string, string>; hero?: string; logo?: string }) {
-  return <div className="bonus-backdrop" aria-hidden="true">
-    <BonusArtwork className="bonus-main-art" src={hero ?? artwork?.mainVisual} />
-    <BonusArtwork className="bonus-logo" src={logo ?? artwork?.logo} />
-  </div>;
-}
-
-export function BonusHeader({ artwork }: { artwork?: Record<string, string> }) {
-  return <><div className="bonus-right-background" aria-hidden="true"><BonusArtwork src={artwork?.rightVisual} /></div>
-    <header className="bonus-header"><BonusArtwork className="bonus-header-art" src={artwork?.header} />
-      {!artwork?.header && <h1>BONUS CONTENT</h1>}</header></>;
 }
 
 export function BonusHints({ lastInputKind, onBack }: { lastInputKind: InputKind; onBack: () => void }) {

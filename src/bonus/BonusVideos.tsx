@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { BonusLibrary, BonusVideo } from "@shared/bonus";
-import { BonusBackdrop, BonusHeader, BonusHints, type BonusContentScreenProps } from "./BonusContentScreen";
+import { BonusHints, type BonusContentScreenProps } from "./BonusContentScreen";
+import { BonusBackdrop, BonusHeader } from "./BonusScene";
 import { playMenuSound } from "../audio/menuSounds";
 import { mediaTime, useBonusActions } from "./bonusMedia";
 import BonusArtwork from "./BonusArtwork";

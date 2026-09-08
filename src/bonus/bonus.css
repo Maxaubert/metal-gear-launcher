@@ -1,4 +1,6 @@
 .bonus-screen{position:absolute;inset:0;overflow:hidden;background:#fff;color:#111;font-family:"MenuEnglish","Rodin","Segoe UI",sans-serif;--bonus-accent:#70673a;--hint-ink:#555;--hint-paper:#fff}
+/* Keep hints legible while a dark and light scene share the wipe. */
+[data-testid="game-selection"] .hints{background:var(--paper);box-shadow:0 0 0 .35vw var(--paper)}
 .bonus-screen button{font:inherit;color:inherit;cursor:pointer;border-radius:0}
 .bonus-screen button:focus-visible,.bonus-screen input:focus-visible{outline:.2vw solid var(--bonus-accent);outline-offset:.12vw}
 .bonus-backdrop{position:absolute;inset:0 37.7vw 0 0;overflow:hidden;border-right:.08vw solid #444;pointer-events:none}
@@ -6,10 +8,15 @@
 .bonus-logo{position:absolute;left:.45vw;top:.9vh;width:18.385vw;height:98.15vh;object-fit:fill}
 .bonus-home .bonus-logo{clip-path:polygon(0 0,100% 0,100% 100%,29.2% 100%,29.2% 80.5%,0 80.5%)}
 .bonus-home[data-art-volume=vol2]{background:#050505;color:#fff;--hint-ink:#fff;--hint-paper:#050505}
+.bonus-home[data-art-volume=none]{background:#050505;color:#fff;--hint-ink:#fff;--hint-paper:#050505}
+.bonus-selection-scene .bonus-header{top:8vh}
+.bonus-empty-art{position:absolute;left:6vw;top:29vh;color:inherit;font-family:"MenuCondensed","Rodin",sans-serif;line-height:.95}
+.bonus-empty-art span{display:block;font-size:3vw;letter-spacing:.15vw;color:#b9aa62;margin-bottom:2vh}
+.bonus-empty-art strong{font-size:10vw;font-weight:400}
 .bonus-home[data-art-volume=vol2] .bonus-logo{clip-path:polygon(0 0,100% 0,100% 100%,29.2% 100%,29.2% 79.7%,0 79.7%)}
 .bonus-home[data-art-volume=vol2] .bonus-main-art{left:11.1vw;top:59.5vh;width:51.65vw;height:130.37vh;object-fit:contain}
-.bonus-home[data-art-volume=vol2] .bonus-home-menu button{background:transparent;border-color:#999}
-.bonus-home[data-art-volume=vol2] .bonus-home-menu button.bonus-selected{background:var(--bonus-accent);border-color:var(--bonus-accent)}
+.bonus-home:is([data-art-volume=vol2],[data-art-volume=none]) .bonus-home-menu button{background:transparent;border-color:#999}
+.bonus-home:is([data-art-volume=vol2],[data-art-volume=none]) .bonus-home-menu button.bonus-selected{background:var(--bonus-accent);border-color:var(--bonus-accent)}
 .bonus-right-background{position:absolute;left:62.3vw;right:0;top:0;height:100vh;overflow:hidden;pointer-events:none}
 .bonus-right-background img{position:absolute;left:-11.51vw;top:-4.79vh;width:49.14vw;height:95.97vh;display:block;opacity:.2;mask-image:linear-gradient(to bottom,#000 0,#000 22%,transparent 50%)}
 .bonus-home[data-art-volume=vol2] .bonus-right-background img{left:0;top:-4vh;width:100%;height:auto;opacity:.2;mask-image:linear-gradient(to bottom,#000 0,#000 20%,transparent 62%)}

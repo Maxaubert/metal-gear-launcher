@@ -77,7 +77,19 @@ its optional movie downloads through Steam first. Missing volumes or individual 
 not prevent the rest of the library from working. Retry refreshes detection after an installation.
 Small menu and sleeve images are extracted into the launcher's local cache; movies and tracks
 play directly from the Steam library without being copied. No bonus media ships with the launcher.
-Menu music pauses while Bonus Content is open and resumes when you leave.
+Bonus Content has its own artwork and transition in Game Selection. Its menus play a sequential
+playlist of classic themes and vocal finales found in your local game music folders, including
+Snake Eater, The Best Is Yet to Come, Old Snake and Heavens Divide. Unavailable songs are skipped.
+The vocal selections follow [Konami's series compilation](https://www.konami.com/mg/mgs5/tpp/jp/goods/item_vtac.html).
+Without matching local songs, the launcher uses available tracks from installed bonus soundtracks.
+The playlist pauses for soundtrack playback and movies, then resumes from the same position.
+
+To replace the playlist, add audio files to `%LOCALAPPDATA%\MGSMasterHub\music\bonus\` and restart
+the launcher. Files play in filename order (numeric prefixes are supported), with extensions
+hidden from titles. The last song returns to the first; individual songs do not loop.
+
+Master Book and Screenplay Book extraction has also been verified for all six games. This build
+does not include a book reader or automatically extract books. See the [book findings](docs/books.md).
 
 ## Menu music
 

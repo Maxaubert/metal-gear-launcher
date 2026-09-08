@@ -6,7 +6,8 @@ import { playMenuSound } from "../audio/menuSounds";
 import { mediaTime, stopMedia, useBonusActions } from "./bonusMedia";
 import PlayerIcon from "./PlayerIcon";
 
-export default function BonusVideoPlayer({ video, startTime, actionRef, onClose, lastInputKind, volume }: BonusContentScreenProps & { video: BonusVideo; startTime: number }) {
+export default function BonusVideoPlayer({ video, startTime, actionRef, onClose, lastInputKind, volume, onPlaybackViewChange }: BonusContentScreenProps & { video: BonusVideo; startTime: number }) {
+  useEffect(() => { onPlaybackViewChange?.(true); return () => onPlaybackViewChange?.(false); }, [onPlaybackViewChange]);
   const player = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
   const [position, setPosition] = useState(startTime);
