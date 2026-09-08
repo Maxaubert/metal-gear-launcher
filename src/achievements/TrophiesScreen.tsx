@@ -45,7 +45,7 @@ export default function TrophiesScreen({ game, lastInputKind, onClose, actionRef
       const result = await window.hub.getAchievements({ gameId: game.pack.id, refresh });
       if (attempt !== generation.current) return;
       if (!result.ok) { setError(result.error); return; }
-      setSnapshot(result.value); setSourceIndex(previous => Math.min(previous, result.value.sources.length - 1)); setFocus(0);
+      setSnapshot(result.value); setSourceIndex(previous => Math.max(0, Math.min(previous, result.value.sources.length - 1))); setFocus(0);
     } catch { if (attempt === generation.current) setError("Could not load trophies. Choose Refresh to try again."); }
     finally { if (attempt === generation.current) setBusy(false); }
   }

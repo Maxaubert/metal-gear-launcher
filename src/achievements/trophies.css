@@ -10,6 +10,7 @@
 .trophies-list { position: absolute; left: 5.6vw; right: 37vw; top: 20vh; bottom: 18vh; overflow-y: auto; scrollbar-width: thin; font-size: 2.5vh; padding: .2vh .35vw .2vh .1vw; }
 .trophy-row { display: flex; width: 100%; min-height: 7.8vh; align-items: center; gap: 1vw; margin: 0 0 .8vh; padding: .6vh .8vw; text-align: left; font: inherit; color: inherit; border: .13vh solid #171717; background: transparent; cursor: pointer; }
 .trophy-row.focused, .trophies-actions .focused { background: var(--accent); color: #000; border-color: var(--accent); }
+.trophies-screen[data-game="mg12"] .trophy-row.focused, .trophies-screen[data-game="mg12"] .trophies-actions .focused { color: #fff; }
 .trophy-row:hover, .trophies-sources button:hover, .trophies-actions button:hover { outline: .2vh solid currentColor; outline-offset: -.2vh; }
 .trophy-row:focus-visible, .trophies-sources button:focus-visible, .trophies-actions button:focus-visible { outline: .3vh solid #111; outline-offset: .15vh; }
 .trophy-icon { width: 5.5vh; height: 5.5vh; flex-shrink: 0; }
