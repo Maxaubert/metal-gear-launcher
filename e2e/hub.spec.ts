@@ -3,8 +3,9 @@
    (mirrors tests/launch/launcher.test.ts's fake-child casts) rather than extending Playwright's Page type. */
 import { test, expect, _electron as electron } from "@playwright/test";
 import { join } from "node:path";
-import { mkdtempSync, cpSync, readFileSync } from "node:fs";
+import { mkdtempSync, cpSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import sharp from "sharp";
 
 test.describe("hub", () => {
   let app: Awaited<ReturnType<typeof electron.launch>>;
@@ -13,6 +14,15 @@ test.describe("hub", () => {
   test.beforeAll(async () => {
     const data = mkdtempSync(join(tmpdir(), "hub-e2e-"));
     cpSync(join(__dirname, "fixtures", "assets"), join(data, "assets"), { recursive: true });
+    // Hand-made marks at the reference dimensions, without proprietary image data.
+    for (const id of ["mgs2", "mgs3"]) {
+      const dir = join(data, "assets", id);
+      await sharp(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="309" height="122"><path d="M234 0V92 M298 0V92 M306 0V92 M0 121L20 102H309" fill="none" stroke="black"/></svg>'))
+        .png().toFile(join(dir, "headerMark.png"));
+      const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
+      manifest.files.headerMark = "headerMark.png";
+      writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest));
+    }
     app = await electron.launch({
       args: [join(__dirname, "..", "out", "main", "index.js")],
       env: {
@@ -189,6 +199,38 @@ test.describe("hub", () => {
     }
   });
 
+  test("native header rule endpoints remain fixed across MGS1, MGS2 and MGS3", async () => {
+    for (const width of [1920, 3840]) {
+      await page.setViewportSize({ width, height: width * 9 / 16 });
+      const positions: { x: number; y: number }[][] = [];
+      for (const id of ["mgs1", "mgs2", "mgs3"]) {
+        await page.keyboard.press("Tab");
+        await page.getByTestId(`tile-${id}`).click();
+        positions.push(await page.locator(".header-mark-art > :is(img, svg)").evaluate(async element => {
+          // Reference ink coordinates, measured from the original 309x122 marks.
+          const points = [{ x: 234, y: 0 }, { x: 308, y: 91 }, { x: 20, y: 102 }];
+          if (element instanceof SVGSVGElement) {
+            const matrix = element.getScreenCTM()!;
+            return points.map(point => {
+              const projected = new DOMPoint(point.x + 420, point.y + 336).matrixTransform(matrix);
+              return { x: projected.x, y: projected.y };
+            });
+          }
+          const image = element as HTMLImageElement;
+          await image.decode();
+          const rect = image.getBoundingClientRect();
+          const scale = Math.min(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+          const x = rect.right - image.naturalWidth * scale;
+          const y = rect.bottom - image.naturalHeight * scale;
+          return points.map(point => ({ x: x + point.x * scale, y: y + point.y * scale }));
+        }));
+      }
+      for (const points of positions.slice(1)) for (let i = 0; i < points.length; i++) {
+        expect(Math.abs(points[i].x - positions[0][i].x)).toBeLessThan(0.1);
+        expect(Math.abs(points[i].y - positions[0][i].y)).toBeLessThan(0.1);
+      }
+    }
+  });
   test("portraits retain their geometry when opening Options at HD, 4K, and windowed aspect ratios", async () => {
     await expect(page.getByTestId("game-screen")).toBeVisible();
     for (const viewport of [{ width: 1920, height: 1080 }, { width: 3840, height: 2160 }, { width: 1600, height: 850 }]) {

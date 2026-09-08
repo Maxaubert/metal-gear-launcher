@@ -111,7 +111,7 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
     crop: { x: 0, y: 98, width: 212, height: 47, sourceWidth: 212, sourceHeight: 116 } }
     : assetUrls.headerSubtitle ? { src: assetUrls.headerSubtitle } : undefined;
   const headerMark: HeaderArtworkSource | undefined = pack.id === "mgs1" && assetUrls.settingsTimeline
-    ? { src: assetUrls.settingsTimeline, crop: { x: 420, y: 335, width: 309, height: 124,
+    ? { src: assetUrls.settingsTimeline, crop: { x: 420, y: 336, width: 309, height: 122,
       sourceWidth: 760, sourceHeight: 981, cutout: { x: 675, y: 340, width: 30, height: 90 } } }
     : undefined;
 
