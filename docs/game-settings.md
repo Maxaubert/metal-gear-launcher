@@ -4,8 +4,11 @@ Options opens a game's native-style settings categories using the same extracted
 fonts, palette and controller navigation as its main menu. Community Fixes lists detected
 patches separately, with their version and configuration status.
 
-Startup prepares installed games' settings, decodes menu artwork, and loads native fonts before
-showing the launcher. Main, Game Selection and Options share a persistent background, so menu
+Startup prepares installed games' settings, decodes menu artwork, loads native fonts, and waits
+for the selected menu track to buffer and begin playback at the saved volume before showing
+the launcher. No input is required to start music. Games without a track can open silently;
+a broken initial track offers Retry. Later track changes keep the menus mounted.
+Main, Game Selection and Options share a persistent background, so menu
 navigation does not remount the portrait or restart its fade. Main menu descriptions, buttons
 and hints share the extracted Unity font files. MGS1 Options retains its extracted static lettering
 and original English bitmap font.

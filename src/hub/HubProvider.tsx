@@ -36,7 +36,9 @@ function presentationState(state: HubState): HubState {
 export default function HubProvider() {
   const [hubState, setHubState] = useState<HubState | null>(null);
   const [preparedState, setPreparedState] = useState<HubState | null>(null);
-  const [startupError, setStartupError] = useState("");
+  const [startedState, setStartedState] = useState<HubState | null>(null);
+  const [musicAttempt, setMusicAttempt] = useState(0);
+  const [preparationError, setStartupError] = useState("");
   const [startupItem, setStartupItem] = useState(0);
   const startupButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const settingsCache = useGameSettingsCache();
@@ -57,7 +59,6 @@ export default function HubProvider() {
   const [musicSelections, setMusicSelections] = useState<MenuMusicSelections>({});
   const [configLoaded, setConfigLoaded] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const hasActedRef = useRef(false);
 
   // The "Launching..." overlay (and the dimmed screen behind it) was otherwise only cleared by
   // its own LAUNCH_MESSAGE_MS timeout, so navigating away - picking a different game, opening
@@ -130,7 +131,14 @@ export default function HubProvider() {
   const games = hubState?.games ?? [];
   const currentGame: GameState | undefined = games[nav.game];
   const needsFirstRun = Boolean(hubState && !hubState.steamPath) || games.some((g) => g.installed && (!g.assets || g.stale));
-  const ready = Boolean(hubState && preparedState === hubState);
+  const ready = Boolean(hubState && preparedState === hubState && startedState === hubState);
+  const musicUrl = configLoaded && !needsFirstRun && currentGame
+    ? resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id]) : undefined;
+  const music = useMenuMusic(musicUrl, volume, musicAttempt);
+  const startupError = preparationError || (!ready ? music.error : "");
+  // Keep a completed startup latched while later tracks buffer or fail. This conditional
+  // state adjustment finishes before React commits the newly visible menu.
+  if (hubState && preparedState === hubState && music.ready && startedState !== hubState) setStartedState(hubState);
   const startupRowCount = games.some(game => game.installed) ? 2 : 1;
 
   useEffect(() => {
@@ -146,10 +154,11 @@ export default function HubProvider() {
     ]).then(() => {
       if (cancelled) return;
       setPreparedState(hubState);
-      void window.hub.ready();
     }).catch(error => { if (!cancelled) setStartupError(error instanceof Error ? error.message : String(error)); });
     return () => { cancelled = true; };
   }, [hubState, needsFirstRun, settingsCache, configLoaded]);
+
+  useEffect(() => { if (ready) void window.hub.ready(); }, [ready]);
 
   // Remembers the current game so the next launch with no `--game` argument opens on it.
   useEffect(() => {
@@ -157,9 +166,6 @@ export default function HubProvider() {
     if (!id) return;
     void window.hub.setConfig({ lastGame: id });
   }, [currentGame?.pack.id]);
-
-  const musicUrl = currentGame ? resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id]) : undefined;
-  const music = useMenuMusic(musicUrl, volume);
 
   // Theme: the current game's colours become CSS custom properties on <html>.
   useEffect(() => {
@@ -207,6 +213,7 @@ export default function HubProvider() {
         setVolume(config.value.volume);
         setMusicSelections(config.value.menuMusic ?? {});
         setConfigLoaded(true);
+        setMusicAttempt(attempt => attempt + 1);
         for (const game of r.value.games) settingsCache.invalidate(game.pack.id);
         setHubState(presentationState(r.value));
       } else setStartupError(r.error);
@@ -288,11 +295,6 @@ export default function HubProvider() {
       settingsActionRef.current?.(action);
       return;
     }
-    if (!hasActedRef.current) {
-      hasActedRef.current = true;
-      music.unlock();
-    }
-
     if (needsFirstRun) {
       const rows = firstRunRows();
       if (action === "up" || action === "down") {

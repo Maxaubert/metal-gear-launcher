@@ -66,7 +66,8 @@ function createWindow(): BrowserWindow {
     frame: shootMode ? false : true,
     useContentSize: shootMode,
     autoHideMenuBar: true,
-    webPreferences: { preload: join(__dirname, "../preload/index.js"), sandbox: true, contextIsolation: true },
+    webPreferences: { preload: join(__dirname, "../preload/index.js"), sandbox: true, contextIsolation: true,
+      autoplayPolicy: "no-user-gesture-required" },
   });
   win.once("ready-to-show", () => win.show());
   if (process.env.ELECTRON_RENDERER_URL) win.loadURL(process.env.ELECTRON_RENDERER_URL);
