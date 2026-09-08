@@ -8,8 +8,12 @@
   "steam": { "appId": 2131630, "installDir": "MGS1" },
   "launch": { "exe": "METAL GEAR SOLID.exe", "env": { "SteamAppId": "2131630" } },
   "visualFit": { "leftVw": 5.989583, "widthVw": 57.395833, "heightVh": 100.185185, "anchor": "top" },
-  "assetRevision": 1,
+  "assetRevision": 2,
   "assets": [
+    { "role": "nativeTextAtlas", "source": "m2", "file": "system/motion/txt_en.psb.m" },
+    { "role": "nativeTextMetrics", "source": "m2", "file": "system/motion/txt_en.psb.m", "format": "metrics" },
+    { "role": "nativeFontAtlas", "source": "m2", "file": "system/font/title_tsukugo_22pt.psb.m" },
+    { "role": "nativeFontMetrics", "source": "m2", "file": "system/font/title_tsukugo_22pt.psb.m", "format": "metrics" },
     { "role": "mainVisual", "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0019" },
     { "role": "logo",       "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0012" },
     { "role": "numbering",  "source": "m2", "file": "system/motion/outgame_menu_main.psb.m", "sprite": "0007" },

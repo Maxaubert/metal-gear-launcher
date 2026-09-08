@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from "electron";
 import { exec, spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, stat, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -38,6 +38,7 @@ const ASSET_CONTENT_TYPES: Record<string, string> = {
   ".wav": "audio/wav",
   ".ttf": "font/otf",
   ".otf": "font/otf",
+  ".json": "application/json",
 };
 
 function ok<T>(value: T): Result<T> {
@@ -98,9 +99,10 @@ async function buildState(): Promise<HubState> {
   for (const pack of loadPacks()) {
     const install = steamRoot ? await resolveInstall(pack, libraries) : null;
     const manifest = await readManifest(pack.id);
+    const revision = manifest ? (await stat(join(assetsDir(pack.id), "manifest.json"))).mtimeMs : 0;
     const assetUrls: Partial<Record<AssetRole, string>> = {};
     for (const [role, file] of Object.entries(manifest?.files ?? {})) {
-      if (file) assetUrls[role as AssetRole] = `${ASSET_PROTOCOL}://${pack.id}/${file}`;
+      if (file) assetUrls[role as AssetRole] = `${ASSET_PROTOCOL}://${pack.id}/${file}?v=${revision}`;
     }
     games.push({
       pack,

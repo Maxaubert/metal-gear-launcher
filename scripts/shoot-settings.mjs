@@ -37,7 +37,7 @@ try {
     }
     const result = await page.evaluate(id => window.hub.getGameSettings(id), id);
     await writeFile(join(directory, `${id}-settings.json`), JSON.stringify(result, null, 2));
-    const categories = await page.locator('.settings-row-label').allTextContents();
+    const categories = await page.locator('.settings-row-label').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label') || button.textContent || ''));
     for (const label of categories.filter(label => ['Audio', 'Sound', 'Screen', 'Language', 'Community Fixes', 'Button Icons', 'Button Settings'].includes(label))) {
       await page.getByRole('button', { name: label, exact: true }).click();
       await page.screenshot({ path: join(directory, `${id}-${label.toLowerCase().replaceAll(' ', '-')}.png`) });

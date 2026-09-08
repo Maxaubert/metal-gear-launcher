@@ -5,6 +5,7 @@ import sharp from "sharp";
 import type { M2Asset } from "@shared/packs";
 import { psbFileArgs, runTool, toolPaths } from "./tools";
 import { ExtractError } from "./unity";
+import { nativeTypographyMetrics } from "./nativeTypography";
 
 export type FileEntry = { offset: number; size: number };
 
@@ -68,6 +69,12 @@ export async function extractM2Asset(installDir: string, asset: M2Asset, destFil
     const local = join(work, fileBase);
     await sliceArchiveFile(join(installDir, `${asset.archive}.bin`), entry, local);
     await decompileM2File(local, work, deps);
+    if (asset.format === "metrics") {
+      const atlasJson = JSON.parse(await readFile(join(work, `${fileBase}.json`), "utf8"));
+      await mkdir(dirname(destFile), { recursive: true });
+      await writeFile(destFile, JSON.stringify(nativeTypographyMetrics(atlasJson)));
+      return;
+    }
     const resourceDir = await findResourceDir(work, fileBase);
     if (asset.sprite) {
       const atlasJson = JSON.parse(await readFile(join(work, `${fileBase}.json`), "utf8"));

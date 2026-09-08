@@ -4,6 +4,16 @@ Options opens a game's native-style settings categories using the same extracted
 fonts, palette and controller navigation as its main menu. Community Fixes lists detected
 patches separately, with their version and configuration status.
 
+Startup prepares installed games' settings, decodes menu artwork, and loads native fonts before
+showing the launcher. Main, Game Selection and Options share a persistent background, so menu
+navigation does not remount the portrait or restart its fade. MGS1 uses extracted static lettering
+and its original English bitmap font; the other games share their identical extracted font files.
+
+Options opens from the prepared settings snapshot. Reload and Discard explicitly reread the
+files, and saving still checks for external changes before writing. Failed startup preparation
+offers Retry and artwork re-extraction with keyboard, mouse and controller navigation. Cached
+artwork for uninstalled games cannot block startup.
+
 | Work | Verification |
 | --- | --- |
 | Match native Options and category screens | Captured native references and independent visual critique |

@@ -144,6 +144,8 @@ test.describe("hub", () => {
             fit: style.objectFit, position: style.objectPosition, transform: style.transform };
         }));
         const main = await geometry();
+        const portraitNodes = await portraits.elementHandles();
+        const fontsBefore = await page.evaluate(() => document.fonts.size);
         if (id === "mgs1") {
           expect(main[0].fit).toBe("contain");
           expect(main[0].x / viewport.width).toBeCloseTo(115 / 1920, 4);
@@ -155,8 +157,18 @@ test.describe("hub", () => {
         await expect(page.getByTestId("settings-screen")).toBeVisible();
         await expect(page.getByText("Loading settings...", { exact: true })).toHaveCount(0);
         expect(await geometry()).toEqual(main);
+        for (const node of portraitNodes) expect(await node.evaluate(image => image.isConnected)).toBe(true);
+        await expect(page.locator('.persistent-backdrop .left-zone')).toHaveCSS("opacity", "1");
+        await expect(page.locator('.persistent-backdrop .left-zone')).toHaveCSS("animation-name", "none");
+        expect(await page.evaluate(() => document.fonts.size)).toBe(fontsBefore);
         await page.keyboard.press("Escape");
         await expect(page.getByTestId("game-screen")).toBeVisible();
+        for (const node of portraitNodes) expect(await node.evaluate(image => image.isConnected)).toBe(true);
+        await expect(page.locator('.persistent-backdrop .left-zone')).toHaveCSS("opacity", "1");
+        await page.keyboard.press("Tab");
+        await expect(page.getByTestId("game-selection")).toBeVisible();
+        for (const node of portraitNodes) expect(await node.evaluate(image => image.isConnected)).toBe(true);
+        await page.keyboard.press("Escape");
       }
     }
   });
@@ -201,7 +213,7 @@ test.describe("hub", () => {
     await expect(pattern).toHaveCSS("opacity", "0");
     await expect(pattern).not.toHaveAttribute("data-cycle", "0", { timeout: 10_000 });
     await page.getByRole("button", { name: "Community Fixes", exact: true }).click();
-    await expect(pattern).toHaveCount(0);
+    await expect(pattern).toBeHidden();
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");

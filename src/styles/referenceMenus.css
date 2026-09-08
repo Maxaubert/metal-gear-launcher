@@ -10,6 +10,44 @@
   z-index: 2;
 }
 
+.mgs1-native-main-header { margin: 0; line-height: 1; font-size: inherit; }
+.mgs1-native-main-header .mgs1-native-sprite { display: block; }
+.screen[data-game="mgs1"] .ghost-timeline {
+  left: 61.666667vw;
+  top: -13.888889vh;
+  width: 39.583333vw;
+  height: 90.833333vh;
+  object-fit: fill;
+  opacity: 1;
+}
+.screen[data-game="mgs1"] .ghost-number {
+  left: 91.614583vw;
+  top: 2.87037vh;
+  width: 5.833333vw;
+  height: 39.722222vh;
+  object-fit: fill;
+}
+.persistent-backdrop[data-game="mgs1"]:not(.settings-screen) .head:has(.mgs1-native-main-header) {
+  top: 17.12963vh;
+  left: 63.541667vw;
+  right: .6vw;
+  padding-bottom: .7vh;
+  border: 0;
+}
+.persistent-backdrop[data-game="mgs1"]:not(.settings-screen) .head:has(.mgs1-native-main-header) .tick {
+  display: none;
+}
+.screen[data-game="mgs1"] .description:has(.mgs1-native-sprite) {
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  left: 63.385417vw;
+  top: 31.018519vh;
+  color: #585858;
+  line-height: 0;
+}
+.screen[data-game="mgs1"] .menu li { font-size: 2.9vh; }
+.screen[data-game="mgs1"] .menu { top: 50.3vh; }
+
 .screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .ground {
   background-image: linear-gradient(to right, var(--paper-left), var(--paper) 62%);
   background-size: 100% 100%;
@@ -147,7 +185,9 @@
 
 /* Selection owns the right column, including when the two-chapter game is focused. */
 .screen[data-testid="game-selection"][data-game="mg12"] .chapter-block + .chapter-block,
-.screen[data-testid="game-selection"][data-game="mg12"] .chapter-description {
+.screen[data-testid="game-selection"][data-game="mg12"] .chapter-description,
+.screen[data-view="selection"][data-game="mg12"] .chapter-block + .chapter-block,
+.screen[data-view="selection"][data-game="mg12"] .chapter-description {
   display: none;
 }
 

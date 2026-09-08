@@ -2,6 +2,8 @@ import type { CSSProperties } from "react";
 import type { GameState } from "@shared/ipc";
 import type { Pack } from "@shared/packs";
 import PeaceWalkerMotion from "./PeaceWalkerMotion";
+import Mgs1NativeText from "../typography/Mgs1NativeText";
+import { MGS1_TEXT_SPRITES } from "../typography/mgs1Typography";
 
 // D2 (round 5): per-pack override of `.main-visual`'s box so the key art can bleed past the
 // bottom edge like the originals (spec 4.7's `visualFit` pack field). `undefined` when the pack
@@ -79,13 +81,11 @@ function HeaderMark({ serialLines, indexLabel, src }: HeaderMarkProps) {
 }
 
 /**
- * The left-hand art and header block shared by `GameScreen` and `GameSelection` (round 6):
+ * The persistent left-hand art and header block shared by the main and selection menus:
  * ground, background effect, logo strip, main visual (or its fallback), divider, the two ghost
  * layers, and the header (tick/year/subtitle/mark). Extracted so the two screens render the same
- * markup for the same pack/assetUrls and cannot drift apart - `GameScreen` renders it for the
- * current game, `GameSelection` for whichever entry has focus. Each screen still wraps this in
- * its own `.screen` root (different `data-testid`) and supplies whatever comes after it
- * (description+menu, or the Game Selection header+list).
+ * markup for the same pack/assetUrls and cannot drift apart. `PersistentBackdrop` keeps it
+ * mounted while the foreground changes between main, selection and Options menus.
  *
  * A pack with `chapters` (defect 4: MG1&2) is structurally different - two stacked key-art
  * panels instead of one logo strip + main visual, and this component also renders both chapters'
@@ -158,7 +158,7 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
       <div className="divider" />
 
       <div key={`${pack.id}-ghosts`} className="fade-in">
-        {assetUrls.year && <img className="ghost-timeline" src={assetUrls.year} alt="" />}
+        {assetUrls.year && <img className="ghost-timeline" src={pack.id === "mgs1" ? assetUrls.settingsTimeline ?? assetUrls.year : assetUrls.year} alt="" />}
         {assetUrls.numbering && <img className="ghost-number" src={assetUrls.numbering} alt="" />}
       </div>
 
@@ -184,13 +184,15 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
         <div key={`${pack.id}-head`} className="fade-in-fast">
           <header className="head">
             <span className="tick" />
-            <h1 className="year">{assetUrls.headerYear ? <img className="header-year-art" src={assetUrls.headerYear} alt={pack.yearLabel} /> : pack.yearLabel}</h1>
-            <p className="subtitle">
+            {pack.id === "mgs1" && assetUrls.nativeTextAtlas ? <h1 className="mgs1-native-main-header">
+              <Mgs1NativeText assetUrls={assetUrls} text={`${pack.yearLabel} ${pack.subtitle}`} sprite={MGS1_TEXT_SPRITES.yearAndSubtitle} />
+            </h1> : <h1 className="year">{assetUrls.headerYear ? <img className="header-year-art" src={assetUrls.headerYear} alt={pack.yearLabel} /> : pack.yearLabel}</h1>}
+            {!(pack.id === "mgs1" && assetUrls.nativeTextAtlas) && <p className="subtitle">
               {assetUrls.headerSubtitle ? <img className="header-subtitle-art" src={assetUrls.headerSubtitle} alt={pack.subtitle} /> : pack.subtitle.split(" / ").map((line) => (
                 <span key={line}>{line}</span>
               ))}
-            </p>
-            <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} src={assetUrls.headerMark} />
+            </p>}
+            {!(pack.id === "mgs1" && assetUrls.nativeTextAtlas) && <HeaderMark serialLines={serialLines} indexLabel={pack.indexLabel} src={assetUrls.headerMark} />}
           </header>
         </div>
       )}

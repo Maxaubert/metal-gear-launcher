@@ -1,0 +1,13 @@
+.mgs1-native-sprite,
+.mgs1-native-glyph {
+  display: inline-block;
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-mode: alpha;
+}
+
+.mgs1-native-sprite { vertical-align: middle; flex-shrink: 0; }
+.mgs1-native-bitmap { white-space: pre-wrap; }
+.mgs1-native-word { display: inline-block; white-space: nowrap; }
+.mgs1-native-advance { display: inline-block; height: 0; position: relative; vertical-align: baseline; }
+.mgs1-native-glyph { position: absolute; }

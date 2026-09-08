@@ -13,8 +13,12 @@
     "bgEffect": "bgEffect.png",
     "bgm": "bgm.wav",
     "settingsHeader": "settingsHeader.png",
-    "settingsTimeline": "settingsTimeline.png"
+    "settingsTimeline": "settingsTimeline.png",
+    "nativeTextAtlas": "nativeTextAtlas.png",
+    "nativeFontAtlas": "nativeFontAtlas.png",
+    "nativeTextMetrics": "nativeTextMetrics.json",
+    "nativeFontMetrics": "nativeFontMetrics.json"
   },
   "failed": {},
-  "assetRevision": 1
+  "assetRevision": 2
 }

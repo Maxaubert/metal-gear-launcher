@@ -1,21 +1,25 @@
-import { useEffect, useRef, useState, type CSSProperties, type MutableRefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MutableRefObject } from "react";
 import type { GameState } from "@shared/ipc";
 import type { GameSettings, SettingField, SettingsChange, SettingsSection, SettingValue } from "@shared/settings";
 import type { Action } from "../input/navigationReducer";
 import type { InputKind } from "../input/useNavigation";
 import { layoutVars, themeVars } from "../theme/theme";
-import SettingsOverviewBackdrop from "./SettingsOverviewBackdrop";
 import ControllerPreview from "./ControllerPreview";
 import NumberSetting from "./NumberSetting";
 import Mg12ScreenPreview from "./Mg12ScreenPreview";
 import { mgs2ScreenHelp } from "./mgs2ScreenHelp";
 import { graphicsEdit } from "./graphicsEdit";
+import type { GameSettingsCache } from "./gameSettingsCache";
+import Mgs1NativeText from "../typography/Mgs1NativeText";
+import { MGS1_TEXT_SPRITES } from "../typography/mgs1Typography";
 
 type Props = {
   game: GameState;
   lastInputKind: InputKind;
   actionRef: MutableRefObject<((action: Action) => void) | null>;
   onClose: () => void;
+  settingsCache: GameSettingsCache;
+  onDetailChange: (detail: boolean) => void;
 };
 type Row = { id: string; label: string; field?: SettingField; mute?: SettingField; section?: SettingsSection; selected?: boolean; onSelect?: () => void };
 const changeKey = (section: string, field: string) => `${section}\n${field}`;
@@ -26,15 +30,16 @@ const MUTE_FIELDS: Record<string, string> = {
   volumeUi: "muteUi", volumeGame: "muteGame",
 };
 
-export default function SettingsScreen({ game, lastInputKind, actionRef, onClose }: Props) {
-  const [settings, setSettings] = useState<GameSettings | null>(null);
+export default function SettingsScreen({ game, lastInputKind, actionRef, onClose, settingsCache, onDetailChange }: Props) {
+  const initial = settingsCache.peek(game.pack.id);
+  const [settings, setSettings] = useState<GameSettings | null>(() => initial?.ok ? initial.value : null);
   const [category, setCategory] = useState<string | null>(null);
   const [patchId, setPatchId] = useState<string | null>(null);
   const [focus, setFocus] = useState(0);
   const [changes, setChanges] = useState<Record<string, SettingsChange>>({});
   const [initialize, setInitialize] = useState<string[]>([]);
-  const [busy, setBusy] = useState(true);
-  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(!initial);
+  const [message, setMessage] = useState(() => initial && !initial.ok ? initial.error : "");
   const [discardOpen, setDiscardOpen] = useState(false);
   const [discardItem, setDiscardItem] = useState(0);
   const [accountPage, setAccountPage] = useState(false);
@@ -42,11 +47,11 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const listRef = useRef<HTMLDivElement>(null);
   const dirty = Object.keys(changes).length > 0 || initialize.length > 0;
 
-  async function load(accountId?: string) {
+  async function load(accountId?: string, refresh = true) {
     const current = ++generation.current;
     setBusy(true);
     setMessage("");
-    const result = await window.hub.getGameSettings(game.pack.id, accountId);
+    const result = await settingsCache.read(game.pack.id, accountId, { refresh });
     if (current !== generation.current) return;
     if (result.ok) {
       setSettings(result.value);
@@ -56,7 +61,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     setBusy(false);
   }
   useEffect(() => {
-    void load();
+    if (!initial) void load(undefined, false);
     // Invalidate asynchronous replies when this screen leaves.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => { generation.current++; };
@@ -73,6 +78,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
       changes: Object.values(changes), initializeSectionIds: initialize,
     });
     if (result.ok) {
+      settingsCache.remember(result.value);
       setSettings(result.value);
       setChanges({});
       setInitialize([]);
@@ -152,7 +158,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   let rows: Row[];
   if (accountPage) {
     rows = settings?.accounts.map((account) => ({ id: account.id, label: account.label, onSelect: () => {
-      setAccountPage(false); setFocus(0); void load(account.id);
+      setAccountPage(false); setFocus(0); void load(account.id, false);
     } })) ?? [];
   } else if (!category) {
     rows = categories.map((name) => ({ id: name, label: name, onSelect: () => openCategory(name) }));
@@ -224,6 +230,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const fieldDescription = rows[focus]?.field?.description;
   const title = accountPage ? "Steam Account" : selectedPatch?.title ?? category ?? "Options";
   const detail = Boolean(category || accountPage);
+  useLayoutEffect(() => { onDetailChange(detail); }, [detail, onDetailChange]);
   const buttonIcons = (category === "Button Icons" || category === "Button Settings") && !selectedPatch;
   const controllerLabel = (field: SettingField, value: SettingValue) => field.id === "confirmButtonSwap"
     ? lastInputKind === "keyboard" ? value ? "Space" : "H" : value ? "Swapped" : "Default"
@@ -288,18 +295,17 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const availabilityHelp = rows[focus]?.field?.readOnly ? fieldDescription
     : fieldDescription?.startsWith("Changing this setting selects Custom.") ? "Changing this setting selects Custom." : undefined;
   if (screenHelp && availabilityHelp) screenHelp.side = `${availabilityHelp}\n\n${screenHelp.side}`.trim();
+  const text = (value: string, sprite?: string) => game.pack.id === "mgs1"
+    ? <Mgs1NativeText assetUrls={game.assetUrls} text={value} sprite={sprite} /> : value;
+  const headings: Record<string, string> = { Options: MGS1_TEXT_SPRITES.headingOptions, Language: MGS1_TEXT_SPRITES.headingLanguage,
+    Screen: MGS1_TEXT_SPRITES.headingScreen, Audio: MGS1_TEXT_SPRITES.headingAudio, "Button Settings": MGS1_TEXT_SPRITES.headingButtonSettings };
 
   return <div className="screen settings-screen" data-testid="settings-screen" data-game={game.pack.id}
     data-layout="v2" data-detail={detail ? "true" : undefined} data-category={category} style={{ ...themeVars(game.pack.theme), ...layoutVars(game.pack.id),
       ...(game.pack.id === "mgs1" ? { "--divider-x": "62.2vw", "--col-x": "63.5vw", "--col-right": "99.4vw" } : {}),
       ...(detail ? { "--ink": "#080808", "--paper": "#dcdcda" } : {}),
     } as CSSProperties}>
-    {!detail && <SettingsOverviewBackdrop game={game} />}
-    {!detail && game.pack.id === "mgs1" && game.assetUrls.settingsHeader && <div className="settings-native-mgs1-header" aria-hidden="true">
-      <img className="settings-timeline" src={game.assetUrls.settingsTimeline} alt="" />
-      <img className="settings-year-subtitle" src={game.assetUrls.settingsHeader} alt="" />
-    </div>}
-    <div className="settings-heading"><span aria-hidden="true" />{title}</div>
+    <div className="settings-heading"><span className="settings-heading-marker" aria-hidden="true" />{text(title, headings[title])}</div>
     {buttonIcons && <div className="settings-table-head"><span>Settings</span><span>Current Settings</span><span>Updated Settings</span></div>}
     <div className="settings-list" ref={listRef} role="group" aria-label={title}>
       {busy && <p className="settings-notice" role="status">Loading settings...</p>}
@@ -311,9 +317,9 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
         return <div key={row.id} className={`settings-row${focus === index ? " focused" : ""}${field ? " has-value" : ""}${field?.readOnly ? " read-only" : ""}${buttonIcons ? " controller-row" : ""}`}
           data-focused={focus === index ? "true" : undefined} data-testid={`setting-${field?.id ?? row.id}`}
           onMouseEnter={() => setFocus(index)}>
-          <button className="settings-row-label" disabled={busy} aria-disabled={Boolean(field?.readOnly || row.section?.status === "unsupported" && field)}
+          <button className="settings-row-label" aria-label={row.label} disabled={busy} aria-disabled={Boolean(field?.readOnly || row.section?.status === "unsupported" && field)}
             onFocus={() => setFocus(index)} onClick={() => activateRow(row)}>
-            {row.label}{row.selected && <span className="settings-selected" aria-label="Selected">✓</span>}
+            {text(row.label)}{row.selected && <span className="settings-selected" aria-label="Selected">✓</span>}
             {!field && row.section && <small>{row.section.status === "needsSetup" ? "Needs setup" : row.section.version ?? "Detected"}</small>}
           </button>
           {buttonIcons && field && <div className="settings-current">{field.id === "confirmButtonSwap" ? controllerLabel(field, field.value) : <ControllerPreview value={field.value} label={controllerLabel(field, field.value)} />}</div>}
@@ -329,7 +335,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
               : field.kind === "text" ? <input aria-label={field.label} value={String(value)} disabled={busy || field.readOnly}
                 onChange={(event) => edit(row.section!, field, event.target.value)} /> : field.kind === "range" && /^(Audio|Sound)$/.test(field.category) ? <output className="volume-bars" aria-label={`${field.label}: ${label}`}>
                 {Array.from({ length: 10 }, (_, index) => <span key={index} className={Number(value) >= (index + 1) * (field.max ?? 10) / 10 ? "filled" : ""} />)}
-              </output> : <output aria-label={field.label}>{field.id === "confirmButtonSwap" ? controllerLabel(field, value!) : buttonIcons ? <ControllerPreview value={value!} label={label} /> : label}</output>}
+              </output> : <output aria-label={field.label}>{field.id === "confirmButtonSwap" ? text(controllerLabel(field, value!)) : buttonIcons ? <ControllerPreview value={value!} label={label} /> : text(label)}</output>}
             <button aria-label={`Increase ${field.label}`} disabled={busy || field.readOnly} onClick={() => adjust(row, 1)}>▶</button>
           </div>}
         </div>;
@@ -340,11 +346,11 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     {detail && category === "Screen" && ["mgs2", "mgs3", "mgspw"].includes(game.pack.id) && <aside className="settings-side-help">{screenHelp ? screenHelp.side : game.pack.id === "mgspw" ? "This setting can be changed prior to starting the game." : fieldDescription || "This setting can be changed prior to starting the game.\n\nDepending on your setup, game performance may suffer when not set to Original Mode.\n\nConsider switching to Custom and adjusting the settings such as the Internal Resolution, or reverting to Original Mode if you experience any instability."}</aside>}
     {detail && category === "Screen" && game.pack.id === "mg12" && !busy && <Mg12ScreenPreview assetUrls={game.assetUrls}
       wallpaper={previewValue("WallType")} alignment={previewValue("WallAlign")} />}
-    <div className="settings-help" aria-live="polite">{message || (screenHelp ? screenHelp.footer : category === "Screen" && game.pack.id === "mg12" ? "" : category === "Screen" ? categoryHelp : fieldDescription || contextMessage || categoryHelp)}</div>
+    <div className="settings-help" aria-live="polite">{text(message || (screenHelp ? screenHelp.footer : category === "Screen" && game.pack.id === "mg12" ? "" : category === "Screen" ? categoryHelp : fieldDescription || contextMessage || categoryHelp))}</div>
     <div className="settings-actions">
       {actions.map((action, index) => <button key={action.id} disabled={busy}
         className={focus === rows.length + index ? "focused" : ""}
-        onMouseEnter={() => setFocus(rows.length + index)} onFocus={() => setFocus(rows.length + index)} onClick={action.onSelect}>{action.label}</button>)}
+        onMouseEnter={() => setFocus(rows.length + index)} onFocus={() => setFocus(rows.length + index)} onClick={action.onSelect}>{text(action.label)}</button>)}
     </div>
     <div className="settings-hints" aria-hidden="true">{lastInputKind === "gamepad"
       ? "↑ ↓ Move cursor　← → Change　A Confirm　B Back　Menu Save"

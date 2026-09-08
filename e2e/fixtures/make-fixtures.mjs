@@ -89,7 +89,21 @@ async function main() {
     await writeFile(join(dir, "bgm.wav"), silentWav());
     files.bgm = "bgm.wav";
 
-    const assetRevision = ["mg12", "mgs2"].includes(gameId) ? 3 : ["mgs2", "mgs3", "mgs4", "mgspw"].includes(gameId) ? 1 : 0;
+    if (gameId === "mgs1") {
+      for (const role of ["nativeTextAtlas", "nativeFontAtlas"]) {
+        await sharp({ create: { width: 64, height: 32, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } } })
+          .png().toFile(join(dir, `${role}.png`));
+        files[role] = `${role}.png`;
+      }
+      const glyphs = Object.fromEntries(Array.from({ length: 95 }, (_, index) => [String.fromCharCode(index + 32),
+        { x: 0, y: 0, width: 8, height: 12, advance: 10, bearingX: 0, bearingY: 12 }]));
+      await writeFile(join(dir, "nativeTextMetrics.json"), JSON.stringify({ kind: "sprites", width: 64, height: 32, sprites: {} }));
+      await writeFile(join(dir, "nativeFontMetrics.json"), JSON.stringify({ kind: "font", width: 64, height: 32, size: 22, glyphs }));
+      files.nativeTextMetrics = "nativeTextMetrics.json";
+      files.nativeFontMetrics = "nativeFontMetrics.json";
+    }
+
+    const assetRevision = gameId === "mgs1" ? 2 : ["mg12", "mgs2"].includes(gameId) ? 3 : ["mgs3", "mgs4", "mgspw"].includes(gameId) ? 1 : 0;
     const manifest = { gameId, buildId, ...(assetRevision ? { assetRevision } : {}), toolVersions: TOOL_VERSIONS, files, failed: {} };
     await writeFile(join(dir, "manifest.json"), JSON.stringify(manifest, null, 2));
   }
