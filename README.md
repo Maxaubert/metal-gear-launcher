@@ -88,8 +88,10 @@ To replace the playlist, add audio files to `%LOCALAPPDATA%\MGSMasterHub\music\b
 the launcher. Files play in filename order (numeric prefixes are supported), with extensions
 hidden from titles. The last song returns to the first; individual songs do not loop.
 
-Master Book and Screenplay Book extraction has also been verified for all six games. This build
-does not include a book reader or automatically extract books. See the [book findings](docs/books.md).
+Master Books and Screenplay Books appear under **Bonus Content → Books** for installed games.
+Choose English or Japanese, browse the contents, zoom and pan, and resume your last page.
+Startup detects books without extracting them; metadata and page images are prepared only when
+needed and cached locally. No book content is bundled. See [book support](docs/books.md).
 
 ## Menu music
 
@@ -168,7 +170,7 @@ alongside them under `resources/tools/LICENSES/`.
 
 - Per-game settings screen (Konami launcher options and community fix-mod settings), see
   `docs/superpowers/specs/2026-09-06-mgs-master-hub-design.md` section 4.5
-- In-hub book/comic viewer for the Master Book, Screenplay Book and MGS4 Database content
+- MGS4 Database content and additional manuals
 - More launch options (borderless, monitor selection) surfaced from the hub itself
 
 ## Development

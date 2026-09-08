@@ -24,7 +24,7 @@ test("combined bonus content handles missing installs, both volumes, playback, c
     await expect(page.getByTestId("tile-bonus")).toHaveAttribute("data-focused", "true");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("bonus-content")).toBeVisible();
-    await expect(page.getByTestId("bonus-content")).toContainText("Install Bonus Content");
+    await expect(page.getByTestId("bonus-content")).toContainText("For videos and soundtrack, install Bonus Content through Steam");
     await expect(page.locator("#menu-music")).toHaveJSProperty("paused", true);
 
     const artwork = "hub-asset://mg12/mainVisual.png";

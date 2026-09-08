@@ -32,6 +32,8 @@ import { resolveBonusFile } from "./bonus/media";
 import { bonusResponse } from "./bonus/response";
 import { getBonusPresentation } from "./bonus/presentation";
 import { getBonusPlaylist } from "./bonus/playlist";
+import { bookPageRequest, bookRequest } from "@shared/books";
+import { getBooksCatalog, openBook, getBookPage, saveBookProgress } from "./books";
 
 const execAsync = promisify(exec);
 
@@ -199,6 +201,31 @@ if (!gotSingleInstanceLock) {
         const config = await readConfig();
         return ok(await getBonusPresentation(await findSteamRoot(config.steamPath), dataDir()));
       } catch (error) { return err(asError(error)); }
+    });
+    ipcMain.handle("hub:books:catalog", async (_event, arg) => {
+      try {
+        z.undefined().parse(arg);
+        const config = await readConfig();
+        return ok(await getBooksCatalog(await findSteamRoot(config.steamPath), dataDir()));
+      } catch (error) { return err(asError(error)); }
+    });
+    ipcMain.handle("hub:books:open", async (_event, arg) => {
+      try {
+        const request = bookRequest.parse(arg);
+        const config = await readConfig();
+        return ok(await openBook(await findSteamRoot(config.steamPath), dataDir(), request));
+      } catch (error) { return err(asError(error)); }
+    });
+    ipcMain.handle("hub:books:page", async (_event, arg) => {
+      try {
+        const request = bookPageRequest.parse(arg);
+        const config = await readConfig();
+        return ok(await getBookPage(await findSteamRoot(config.steamPath), dataDir(), request));
+      } catch (error) { return err(asError(error)); }
+    });
+    ipcMain.handle("hub:books:progress", async (_event, arg) => {
+      try { await saveBookProgress(dataDir(), bookPageRequest.parse(arg)); return ok(undefined); }
+      catch (error) { return err(asError(error)); }
     });
     ipcMain.handle("hub:bonus:playlist", async (_event, arg) => {
       try {
