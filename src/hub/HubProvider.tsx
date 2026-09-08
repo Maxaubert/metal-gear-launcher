@@ -9,10 +9,14 @@ import GameScreen, { type MenuKey } from "../screens/GameScreen";
 import GameSelection from "../screens/GameSelection";
 import FirstRun, { type ExtractProgress } from "../screens/FirstRun";
 import NotInstalled from "../screens/NotInstalled";
+import SettingsScreen from "../settings/SettingsScreen";
+import PersistentBackdrop from "../screens/PersistentBackdrop";
+import { useGameSettingsCache } from "../settings/useGameSettingsCache";
+import { preloadPresentation } from "./preloadPresentation";
+import { resolveMenuMusic, type MenuMusicSelections } from "@shared/menuMusic";
 
-const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 3, gameCount: PACK_ORDER.length };
+const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
 const LAUNCH_MESSAGE_MS = 3000;
-const FONT_STYLE_ID = "hub-font-face";
 const MAX_PADS = 4;
 
 // `navigate` (Task 8) only understands relative moves, so clicking a specific tile in
@@ -25,18 +29,36 @@ function reduceNav(state: NavState, action: Action | SelectGame): NavState {
   return navigate(state, action);
 }
 
+function presentationState(state: HubState): HubState {
+  return { ...state, games: state.games.map(game => game.installed ? game : { ...game, assetUrls: {} }) };
+}
+
 export default function HubProvider() {
   const [hubState, setHubState] = useState<HubState | null>(null);
+  const [preparedState, setPreparedState] = useState<HubState | null>(null);
+  const [startedState, setStartedState] = useState<HubState | null>(null);
+  const [musicAttempt, setMusicAttempt] = useState(0);
+  const [preparationError, setStartupError] = useState("");
+  const [startupItem, setStartupItem] = useState(0);
+  const startupButtons = useRef<(HTMLButtonElement | null)[]>([]);
+  const settingsCache = useGameSettingsCache();
   const [nav, rawDispatch] = useReducer(reduceNav, INITIAL_NAV);
   const [quitOpen, setQuitOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsDetail, setSettingsDetail] = useState(false);
+  const settingsOpenRef = useRef(false);
+  useEffect(() => { settingsOpenRef.current = settingsOpen; }, [settingsOpen]);
+  const pendingNavigation = useRef<Action | SelectGame | null>(null);
+  const settingsActionRef = useRef<((action: Action) => void) | null>(null);
   const [quitItem, setQuitItem] = useState(0);
   const [launching, setLaunching] = useState(false);
   const [firstRunItem, setFirstRunItem] = useState(0);
   const [extractingAll, setExtractingAll] = useState(false);
   const [progress, setProgress] = useState<Record<string, ExtractProgress>>({});
   const [volume, setVolume] = useState(0.6);
+  const [musicSelections, setMusicSelections] = useState<MenuMusicSelections>({});
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const hasActedRef = useRef(false);
 
   // The "Launching..." overlay (and the dimmed screen behind it) was otherwise only cleared by
   // its own LAUNCH_MESSAGE_MS timeout, so navigating away - picking a different game, opening
@@ -51,30 +73,38 @@ export default function HubProvider() {
   useEffect(() => {
     let cancelled = false;
     void window.hub.getState().then((r) => {
-      if (cancelled || !r.ok) return;
-      setHubState(r.value);
+      if (cancelled) return;
+      if (!r.ok) { setStartupError(r.error); return; }
+      setHubState(presentationState(r.value));
       if (r.value.startGame) {
         const index = PACK_ORDER.indexOf(r.value.startGame);
         if (index >= 0) dispatch({ type: "selectGame", index });
       }
-      // Tells main it is safe to start the HUB_SHOOT screenshot sequence, if one was
-      // requested - packs and asset state are loaded, so a `hub:selectGame` push would land
-      // on a fully rendered screen. A no-op outside shoot mode.
-      void window.hub.ready();
-    });
+    }).catch(error => { if (!cancelled) setStartupError(String(error)); });
     void window.hub.getConfig().then((r) => {
-      if (!cancelled && r.ok) setVolume(r.value.volume);
-    });
+      if (cancelled) return;
+      if (!r.ok) { setStartupError(r.error); return; }
+      setVolume(r.value.volume);
+      setMusicSelections(r.value.menuMusic ?? {});
+      setConfigLoaded(true);
+    }).catch(error => { if (!cancelled) setStartupError(String(error)); });
     void window.hub.getUpdate().then((r) => {
       if (!cancelled && r.ok && r.value) setUpdateInfo(r.value);
     });
     const offSelectGame = window.hub.onSelectGame((id) => {
       if (cancelled) return;
       const index = PACK_ORDER.indexOf(id);
-      if (index >= 0) dispatch({ type: "selectGame", index });
+      if (index >= 0) {
+        const action: SelectGame = { type: "selectGame", index };
+        if (settingsOpenRef.current) pendingNavigation.current = action;
+        else dispatch(action);
+      }
     });
     const offSelectionOpen = window.hub.onSelectionOpen(() => {
-      if (!cancelled) dispatch("menu");
+      if (!cancelled) {
+        if (settingsOpenRef.current) pendingNavigation.current = "menu";
+        else dispatch("menu");
+      }
     });
     const off = window.hub.onExtractProgress((p: Progress) => {
       if (cancelled) return;
@@ -100,8 +130,35 @@ export default function HubProvider() {
 
   const games = hubState?.games ?? [];
   const currentGame: GameState | undefined = games[nav.game];
-  const mgs3Game = games.find((g) => g.pack.id === "mgs3");
-  const needsFirstRun = games.some((g) => g.installed && (!g.assets || g.stale));
+  const needsFirstRun = Boolean(hubState && !hubState.steamPath) || games.some((g) => g.installed && (!g.assets || g.stale));
+  const ready = Boolean(hubState && preparedState === hubState && startedState === hubState);
+  const musicUrl = configLoaded && !needsFirstRun && currentGame
+    ? resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id]) : undefined;
+  const music = useMenuMusic(musicUrl, volume, musicAttempt);
+  const startupError = preparationError || (!ready ? music.error : "");
+  // Keep a completed startup latched while later tracks buffer or fail. This conditional
+  // state adjustment finishes before React commits the newly visible menu.
+  if (hubState && preparedState === hubState && music.ready && startedState !== hubState) setStartedState(hubState);
+  const startupRowCount = games.some(game => game.installed) ? 2 : 1;
+
+  useEffect(() => {
+    if (startupError) startupButtons.current[Math.min(startupItem, startupRowCount - 1)]?.focus();
+  }, [startupError, startupItem, startupRowCount]);
+
+  useEffect(() => {
+    if (!hubState || needsFirstRun || !configLoaded) return;
+    let cancelled = false;
+    void Promise.all([
+      settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
+      preloadPresentation(hubState.games),
+    ]).then(() => {
+      if (cancelled) return;
+      setPreparedState(hubState);
+    }).catch(error => { if (!cancelled) setStartupError(error instanceof Error ? error.message : String(error)); });
+    return () => { cancelled = true; };
+  }, [hubState, needsFirstRun, settingsCache, configLoaded]);
+
+  useEffect(() => { if (ready) void window.hub.ready(); }, [ready]);
 
   // Remembers the current game so the next launch with no `--game` argument opens on it.
   useEffect(() => {
@@ -109,33 +166,6 @@ export default function HubProvider() {
     if (!id) return;
     void window.hub.setConfig({ lastGame: id });
   }, [currentGame?.pack.id]);
-
-  const music = useMenuMusic(currentGame?.assetUrls.bgm, volume);
-
-  // Font (D1): the current game's medium (400) and bold (700) weights, each falling back to
-  // MGS3's own weight, falling back to the system font already declared in global.css when
-  // neither has been extracted yet (MGS1 has no font asset at all, so it always falls back).
-  // `font-display: block` avoids a visible swap-in flash once the CORS-unblocked font loads.
-  useEffect(() => {
-    const fontMediumUrl = currentGame?.assetUrls.fontMedium ?? mgs3Game?.assetUrls.fontMedium;
-    const fontBoldUrl = currentGame?.assetUrls.fontBold ?? mgs3Game?.assetUrls.fontBold;
-    let styleEl = document.getElementById(FONT_STYLE_ID) as HTMLStyleElement | null;
-    if (!fontMediumUrl && !fontBoldUrl) {
-      styleEl?.remove();
-      return;
-    }
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = FONT_STYLE_ID;
-      document.head.appendChild(styleEl);
-    }
-    const rules: string[] = [];
-    const fontUiUrl = currentGame?.assetUrls.fontUi ?? mgs3Game?.assetUrls.fontUi;
-    if (fontUiUrl) rules.push(`@font-face { font-family: "MenuEnglish"; font-weight: 400; font-display: block; src: url("${fontUiUrl}"); }`);
-    if (fontMediumUrl) rules.push(`@font-face { font-family: "Rodin"; font-weight: 400; font-display: block; src: url("${fontMediumUrl}"); }`);
-    if (fontBoldUrl) rules.push(`@font-face { font-family: "Rodin"; font-weight: 700; font-display: block; src: url("${fontBoldUrl}"); }`);
-    styleEl.textContent = rules.join("\n");
-  }, [currentGame?.assetUrls.fontMedium, currentGame?.assetUrls.fontBold, currentGame?.assetUrls.fontUi, mgs3Game?.assetUrls.fontMedium, mgs3Game?.assetUrls.fontBold, mgs3Game?.assetUrls.fontUi]);
 
   // Theme: the current game's colours become CSS custom properties on <html>.
   useEffect(() => {
@@ -149,7 +179,7 @@ export default function HubProvider() {
   // Y/retry effect (same button, same polling shape) since both are global "press Y for the
   // thing the footer/overlay is telling you about" affordances rather than menu navigation.
   useEffect(() => {
-    if (!updateInfo) return;
+    if (!updateInfo || settingsOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "KeyY") void window.hub.openUpdate();
     };
@@ -172,11 +202,33 @@ export default function HubProvider() {
       window.removeEventListener("keydown", onKeyDown);
       cancelAnimationFrame(frame);
     };
-  }, [updateInfo]);
+  }, [updateInfo, settingsOpen]);
 
   async function refreshState(): Promise<void> {
-    const r = await window.hub.getState();
-    if (r.ok) setHubState(r.value);
+    try {
+      const [r, config] = await Promise.all([window.hub.getState(), window.hub.getConfig()]);
+      if (!config.ok) { setStartupError(config.error); return; }
+      if (r.ok) {
+        setStartupError("");
+        setVolume(config.value.volume);
+        setMusicSelections(config.value.menuMusic ?? {});
+        setConfigLoaded(true);
+        setMusicAttempt(attempt => attempt + 1);
+        for (const game of r.value.games) settingsCache.invalidate(game.pack.id);
+        setHubState(presentationState(r.value));
+      } else setStartupError(r.error);
+    } catch (error) { setStartupError(error instanceof Error ? error.message : String(error)); }
+  }
+
+  function recoverStartup(index: number): void {
+    setStartupError("");
+    setStartupItem(0);
+    if (index === 0) void refreshState();
+    else {
+      setFirstRunItem(0);
+      setProgress({});
+      setHubState(state => state && { ...state, games: state.games.map(game => game.installed ? { ...game, stale: true } : game) });
+    }
   }
 
   async function handleMenuChoice(key: MenuKey): Promise<void> {
@@ -187,6 +239,9 @@ export default function HubProvider() {
       window.setTimeout(() => setLaunching(false), LAUNCH_MESSAGE_MS);
     } else if (key === "gameSelection") {
       dispatch("menu");
+    } else if (key === "options") {
+      setSettingsDetail(false);
+      setSettingsOpen(true);
     } else {
       setQuitItem(0);
       setQuitOpen(true);
@@ -215,7 +270,10 @@ export default function HubProvider() {
     const picked = await window.hub.pickFolder();
     if (!picked.ok) return;
     const r = await window.hub.setSteamPath(picked.value);
-    if (r.ok) setHubState(r.value);
+    if (r.ok) {
+      for (const game of r.value.games) settingsCache.invalidate(game.pack.id);
+      setHubState(presentationState(r.value));
+    }
   }
 
   function firstRunRows(): { onSelect: () => void }[] {
@@ -226,11 +284,17 @@ export default function HubProvider() {
   }
 
   const onAction = (action: Action) => {
-    if (!hasActedRef.current) {
-      hasActedRef.current = true;
-      music.unlock();
+    if (startupError || (!ready && !needsFirstRun)) {
+      if (startupError) {
+        if (action === "up" || action === "down") setStartupItem(index => (index + (action === "up" ? startupRowCount - 1 : 1)) % startupRowCount);
+        else if (action === "confirm") recoverStartup(Math.min(startupItem, startupRowCount - 1));
+      }
+      return;
     }
-
+    if (settingsOpen) {
+      settingsActionRef.current?.(action);
+      return;
+    }
     if (needsFirstRun) {
       const rows = firstRunRows();
       if (action === "up" || action === "down") {
@@ -281,7 +345,12 @@ export default function HubProvider() {
     </div>
   );
 
-  if (!hubState) return <div className="screen-root" />;
+  if (!hubState || startupError || (!needsFirstRun && !ready)) return <div className="startup-screen" data-testid="startup-screen">
+    <p role="status">{startupError || "Loading…"}</p>
+    {startupError && ["Retry", ...(startupRowCount > 1 ? ["Re-extract Artwork"] : [])].map((label, index) => <button key={label}
+      ref={button => { startupButtons.current[index] = button; }} className={startupItem === index ? "focused" : undefined}
+      onFocus={() => setStartupItem(index)} onMouseEnter={() => setStartupItem(index)} onClick={() => recoverStartup(index)}>{label}</button>)}
+  </div>;
 
   if (needsFirstRun) {
     return (
@@ -302,17 +371,25 @@ export default function HubProvider() {
 
   if (!currentGame) return <div className="screen-root" />;
 
-  // Round 6: Game Selection is no longer a dark overlay stacked on top of a dimmed GameScreen -
-  // it's the same light screen (`ScreenBackdrop` renders the focused entry's own art/header), so
-  // the two are mutually exclusive here rather than both mounted. The crossfade key follows
-  // whichever pack is actually on screen (the focused entry while browsing, the current game
-  // otherwise) so switching games/entries and entering/leaving Game Selection all still crossfade.
-  const displayedPackId = nav.screen === "selection" ? (games[nav.item]?.pack.id ?? currentGame.pack.id) : currentGame.pack.id;
+  // The backdrop has one stable mount. Navigation replaces only the foreground menus.
+  const displayedGame = nav.screen === "selection" ? (games[nav.item] ?? currentGame) : currentGame;
 
   return (
     <>
-      <div key={displayedPackId} className="game-fade" style={{ position: "absolute", inset: 0 }}>
-        {nav.screen === "selection" ? (
+      <div style={{ position: "absolute", inset: 0 }}>
+        <PersistentBackdrop game={displayedGame} view={settingsOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail} />
+        {settingsOpen ? (
+          <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
+            musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={setMusicSelections}
+            onClose={() => {
+              setSettingsOpen(false);
+              setSettingsDetail(false);
+              if (pendingNavigation.current) {
+                dispatch(pendingNavigation.current);
+                pendingNavigation.current = null;
+              }
+            }} />
+        ) : nav.screen === "selection" ? (
           <GameSelection
             games={games}
             focusIndex={nav.item}

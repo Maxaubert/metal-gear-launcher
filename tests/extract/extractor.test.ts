@@ -44,4 +44,23 @@ describe("extractor", () => {
       if (dirname(dir) === tmpdir()) await rm(dir, { recursive: true, force: true });
     }
   });
+  it.each([["mg12", 11], ["mgs2", 6]])("preserves native %s preview and overlay canvases", async (gameId, count) => {
+    const dir = await mkdtemp(join(tmpdir(), "hub-wallpaper-"));
+    try {
+      const pack = loadPacks().find(p => p.id === gameId)!;
+      const preview = { ...pack, assets: pack.assets.filter(a => a.role.startsWith("wallpaper") || a.role.startsWith("settings")) };
+      const png = await sharp({ create: { width: 128, height: 72, channels: 4, background: "transparent" } })
+        .composite([{ input: Buffer.from('<svg width="128" height="72"><rect x="20" y="10" width="12" height="20" fill="white"/></svg>') }])
+        .png().toBuffer();
+      const manifest = await extractGame(preview, { installDir: "C:\\g", buildId: "9" }, () => {}, {
+        unity: async (_dir, _asset, dest) => { await writeFile(dest, png); },
+        m2: vi.fn(), assetsDir: () => dir, toolVersions: () => ({ assetStudio: "a", freemote: "b" }), writeManifest: vi.fn(),
+      });
+      expect(manifest.failed).toEqual({});
+      expect(Object.keys(manifest.files)).toHaveLength(count);
+      for (const file of Object.values(manifest.files)) expect(await readFile(join(dir, file))).toEqual(png);
+    } finally {
+      if (dirname(dir) === tmpdir()) await rm(dir, { recursive: true, force: true });
+    }
+  });
 });

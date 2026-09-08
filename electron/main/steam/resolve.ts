@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { Pack } from "@shared/packs";
 import { installFromManifest } from "./library";
@@ -11,7 +11,7 @@ export async function resolveInstall(pack: Pack, libraries: string[]): Promise<I
       const acf = await readFile(join(lib, "steamapps", `appmanifest_${pack.steam.appId}.acf`), "utf8");
       const { installdir, buildid } = installFromManifest(acf);
       const dir = join(lib, "steamapps", "common", installdir);
-      await readFile(join(dir, pack.launch.exe)); // exe must exist, otherwise treat as not installed
+      if (!(await stat(join(dir, pack.launch.exe))).isFile()) continue;
       return { installDir: dir, buildId: buildid };
     } catch {
       /* not in this library */

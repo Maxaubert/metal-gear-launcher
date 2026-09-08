@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const FADE_MS = 300;
 const FADE_STEP_MS = 25;
@@ -19,80 +19,98 @@ function fade(audio: HTMLAudioElement, from: number, to: number, onDone?: () => 
   return () => window.clearInterval(id);
 }
 
-/**
- * Owns the single `HTMLAudioElement` that plays a game's menu music. Call it with the
- * current game's `bgm` asset URL and the configured volume (0..1); it fades out, swaps
- * the source and fades back in whenever `bgmUrl` changes. Browsers block autoplay before
- * a user gesture, so playback stays silent until `unlock()` is called (the hub calls it
- * from the first navigation action).
- */
-export function useMenuMusic(bgmUrl: string | undefined, volume: number): { unlock: () => void } {
+/** Resolves only after buffering and playback start, including when the volume is zero. */
+function playWhenReady(audio: HTMLAudioElement, url: string, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let starting = false;
+    const finish = (error?: Error) => {
+      window.clearTimeout(timer);
+      audio.removeEventListener("canplaythrough", play);
+      audio.removeEventListener("error", failed);
+      signal.removeEventListener("abort", aborted);
+      if (error) reject(error); else resolve();
+    };
+    const failed = () => finish(new Error("Could not load menu music. Please retry or re-extract artwork."));
+    const aborted = () => finish(new DOMException("Music changed", "AbortError"));
+    const play = () => {
+      if (starting) return;
+      starting = true;
+      void audio.play().then(() => finish(), () => finish(new Error("Could not start menu music. Please retry.")));
+    };
+    const timer = window.setTimeout(() => finish(new Error("Menu music loading timed out. Please retry.")), 15000);
+    audio.addEventListener("canplaythrough", play);
+    audio.addEventListener("error", failed);
+    signal.addEventListener("abort", aborted, { once: true });
+    audio.src = url;
+    audio.load();
+  });
+}
+
+type PlaybackState = { url?: string; attempt: number; ready: boolean; error: string };
+
+/** Starts automatically, then fades between games without restarting on menu navigation. */
+export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0): { ready: boolean; error: string } {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const unlockedRef = useRef(false);
   const volumeRef = useRef(volume);
-  const cancelFadeRef = useRef<() => void>(() => {});
-  const urlRef = useRef<string | undefined>(undefined);
+  const [state, setState] = useState<PlaybackState>({ attempt: -1, ready: false, error: "" });
 
   useEffect(() => {
     volumeRef.current = volume;
+    if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
-  // The audio element is a genuinely imperative, mutable object (HTMLMediaElement), so it
-  // is created and torn down in an effect rather than held in state or read during render.
   useEffect(() => {
     const audio = new Audio();
+    audio.id = "menu-music";
+    audio.hidden = true;
     audio.loop = true;
-    audio.volume = 0;
+    audio.preload = "auto";
     audioRef.current = audio;
+    document.body.append(audio);
     return () => {
-      cancelFadeRef.current();
       audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+      audio.remove();
       audioRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || urlRef.current === bgmUrl) return;
-    cancelFadeRef.current();
-
-    const swapAndFadeIn = () => {
-      urlRef.current = bgmUrl;
-      if (!bgmUrl) return;
-      audio.src = bgmUrl;
-      if (unlockedRef.current) {
-        audio.play().catch(() => {
-          // Autoplay can still be refused right after a src change; the next game switch
-          // re-enters this same branch and tries again, since `unlockedRef.current` stays true.
-        });
-        cancelFadeRef.current = fade(audio, 0, volumeRef.current);
+    const audio = audioRef.current!;
+    const controller = new AbortController();
+    let cancelled = false;
+    let cancelFade = () => {};
+    const switching = Boolean(audio.getAttribute("src")) && !audio.paused;
+    const start = async () => {
+      audio.pause();
+      if (!bgmUrl) {
+        audio.removeAttribute("src");
+        audio.load();
+        setState({ url: bgmUrl, attempt, ready: true, error: "" });
+        return;
+      }
+      audio.volume = switching ? 0 : volumeRef.current;
+      try {
+        const source = new URL(bgmUrl);
+        // Chromium can retain a failed media resource even after load(); Retry must
+        // request the repaired file again instead of reusing that failed resource.
+        if (attempt) source.searchParams.set("musicAttempt", String(attempt));
+        await playWhenReady(audio, source.href, controller.signal);
+        if (cancelled) return;
+        if (switching) cancelFade = fade(audio, 0, volumeRef.current, () => { audio.volume = volumeRef.current; });
+        setState({ url: bgmUrl, attempt, ready: true, error: "" });
+      } catch (error) {
+        if (cancelled) return;
+        audio.pause();
+        setState({ url: bgmUrl, attempt, ready: false, error: error instanceof Error ? error.message : String(error) });
       }
     };
+    if (switching) cancelFade = fade(audio, audio.volume, 0, () => { void start(); });
+    else void start();
+    return () => { cancelled = true; cancelFade(); controller.abort(); };
+  }, [bgmUrl, attempt]);
 
-    if (urlRef.current === undefined || audio.paused) {
-      swapAndFadeIn();
-    } else {
-      cancelFadeRef.current = fade(audio, audio.volume, 0, swapAndFadeIn);
-    }
-  }, [bgmUrl]);
-
-  const unlock = () => {
-    if (unlockedRef.current) return;
-    // Record the gesture even when `bgmUrl` has not resolved yet: hub state loads
-    // asynchronously (see `HubProvider`), and the caller unlocks exactly once, on the very
-    // first input, which can arrive before that load finishes and `audio.src` gets set. The
-    // effect above reads `unlockedRef.current` in `swapAndFadeIn` and plays as soon as it
-    // later sets a src, so recording the gesture here (rather than bailing out) is what makes
-    // that catch-up play happen instead of music never starting for the rest of the session.
-    unlockedRef.current = true;
-    const audio = audioRef.current;
-    if (!audio || !audio.src) return;
-    audio.play().catch(() => {
-      // Autoplay can still be refused here; `unlockedRef.current` stays true, so the next
-      // `bgmUrl` change (game switch) retries via `swapAndFadeIn` above.
-    });
-    cancelFadeRef.current = fade(audio, 0, volumeRef.current);
-  };
-
-  return { unlock };
+  const current = state.url === bgmUrl && state.attempt === attempt;
+  return { ready: current && state.ready, error: current ? state.error : "" };
 }

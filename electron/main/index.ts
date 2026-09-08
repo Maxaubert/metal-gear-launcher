@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from "electron";
 import { exec, spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, stat, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -13,12 +13,15 @@ import "./log";
 import { isGameId, parseCliGame } from "./cli";
 import { assetsDir, dataDir } from "./paths";
 import { configSchema, readConfig, writeConfig } from "./config";
+import { menuMusicRequest } from "../../shared/menuMusic";
 import { findSteamRoot, listLibraries } from "./steam/library";
 import { resolveInstall } from "./steam/resolve";
 import { extractGame, isStale, readManifest, readToolVersions } from "./extract/extractor";
 import { launchGame } from "./launch/launcher";
 import { minimizeForLaunch, restoreAfterLaunch } from "./launch/windowTransition";
 import { checkForUpdate } from "./update";
+import { settingsReadRequest, saveSettingsRequest } from "@shared/settings";
+import { getGameSettings, saveGameSettings } from "./settings/service";
 
 const execAsync = promisify(exec);
 
@@ -36,6 +39,7 @@ const ASSET_CONTENT_TYPES: Record<string, string> = {
   ".wav": "audio/wav",
   ".ttf": "font/otf",
   ".otf": "font/otf",
+  ".json": "application/json",
 };
 
 function ok<T>(value: T): Result<T> {
@@ -62,7 +66,8 @@ function createWindow(): BrowserWindow {
     frame: shootMode ? false : true,
     useContentSize: shootMode,
     autoHideMenuBar: true,
-    webPreferences: { preload: join(__dirname, "../preload/index.js"), sandbox: true, contextIsolation: true },
+    webPreferences: { preload: join(__dirname, "../preload/index.js"), sandbox: true, contextIsolation: true,
+      autoplayPolicy: "no-user-gesture-required" },
   });
   win.once("ready-to-show", () => win.show());
   if (process.env.ELECTRON_RENDERER_URL) win.loadURL(process.env.ELECTRON_RENDERER_URL);
@@ -96,9 +101,10 @@ async function buildState(): Promise<HubState> {
   for (const pack of loadPacks()) {
     const install = steamRoot ? await resolveInstall(pack, libraries) : null;
     const manifest = await readManifest(pack.id);
+    const revision = manifest ? (await stat(join(assetsDir(pack.id), "manifest.json"))).mtimeMs : 0;
     const assetUrls: Partial<Record<AssetRole, string>> = {};
     for (const [role, file] of Object.entries(manifest?.files ?? {})) {
-      if (file) assetUrls[role as AssetRole] = `${ASSET_PROTOCOL}://${pack.id}/${file}`;
+      if (file) assetUrls[role as AssetRole] = `${ASSET_PROTOCOL}://${pack.id}/${file}?v=${revision}`;
     }
     games.push({
       pack,
@@ -187,6 +193,28 @@ if (!gotSingleInstanceLock) {
       }
     });
 
+    ipcMain.handle("hub:settings:get", async (_event, arg) => {
+      const parsed = settingsReadRequest.safeParse(arg);
+      if (!parsed.success) return err("Invalid settings request.");
+      try {
+        const state = await buildState();
+        const game = state.games.find((game) => game.pack.id === parsed.data.gameId);
+        if (!game?.installed || !game.installDir) return err("This game is not installed.");
+        return ok(await getGameSettings(parsed.data.gameId, game.installDir, parsed.data.accountId));
+      } catch (error) { return err(asError(error)); }
+    });
+
+    ipcMain.handle("hub:settings:save", async (_event, arg) => {
+      const parsed = saveSettingsRequest.safeParse(arg);
+      if (!parsed.success) return err("Invalid settings changes.");
+      try {
+        const state = await buildState();
+        const game = state.games.find((game) => game.pack.id === parsed.data.gameId);
+        if (!game?.installed || !game.installDir) return err("This game is not installed.");
+        return ok(await saveGameSettings(parsed.data, game.installDir, dataDir()));
+      } catch (error) { return err(asError(error)); }
+    });
+
     ipcMain.handle("hub:extract", async (_e, arg) => {
       try {
         const target = z.union([z.literal("all"), z.enum(PACK_ORDER)]).parse(arg);
@@ -224,11 +252,18 @@ if (!gotSingleInstanceLock) {
 
     ipcMain.handle("hub:config:set", async (_e, arg) => {
       try {
-        const patch = configSchema.partial().parse(arg);
+        const patch = configSchema.omit({ menuMusic: true }).partial().strict().parse(arg);
         return ok(await writeConfig(patch));
       } catch (e) {
         return err(asError(e));
       }
+    });
+
+    ipcMain.handle("hub:music:save", async (_e, arg) => {
+      try {
+        const { gameId, themeId } = menuMusicRequest.parse(arg);
+        return ok(await writeConfig({ menuMusic: { [gameId]: themeId } }));
+      } catch (e) { return err(asError(e)); }
     });
 
     ipcMain.handle("hub:pickFolder", async () => {

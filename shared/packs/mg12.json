@@ -30,7 +30,18 @@
     {"role": "headerYear2", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_1999", "type": "Sprite"},
     {"role": "headerSubtitle2", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_1999_en", "type": "Sprite"},
     {"role": "fontUi", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/defaultlocalgroup_assets_launcher/fonts/mg_sansserif-md.otf.bundle", "name": "MG_SansSerif-Md", "type": "Font"},
-    {"role": "headerMark", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12menutext.spriteatlas.bundle", "name": "1995text", "type": "Sprite"}
+    {"role": "headerMark", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12menutext.spriteatlas.bundle", "name": "1995text", "type": "Sprite"},
+    {"role": "wallpaper1", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/wallpaper/wallpaper.spriteatlas.bundle", "name": "1", "type": "Sprite"},
+    {"role": "wallpaper2", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/wallpaper/wallpaper.spriteatlas.bundle", "name": "2", "type": "Sprite"},
+    {"role": "wallpaper3", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/wallpaper/wallpaper.spriteatlas.bundle", "name": "3", "type": "Sprite"},
+    {"role": "wallpaper4", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/wallpaper/wallpaper.spriteatlas.bundle", "name": "4", "type": "Sprite"},
+    {"role": "wallpaper5", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/wallpaper/wallpaper.spriteatlas.bundle", "name": "5", "type": "Sprite"},
+    {"role": "wallpaper6", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/wallpaper/wallpaper.spriteatlas.bundle", "name": "6", "type": "Sprite"},
+    {"role": "wallpaperDisplayArea", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "wallpaper_screenpos", "type": "Sprite"},
+    {"role": "settingsOverlay", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "mg12_grid_mask", "type": "Texture2D"},
+    {"role": "settingsGrid", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12/gridatlas.spriteatlas.bundle", "name": "BG_grid_1", "type": "Sprite"},
+    {"role": "settingsGridFine", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/textures/mg12/gridatlas.spriteatlas.bundle", "name": "BG_grid_2", "type": "Sprite"},
+    {"role": "settingsGridBase", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmg12_assets_launcher/prefabs/mg12/animator.prefab.bundle", "name": "mg12_grid_gradation", "type": "Sprite"}
   ],
-  "assetRevision": 1
+  "assetRevision": 3
 }

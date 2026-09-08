@@ -3,7 +3,6 @@ import type { GameState } from "@shared/ipc";
 import type { Pack } from "@shared/packs";
 import type { InputKind } from "../input/useNavigation";
 import { themeVars, layoutVars } from "../theme/theme";
-import ScreenBackdrop from "./ScreenBackdrop";
 import FooterHints from "./FooterHints";
 
 export type MenuKey = Pack["menu"][number];
@@ -11,6 +10,7 @@ export type MenuKey = Pack["menu"][number];
 export const MENU_LABELS: Record<MenuKey, string> = {
   start: "Start Game",
   gameSelection: "Game Selection",
+  options: "Options",
   quit: "QUIT GAME",
 };
 
@@ -83,7 +83,6 @@ export default function GameScreen({
       data-layout="v2"
       style={{ ...themeVars(pack.theme), ...layoutVars(pack.id) }}
     >
-      <ScreenBackdrop pack={pack} assetUrls={assetUrls} />
 
       {/* A `chapters` pack (defect 4: MG1&2) renders its own two descriptions inside
           ScreenBackdrop, one per chapter, instead of this single pack-level one. */}

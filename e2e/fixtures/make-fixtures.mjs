@@ -76,6 +76,8 @@ async function main() {
     if (["mg12", "mgs2", "mgs3", "mgs4", "mgspw"].includes(gameId)) {
       const shapes = { headerYear: [gameId === "mgs2" ? 313 : 141, 88], headerSubtitle: [237, 47] };
       if (gameId === "mg12") Object.assign(shapes, { mainVisual2: [256, 178], logo2: [256, 95], headerYear2: [141, 88], headerSubtitle2: [239, 17] });
+      if (gameId === "mg12") Object.assign(shapes, { wallpaper1: [160, 90], wallpaper2: [160, 90], wallpaper3: [160, 90], wallpaper4: [160, 90], wallpaper5: [160, 90], wallpaper6: [160, 90], wallpaperDisplayArea: [120, 90], settingsOverlay: [160, 90], settingsGrid: [64, 64], settingsGridFine: [64, 64], settingsGridBase: [160, 90] });
+      if (gameId === "mgs2") Object.assign(shapes, { settingsOverlay: [160, 129], settingsPattern2: [160, 129], settingsPattern3: [160, 129], settingsPattern4: [160, 129], settingsPattern5: [160, 129], settingsPattern6: [160, 129] });
       if (gameId === "mgspw") Object.assign(shapes, { reticle1: [256, 251], reticle2: [256, 251], reticle3: [256, 251] });
       for (const [role, [width, height]] of Object.entries(shapes)) {
         const fileName = `${role}.png`;
@@ -87,7 +89,21 @@ async function main() {
     await writeFile(join(dir, "bgm.wav"), silentWav());
     files.bgm = "bgm.wav";
 
-    const assetRevision = ["mg12", "mgs2", "mgs3", "mgs4", "mgspw"].includes(gameId) ? 1 : 0;
+    if (gameId === "mgs1") {
+      for (const role of ["nativeTextAtlas", "nativeFontAtlas"]) {
+        await sharp({ create: { width: 64, height: 32, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } } })
+          .png().toFile(join(dir, `${role}.png`));
+        files[role] = `${role}.png`;
+      }
+      const glyphs = Object.fromEntries(Array.from({ length: 95 }, (_, index) => [String.fromCharCode(index + 32),
+        { x: 0, y: 0, width: 8, height: 12, advance: 10, bearingX: 0, bearingY: 12 }]));
+      await writeFile(join(dir, "nativeTextMetrics.json"), JSON.stringify({ kind: "sprites", width: 64, height: 32, sprites: {} }));
+      await writeFile(join(dir, "nativeFontMetrics.json"), JSON.stringify({ kind: "font", width: 64, height: 32, size: 22, glyphs }));
+      files.nativeTextMetrics = "nativeTextMetrics.json";
+      files.nativeFontMetrics = "nativeFontMetrics.json";
+    }
+
+    const assetRevision = gameId === "mgs1" ? 2 : ["mg12", "mgs2"].includes(gameId) ? 3 : ["mgs3", "mgs4", "mgspw"].includes(gameId) ? 1 : 0;
     const manifest = { gameId, buildId, ...(assetRevision ? { assetRevision } : {}), toolVersions: TOOL_VERSIONS, files, failed: {} };
     await writeFile(join(dir, "manifest.json"), JSON.stringify(manifest, null, 2));
   }

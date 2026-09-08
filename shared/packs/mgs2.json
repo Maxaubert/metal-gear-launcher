@@ -24,7 +24,13 @@
     {"role": "headerYear", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_2007-2009", "type": "Sprite"},
     {"role": "headerSubtitle", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2menutext.spriteatlas.bundle", "name": "ui_launcher_menu_txt_2007-2009_en", "type": "Sprite"},
     {"role": "fontUi", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/defaultlocalgroup_assets_launcher/fonts/mg_sansserif-md.otf.bundle", "name": "MG_SansSerif-Md", "type": "Font"},
-    {"role": "headerMark", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2menutext.spriteatlas.bundle", "name": "1964text", "type": "Sprite"}
+    {"role": "headerMark", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2menutext.spriteatlas.bundle", "name": "1964text", "type": "Sprite"},
+    {"role": "settingsOverlay", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2bg.spriteatlas.bundle", "name": "img_Pattern_2_1_1", "type": "Sprite"},
+    {"role": "settingsPattern2", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2bg.spriteatlas.bundle", "name": "img_Pattern_2_1_2", "type": "Sprite"},
+    {"role": "settingsPattern3", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2bg.spriteatlas.bundle", "name": "img_Pattern_2_1_3", "type": "Sprite"},
+    {"role": "settingsPattern4", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2bg.spriteatlas.bundle", "name": "img_Pattern_2_1_4", "type": "Sprite"},
+    {"role": "settingsPattern5", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2bg.spriteatlas.bundle", "name": "img_Pattern_2_1_5", "type": "Sprite"},
+    {"role": "settingsPattern6", "source": "unity", "path": "launcher_Data/StreamingAssets/aa/StandaloneWindows64/packedassetsmgs2_assets_launcher/textures/mgs2bg.spriteatlas.bundle", "name": "img_Pattern_2_1_6", "type": "Sprite"}
   ],
-  "assetRevision": 1
+  "assetRevision": 3
 }

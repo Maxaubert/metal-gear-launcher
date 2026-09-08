@@ -1,7 +1,6 @@
 import type { GameState } from "@shared/ipc";
 import type { InputKind } from "../input/useNavigation";
 import { themeVars, layoutVars } from "../theme/theme";
-import ScreenBackdrop from "./ScreenBackdrop";
 import FooterHints from "./FooterHints";
 
 export type GameSelectionProps = {
@@ -33,7 +32,6 @@ export default function GameSelection({ games, focusIndex, lastInputKind, onSele
       data-layout="v2"
       style={{ ...themeVars(focused.pack.theme), ...layoutVars(focused.pack.id) }}
     >
-      <ScreenBackdrop pack={focused.pack} assetUrls={focused.assetUrls} />
 
       <div className="selection-info">
         <span className="title">{focused.pack.title}</span>

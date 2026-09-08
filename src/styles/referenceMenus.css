@@ -1,11 +1,46 @@
-/* Geometry measured against the installed launchers' supplied reference images.
-   Scope keeps the accepted MGS1 screen and deferred games unchanged. */
+/* Geometry measured against the installed launchers' supplied reference images. */
+.screen[data-game="mgs1"] .main-visual {
+  /* The native 1102 x 1082 portrait starts at (115, 2) on its 1920 x 1080 canvas.
+     Keep the same aspect-preserving placement on main, selection, and Options. */
+  transform: translateY(.185185vh);
+  z-index: 1;
+}
+
+.screen[data-game="mgs1"] .logo-strip {
+  z-index: 2;
+}
+
+.screen[data-game="mgs1"] .ghost-timeline {
+  left: 61.666667vw;
+  top: -19.537037vh;
+  width: 39.583333vw;
+  height: 90.833333vh;
+  object-fit: fill;
+  opacity: 1;
+}
+.screen[data-game="mgs1"] .ghost-number {
+  left: 91.614583vw;
+  top: 2.87037vh;
+  width: 5.833333vw;
+  height: 39.722222vh;
+  object-fit: fill;
+}
+.persistent-backdrop[data-game="mgs1"]:not(.settings-screen) .ghost-timeline {
+  /* Keep historical dates; the shared header now owns the tick, rule and barcode. */
+  mask-image: linear-gradient(#000 20.59%, transparent 20.59%, transparent 72.98%, #000 72.98%);
+}
+.screen[data-game="mgs1"] .menu { --accent: #d60001; }
+.screen[data-game="mg12"] .menu { --accent: #013686; }
+.screen[data-game="mgs3"] .menu { --accent: #79a036; }
+.screen[data-game="mgs4"] .menu { --accent: #e20000; }
+.screen[data-game="mgspw"] .menu { --accent: #fdd000; }
+
 .screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .ground {
   background-image: linear-gradient(to right, var(--paper-left), var(--paper) 62%);
   background-size: 100% 100%;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .divider {
+.screen .divider {
   width: 0.1vw;
   background: var(--ink);
 }
@@ -40,15 +75,8 @@
   height: 100vh;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li {
-  border-width: 0.08vw;
-  padding-left: 0.9vw;
-  font-size: 2.9vh;
-  box-shadow: none;
-}
-
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .year,
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .subtitle {
+.screen .head .year,
+.screen .head .subtitle {
   margin-left: 0;
 }
 
@@ -65,14 +93,14 @@
   align-self: flex-start;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick {
+.screen:is([data-game="mgs1"], [data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick {
   left: -1.9vw;
   top: 0.5vh;
   height: 8.5vh;
   width: 0.3vw;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick::after {
+.screen:is([data-game="mgs1"], [data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick::after {
   top: 4vh;
   width: 0.8vw;
 }
@@ -85,9 +113,8 @@
   height: 1.9vh;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .description,
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li,
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .hints {
+.screen .description,
+.screen .hints {
   font-family: "MenuEnglish", "Rodin", sans-serif;
   font-weight: 400;
 }
@@ -137,7 +164,9 @@
 
 /* Selection owns the right column, including when the two-chapter game is focused. */
 .screen[data-testid="game-selection"][data-game="mg12"] .chapter-block + .chapter-block,
-.screen[data-testid="game-selection"][data-game="mg12"] .chapter-description {
+.screen[data-testid="game-selection"][data-game="mg12"] .chapter-description,
+.screen[data-view="selection"][data-game="mg12"] .chapter-block + .chapter-block,
+.screen[data-view="selection"][data-game="mg12"] .chapter-description {
   display: none;
 }
 
@@ -147,19 +176,7 @@
   width: 100%;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu .menu-bar {
-  left: -1.9vw;
-  width: 0.3vw;
-  border: 0;
-  padding: 0;
-}
-
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu li.focused {
-  margin-left: -1.3vw;
-  padding-left: 2.2vw;
-}
-
-.screen:is([data-game="mgs2"], [data-game="mgs3"]) .head .subtitle {
+.screen:is([data-game="mgs1"], [data-game="mgs2"], [data-game="mgs3"]) .head .subtitle {
   margin-top: 1.7vh;
 }
 
@@ -172,7 +189,7 @@
   pointer-events: none;
 }
 
-.header-mark-art img {
+.header-mark-art > :is(img, svg) {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -223,7 +240,7 @@
   display: none;
 }
 
-.screen:is([data-game="mgs2"], [data-game="mgs3"]) .description {
+.screen:is([data-game="mgs1"], [data-game="mgs2"], [data-game="mgs3"]) .description {
   right: 4vw;
   line-height: 1.2;
 }
@@ -245,7 +262,7 @@
   height: 38.3vh;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .menu::before {
+.screen .menu::before {
   content: "";
   position: absolute;
   top: -1.2vh;

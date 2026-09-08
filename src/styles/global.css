@@ -78,6 +78,11 @@ body {
   color: var(--ink);
 }
 
+.persistent-backdrop { pointer-events: none; }
+.persistent-backdrop .fade-in, .persistent-backdrop .fade-in-fast { animation: none; }
+.startup-screen { position: fixed; inset: 0; display: grid; place-content: center; background: #000; color: #fff; font: 1rem/1.5 sans-serif; text-align: center; }
+.startup-screen button { font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; padding: .5rem 1rem; }
+
 .ground {
   position: absolute;
   inset: 0;
@@ -547,8 +552,8 @@ body {
 
 .menu {
   position: absolute;
-  left: var(--col-x);
-  right: calc(100vw - var(--col-right));
+  left: 62.916667vw;
+  right: .625vw;
   top: var(--menu-top);
   bottom: auto;
   margin: 0;
@@ -562,12 +567,15 @@ body {
   position: relative;
   height: var(--row-h);
   line-height: var(--row-h);
-  padding-left: 1.4vw;
-  border: 1px solid var(--ink);
+  padding-left: .833333vw;
+  border: .092593vh solid var(--ink);
   background: color-mix(in srgb, var(--paper) 70%, transparent);
-  font: 2.9vh/var(--row-h) "Rodin", sans-serif;
+  font: 400 2.962963vh/var(--row-h) "MenuEnglish", "Rodin", sans-serif;
+  /* The native font's visible capitals sit 14px below the top of a 60px row. */
+  line-height: calc(var(--row-h) - .925926vh);
   color: var(--ink);
   cursor: pointer;
+  box-shadow: none;
   transition: background 120ms ease, color 120ms ease;
 }
 
@@ -575,6 +583,8 @@ body {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  margin-left: -.729167vw;
+  padding-left: 1.5625vw;
 }
 
 .menu li.quit {
@@ -599,9 +609,9 @@ body {
   grid-row: 1;
   grid-column: 1;
   position: absolute;
-  left: -0.45vw;
+  left: -1.354167vw;
   top: 0;
-  width: 0.45vw;
+  width: .3125vw;
   height: var(--row-h);
   background: var(--accent);
   border: none;

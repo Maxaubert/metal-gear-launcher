@@ -14,6 +14,12 @@ function fakeChild(exitCode: number | null, afterMs: number) {
 }
 
 describe("launchGame", () => {
+  it("preserves Unicode and spaced library paths as one executable argument", async () => {
+    const spawn = vi.fn(() => fakeChild(null, 0));
+    const alternate = { installDir: "R:\\Spill og prøver\\日本語\\METAL GEAR SOLID 4", buildId: "1" };
+    expect((await launchGame(pack, alternate, { spawn: spawn as any, openExternal: vi.fn(), waitMs: 10 })).via).toBe("exe");
+    expect(spawn).toHaveBeenCalledWith(`${alternate.installDir}\\MGS4\\mgs4.exe`, [], expect.objectContaining({ cwd: `${alternate.installDir}\\MGS4` }));
+  });
   it("spawns the exe with cwd and SteamAppId and reports exe", async () => {
     const spawn = vi.fn(() => fakeChild(null, 0));
     const r = await launchGame(pack, install, { spawn: spawn as any, openExternal: vi.fn(), waitMs: 10 });

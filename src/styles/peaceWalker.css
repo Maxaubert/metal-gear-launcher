@@ -34,6 +34,9 @@
   top: 8.7vh;
   padding-bottom: 2.3vh;
 }
+.persistent-backdrop[data-game="mgspw"]:not(.settings-screen) .head {
+  top: var(--header-top);
+}
 
 .screen[data-game="mgspw"] .head .subtitle {
   margin-top: 2.5vh;
@@ -45,11 +48,6 @@
 
 .screen[data-game="mgspw"] .menu li.focused {
   color: #000;
-  padding-left: 1.6vw;
-}
-
-.screen[data-game="mgspw"] .menu li:not(.focused):not(.menu-bar) {
-  margin-left: -0.6vw;
 }
 
 .screen[data-game="mgspw"] .tile.focused .tile-number {
