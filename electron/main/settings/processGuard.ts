@@ -38,7 +38,7 @@ export async function requireGameClosed(installDir: string): Promise<void> {
   if (process.platform !== "win32") return;
   const names = await installedExecutableNames(installDir);
   const { stdout } = await execFileAsync(join(process.env.SystemRoot ?? "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe"), ["-NoProfile", "-NonInteractive", "-Command",
-    "Get-CimInstance Win32_Process -ErrorAction Stop | Select-Object Name,ExecutablePath | ConvertTo-Json -Compress"],
+    "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); Get-CimInstance Win32_Process -ErrorAction Stop | Select-Object Name,ExecutablePath | ConvertTo-Json -Compress"],
   { windowsHide: true, timeout: 15000, maxBuffer: 4 * 1024 * 1024 });
   const result: unknown = JSON.parse(stdout.trim() || "null");
   assertNoGameProcesses(installDir, result, names);

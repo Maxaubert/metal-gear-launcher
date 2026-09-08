@@ -7,13 +7,16 @@ import { readPatchSettings, preparePatchEdits } from "./patches";
 import { commitSettings, settingsRevision } from "./transaction";
 import { requireGameClosed } from "./processGuard";
 import { readNativeDisplayContext } from "./nativeDisplay";
+import { readConfig } from "../config";
+import { findSteamRoot } from "../steam/library";
 
 const saving = new Set<string>();
 
 async function readSources(gameId: GameId, installDir: string, accountId?: string) {
   const display = await readNativeDisplayContext();
+  const steamRoot = gameId === "mgs1" ? await findSteamRoot((await readConfig()).steamPath) : null;
   const [native, patches] = await Promise.all([
-    readNativeSettings(gameId, installDir, accountId, display),
+    readNativeSettings(gameId, installDir, accountId, display, steamRoot ?? undefined),
     readPatchSettings(gameId, installDir),
   ]);
   const result: GameSettings = {

@@ -12,6 +12,7 @@ import { graphicsEdit } from "./graphicsEdit";
 import type { GameSettingsCache } from "./gameSettingsCache";
 import Mgs1NativeText from "../typography/Mgs1NativeText";
 import { MGS1_TEXT_SPRITES } from "../typography/mgs1Typography";
+import { MENU_THEMES, type MenuMusicSelections } from "@shared/menuMusic";
 
 type Props = {
   game: GameState;
@@ -20,6 +21,8 @@ type Props = {
   onClose: () => void;
   settingsCache: GameSettingsCache;
   onDetailChange: (detail: boolean) => void;
+  musicSelection?: string;
+  onMusicSaved: (selections: MenuMusicSelections) => void;
 };
 type Row = { id: string; label: string; field?: SettingField; mute?: SettingField; section?: SettingsSection; selected?: boolean; onSelect?: () => void };
 const changeKey = (section: string, field: string) => `${section}\n${field}`;
@@ -30,7 +33,7 @@ const MUTE_FIELDS: Record<string, string> = {
   volumeUi: "muteUi", volumeGame: "muteGame",
 };
 
-export default function SettingsScreen({ game, lastInputKind, actionRef, onClose, settingsCache, onDetailChange }: Props) {
+export default function SettingsScreen({ game, lastInputKind, actionRef, onClose, settingsCache, onDetailChange, musicSelection, onMusicSaved }: Props) {
   const initial = settingsCache.peek(game.pack.id);
   const [settings, setSettings] = useState<GameSettings | null>(() => initial?.ok ? initial.value : null);
   const [category, setCategory] = useState<string | null>(null);
@@ -43,9 +46,14 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const [discardOpen, setDiscardOpen] = useState(false);
   const [discardItem, setDiscardItem] = useState(0);
   const [accountPage, setAccountPage] = useState(false);
+  const [musicDraft, setMusicDraft] = useState<string>();
   const generation = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
-  const dirty = Object.keys(changes).length > 0 || initialize.length > 0;
+  const nativeDirty = Object.keys(changes).length > 0 || initialize.length > 0;
+  const musicDirty = musicDraft !== undefined && musicDraft !== musicSelection;
+  const dirty = nativeDirty || musicDirty;
+  const musicPage = category === "Menu Music";
+  const pageDirty = category ? musicPage ? musicDirty : nativeDirty : dirty;
 
   async function load(accountId?: string, refresh = true) {
     const current = ++generation.current;
@@ -70,21 +78,35 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   }, [game.pack.id]);
 
   async function save() {
-    if (!settings || busy || !dirty) return;
+    if (busy || !pageDirty) return;
     setBusy(true);
     setMessage("");
-    const result = await window.hub.saveGameSettings({
-      gameId: game.pack.id, accountId: settings.accountId, revision: settings.revision,
-      changes: Object.values(changes), initializeSectionIds: initialize,
-    });
-    if (result.ok) {
-      settingsCache.remember(result.value);
-      setSettings(result.value);
-      setChanges({});
-      setInitialize([]);
+    try {
+      if (!musicPage && nativeDirty && settings) {
+        const result = await window.hub.saveGameSettings({
+          gameId: game.pack.id, accountId: settings.accountId, revision: settings.revision,
+          changes: Object.values(changes), initializeSectionIds: initialize,
+        });
+        if (!result.ok) { setMessage(result.error); return; }
+        settingsCache.remember(result.value);
+        setSettings(result.value);
+        setChanges({});
+        setInitialize([]);
+      }
+      if ((musicPage || !category) && musicDirty && musicDraft) {
+        const result = await window.hub.saveMenuMusic({ gameId: game.pack.id, themeId: musicDraft });
+        if (!result.ok) { setMessage(result.error); return; }
+        onMusicSaved(result.value.menuMusic ?? {});
+        setMusicDraft(undefined);
+      }
       setMessage("Settings saved.");
-    } else setMessage(result.error);
-    setBusy(false);
+    } catch (error) { setMessage(error instanceof Error ? error.message : String(error)); }
+    finally { setBusy(false); }
+  }
+  function discard() {
+    if (musicPage || !category) setMusicDraft(undefined);
+    setMessage("");
+    if (!musicPage && nativeDirty) void load(settings?.accountId);
   }
   function openCategory(value: string | null, patch: string | null = null) {
     setCategory(value);
@@ -165,11 +187,18 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     for (const section of native.filter((s) => !s.fields.length)) {
       rows.push({ id: section.id, label: section.title, onSelect: () => openCategory(section.id) });
     }
+    rows.push({ id: "music", label: "Menu Music", onSelect: () => openCategory("Menu Music") });
     rows.push({ id: "patches", label: "Community Fixes", onSelect: () => openCategory("Community Fixes") });
     if ((settings?.accounts.length ?? 0) > 1) rows.push({ id: "account", label: "Steam Account", onSelect: () => {
       if (dirty) setMessage("Save or discard changes before switching accounts.");
       else { setAccountPage(true); setFocus(0); }
     } });
+  } else if (musicPage) {
+    const themes = MENU_THEMES[game.pack.id].filter(theme => game.assetUrls[theme.assetRole]);
+    rows = themes.map(theme => ({ id: theme.id, label: theme.label,
+      selected: theme.id === (musicDraft ?? musicSelection ?? themes[0]?.id),
+      onSelect: () => { setMusicDraft(theme.id === musicSelection ? undefined : theme.id); setMessage(""); },
+    }));
   } else if (category === "Community Fixes" && !patchId) {
     rows = patches.map((section) => ({ id: section.id, label: section.title, section,
       onSelect: () => openCategory("Community Fixes", section.id) }));
@@ -224,7 +253,9 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
       } }];
     }
   }
-  const contextMessage = selectedPatch?.message ?? native.find((section) => section.id === category)?.message
+  const contextMessage = musicPage ? rows.length ? "Choose this game's hub menu theme. Only the original theme is available for now."
+    : "No menu music has been extracted for this game. Re-extract its artwork and audio to make its theme available."
+    : selectedPatch?.message ?? native.find((section) => section.id === category)?.message
     ?? (category === "Community Fixes" ? rows[focus]?.section?.status === "needsSetup" ? "Open to review setup for this installed fix."
       : rows[focus]?.section?.fields.length ? "Open to review and edit this installed fix's settings." : "This installed component has no editable settings." : undefined);
   const fieldDescription = rows[focus]?.field?.description;
@@ -242,9 +273,9 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     : category === "Button Settings" ? "Change the confirmation button."
     : buttonIcons ? "Change the button icons displayed in the game." : "";
   const actions: Row[] = [];
-  if (message && !dirty) actions.push({ id: "reload", label: "Reload", onSelect: () => void load(settings?.accountId) });
-  if (dirty) actions.push(
-    { id: "discard", label: "Discard Changes", onSelect: () => void load(settings?.accountId) },
+  if (message && !dirty && !musicPage) actions.push({ id: "reload", label: "Reload", onSelect: () => void load(settings?.accountId) });
+  if (pageDirty) actions.push(
+    { id: "discard", label: "Discard Changes", onSelect: discard },
     { id: "save", label: "Save Changes", onSelect: () => void save() },
   );
   actions.push({ id: "back", label: "Back", onSelect: back });

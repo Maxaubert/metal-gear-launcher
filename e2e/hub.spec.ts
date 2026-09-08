@@ -139,6 +139,28 @@ test.describe("hub", () => {
     }
   });
 
+  test("arrow-key game switching keeps single-game menus and year headers anchored", async () => {
+    for (const width of [1920, 3840]) {
+      const scale = width / 1920;
+      await page.setViewportSize({ width, height: width * 9 / 16 });
+      await page.keyboard.press("Tab");
+      await page.getByTestId("tile-mgs1").click();
+      for (const direction of ["ArrowRight", "ArrowLeft"]) {
+        for (let i = 0; i < 6; i++) {
+          const id = await page.getByTestId("game-screen").getAttribute("data-game");
+          const menu = await page.locator(".menu").boundingBox();
+          const header = await page.locator(".persistent-backdrop .head").first().boundingBox();
+          expect(menu!.y / scale).toBeCloseTo(id === "mg12" ? 594 : 524.88, 1);
+          if (id !== "mg12") {
+            expect(header!.x / scale).toBeCloseTo(1219.2, 1);
+            expect(header!.y / scale).toBeCloseTo(86.4, 1);
+          }
+          await page.keyboard.press(direction);
+        }
+      }
+    }
+  });
+
   test("portraits retain their geometry when opening Options at HD, 4K, and windowed aspect ratios", async () => {
     await expect(page.getByTestId("game-screen")).toBeVisible();
     for (const viewport of [{ width: 1920, height: 1080 }, { width: 3840, height: 2160 }, { width: 1600, height: 850 }]) {

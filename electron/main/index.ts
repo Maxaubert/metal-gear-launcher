@@ -13,6 +13,7 @@ import "./log";
 import { isGameId, parseCliGame } from "./cli";
 import { assetsDir, dataDir } from "./paths";
 import { configSchema, readConfig, writeConfig } from "./config";
+import { menuMusicRequest } from "../../shared/menuMusic";
 import { findSteamRoot, listLibraries } from "./steam/library";
 import { resolveInstall } from "./steam/resolve";
 import { extractGame, isStale, readManifest, readToolVersions } from "./extract/extractor";
@@ -250,11 +251,18 @@ if (!gotSingleInstanceLock) {
 
     ipcMain.handle("hub:config:set", async (_e, arg) => {
       try {
-        const patch = configSchema.partial().parse(arg);
+        const patch = configSchema.omit({ menuMusic: true }).partial().strict().parse(arg);
         return ok(await writeConfig(patch));
       } catch (e) {
         return err(asError(e));
       }
+    });
+
+    ipcMain.handle("hub:music:save", async (_e, arg) => {
+      try {
+        const { gameId, themeId } = menuMusicRequest.parse(arg);
+        return ok(await writeConfig({ menuMusic: { [gameId]: themeId } }));
+      } catch (e) { return err(asError(e)); }
     });
 
     ipcMain.handle("hub:pickFolder", async () => {

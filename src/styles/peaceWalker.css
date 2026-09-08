@@ -34,6 +34,9 @@
   top: 8.7vh;
   padding-bottom: 2.3vh;
 }
+.persistent-backdrop[data-game="mgspw"]:not(.settings-screen) .head {
+  top: var(--header-top);
+}
 
 .screen[data-game="mgspw"] .head .subtitle {
   margin-top: 2.5vh;

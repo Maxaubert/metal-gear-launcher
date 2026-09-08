@@ -4,7 +4,7 @@
 .settings-screen .chapters { height: 37vh; bottom: auto; }
 .settings-heading { position: absolute; top: var(--settings-top); left: var(--divider-x); right: 0; height: 4.1vh; border-block: .18vh solid var(--ink); padding: .15vh 1vw; font-size: 2.5vh; font-weight: 700; }
 .settings-heading > .settings-heading-marker { position: absolute; left: -.6vw; top: -.18vh; height: 4.1vh; width: .3vw; background: var(--ink); }
-.settings-list { position: absolute; left: var(--settings-x); right: var(--settings-right); top: calc(var(--settings-top) + 5.1vh); max-height: calc(85vh - var(--settings-top) - 5.1vh); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; padding: .15vh .25vw; }
+.settings-list { position: absolute; left: var(--settings-x); right: var(--settings-right); top: calc(var(--settings-top) + 5.1vh); max-height: calc(86.5vh - var(--settings-top) - 5.1vh); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; padding: .15vh .25vw; }
 .settings-screen[data-detail="true"] .settings-list { max-height: calc(78vh - var(--settings-top) - 5.1vh); }
 .settings-row { position: relative; border: .16vh solid var(--ink); height: 5.5vh; margin-bottom: .9vh; display: flex; align-items: stretch; font-size: 2.85vh; background: transparent; }
 .settings-row.focused { box-shadow: none; border-color: var(--accent); background: var(--accent); }

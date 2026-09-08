@@ -36,4 +36,22 @@ describe("config", () => {
   it("rejects a volume outside 0..1", async () => {
     await expect(writeConfig({ volume: 1.5 }, file)).rejects.toThrow();
   });
+
+  it("preserves concurrent music, volume and navigation patches, including other games' selections", async () => {
+    await Promise.all([
+      writeConfig({ menuMusic: { mgs2: "mgs2-original" } }, file),
+      writeConfig({ lastGame: "mg12" }, file),
+      writeConfig({ menuMusic: { mgs3: "mgs3-original" } }, file),
+      writeConfig({ volume: 0.4 }, file),
+    ]);
+    expect(await readConfig(file)).toEqual({ volume: 0.4, lastGame: "mg12",
+      menuMusic: { mgs2: "mgs2-original", mgs3: "mgs3-original" } });
+  });
+
+  it("rejects cross-game or arbitrary music IDs without losing the existing config", async () => {
+    await writeConfig({ volume: 0.2 }, file);
+    await expect(writeConfig({ menuMusic: { mgs2: "mgs3-original" } }, file)).rejects.toThrow();
+    await expect(writeConfig({ menuMusic: { mgs2: "https://example.com/music.mp3" } }, file)).rejects.toThrow();
+    expect(await readConfig(file)).toEqual({ volume: 0.2 });
+  });
 });

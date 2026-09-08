@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { readMgs1Settings, prepareMgs1Edits } from "../electron/main/settings/mgs1";
+import { readNativeSettings } from "../electron/main/settings/native";
 import { decodeMgs1Save, MGS1_BLOCK_SIZE, MGS1_PAYLOAD_SIZE } from "../electron/main/settings/mgs1Codec";
 
 const roots: string[] = [];
@@ -43,8 +44,8 @@ function saveFixture() {
 async function fixture(account = "42") {
   const root = await mkdtemp(join(tmpdir(), "hub-mgs1-"));
   roots.push(root);
-  const install = join(root, "game");
-  const steam = join(root, "steam");
+  const install = join(root, "Bibliotek Åse 東京", "Metal Gear Solid");
+  const steam = join(root, "Steam prøver 日本語");
   const remote = join(steam, "userdata", account, "2131630", "remote");
   await Promise.all([mkdir(join(install, "winbackup"), { recursive: true }), mkdir(remote, { recursive: true })]);
   await writeFile(join(install, "winbackup", "savecfg.txt"), "BOOT_FULLSCREEN = 0\r\nLAST_CLIENT_SIZE_X=3840\r\n");
@@ -62,6 +63,13 @@ afterEach(async () => {
 });
 
 describe("MGS1 native settings", () => {
+  it("uses the configured Steam userdata root independently of the game library location", async () => {
+    const f = await fixture();
+    const settings = await readNativeSettings("mgs1", f.install, undefined, undefined, f.steam);
+    expect(settings.accountId).toBe(ACCOUNT);
+    expect(settings.sections.find(section => section.id === "native-game")?.status).toBe("ready");
+    expect(settings.sources.some(source => source.path === join(f.remote, "data_008_0000.bin"))).toBe(true);
+  });
   it("prepares verified common-field edits, updates the paired digest and preserves every unrelated byte", async () => {
     const f = await fixture();
     const settings = await readMgs1Settings(f.install, undefined, f.steam);

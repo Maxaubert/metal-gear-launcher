@@ -13,6 +13,7 @@ import SettingsScreen from "../settings/SettingsScreen";
 import PersistentBackdrop from "../screens/PersistentBackdrop";
 import { useGameSettingsCache } from "../settings/useGameSettingsCache";
 import { preloadPresentation } from "./preloadPresentation";
+import { resolveMenuMusic, type MenuMusicSelections } from "@shared/menuMusic";
 
 const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
 const LAUNCH_MESSAGE_MS = 3000;
@@ -53,6 +54,8 @@ export default function HubProvider() {
   const [extractingAll, setExtractingAll] = useState(false);
   const [progress, setProgress] = useState<Record<string, ExtractProgress>>({});
   const [volume, setVolume] = useState(0.6);
+  const [musicSelections, setMusicSelections] = useState<MenuMusicSelections>({});
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const hasActedRef = useRef(false);
 
@@ -78,8 +81,12 @@ export default function HubProvider() {
       }
     }).catch(error => { if (!cancelled) setStartupError(String(error)); });
     void window.hub.getConfig().then((r) => {
-      if (!cancelled && r.ok) setVolume(r.value.volume);
-    });
+      if (cancelled) return;
+      if (!r.ok) { setStartupError(r.error); return; }
+      setVolume(r.value.volume);
+      setMusicSelections(r.value.menuMusic ?? {});
+      setConfigLoaded(true);
+    }).catch(error => { if (!cancelled) setStartupError(String(error)); });
     void window.hub.getUpdate().then((r) => {
       if (!cancelled && r.ok && r.value) setUpdateInfo(r.value);
     });
@@ -122,7 +129,7 @@ export default function HubProvider() {
 
   const games = hubState?.games ?? [];
   const currentGame: GameState | undefined = games[nav.game];
-  const needsFirstRun = games.some((g) => g.installed && (!g.assets || g.stale));
+  const needsFirstRun = Boolean(hubState && !hubState.steamPath) || games.some((g) => g.installed && (!g.assets || g.stale));
   const ready = Boolean(hubState && preparedState === hubState);
   const startupRowCount = games.some(game => game.installed) ? 2 : 1;
 
@@ -131,7 +138,7 @@ export default function HubProvider() {
   }, [startupError, startupItem, startupRowCount]);
 
   useEffect(() => {
-    if (!hubState || needsFirstRun) return;
+    if (!hubState || needsFirstRun || !configLoaded) return;
     let cancelled = false;
     void Promise.all([
       settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
@@ -142,7 +149,7 @@ export default function HubProvider() {
       void window.hub.ready();
     }).catch(error => { if (!cancelled) setStartupError(error instanceof Error ? error.message : String(error)); });
     return () => { cancelled = true; };
-  }, [hubState, needsFirstRun, settingsCache]);
+  }, [hubState, needsFirstRun, settingsCache, configLoaded]);
 
   // Remembers the current game so the next launch with no `--game` argument opens on it.
   useEffect(() => {
@@ -151,7 +158,8 @@ export default function HubProvider() {
     void window.hub.setConfig({ lastGame: id });
   }, [currentGame?.pack.id]);
 
-  const music = useMenuMusic(currentGame?.assetUrls.bgm, volume);
+  const musicUrl = currentGame ? resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id]) : undefined;
+  const music = useMenuMusic(musicUrl, volume);
 
   // Theme: the current game's colours become CSS custom properties on <html>.
   useEffect(() => {
@@ -192,9 +200,13 @@ export default function HubProvider() {
 
   async function refreshState(): Promise<void> {
     try {
-      const r = await window.hub.getState();
+      const [r, config] = await Promise.all([window.hub.getState(), window.hub.getConfig()]);
+      if (!config.ok) { setStartupError(config.error); return; }
       if (r.ok) {
         setStartupError("");
+        setVolume(config.value.volume);
+        setMusicSelections(config.value.menuMusic ?? {});
+        setConfigLoaded(true);
         for (const game of r.value.games) settingsCache.invalidate(game.pack.id);
         setHubState(presentationState(r.value));
       } else setStartupError(r.error);
@@ -366,6 +378,7 @@ export default function HubProvider() {
         <PersistentBackdrop game={displayedGame} view={settingsOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail} />
         {settingsOpen ? (
           <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
+            musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={setMusicSelections}
             onClose={() => {
               setSettingsOpen(false);
               setSettingsDetail(false);

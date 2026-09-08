@@ -58,7 +58,12 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number): { unlo
 
     const swapAndFadeIn = () => {
       urlRef.current = bgmUrl;
-      if (!bgmUrl) return;
+      if (!bgmUrl) {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+        return;
+      }
       audio.src = bgmUrl;
       if (unlockedRef.current) {
         audio.play().catch(() => {

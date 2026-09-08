@@ -118,9 +118,9 @@ async function loadSource(result: NativeSettingsResult, gameId: UnitySource["gam
   }
 }
 
-export async function readNativeSettings(gameId: NativeGameId, installDir: string, accountId?: string, display?: NativeDisplayContext): Promise<NativeSettingsResult> {
+export async function readNativeSettings(gameId: NativeGameId, installDir: string, accountId?: string, display?: NativeDisplayContext, steamRoot?: string): Promise<NativeSettingsResult> {
   const result: NativeSettingsResult = { sections: [], accounts: [], sources: [] };
-  if (gameId === "mgs1") return readMgs1Settings(installDir, accountId);
+  if (gameId === "mgs1") return readMgs1Settings(installDir, accountId, steamRoot);
   const saveDir = join(installDir, SAVE_FOLDERS[gameId]);
   try {
     await withinInstall(saveDir, installDir);

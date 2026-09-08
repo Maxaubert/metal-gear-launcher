@@ -14,7 +14,7 @@
 .mgs1-native-main-header .mgs1-native-sprite { display: block; }
 .screen[data-game="mgs1"] .ghost-timeline {
   left: 61.666667vw;
-  top: -13.888889vh;
+  top: -19.537037vh;
   width: 39.583333vw;
   height: 90.833333vh;
   object-fit: fill;
@@ -28,24 +28,26 @@
   object-fit: fill;
 }
 .persistent-backdrop[data-game="mgs1"]:not(.settings-screen) .head:has(.mgs1-native-main-header) {
-  top: 17.12963vh;
-  left: 63.541667vw;
+  top: var(--header-top);
+  left: var(--col-x);
   right: .6vw;
   padding-bottom: .7vh;
   border: 0;
 }
-.persistent-backdrop[data-game="mgs1"]:not(.settings-screen) .head:has(.mgs1-native-main-header) .tick {
-  display: none;
+.persistent-backdrop[data-game="mgs1"]:not(.settings-screen) .ghost-timeline {
+  /* The timeline's baked tick occupies x0..30, y335..431 on its 760x981 canvas.
+     The shared year tick replaces it while the native barcode stays aligned below. */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 43.93476%, 4% 43.93476%, 4% 34.148827%, 0 34.148827%);
 }
 .screen[data-game="mgs1"] .description:has(.mgs1-native-sprite) {
   overflow: visible;
   -webkit-line-clamp: unset;
-  left: 63.385417vw;
-  top: 31.018519vh;
+  left: var(--col-x);
+  top: var(--desc-top);
   color: #585858;
   line-height: 0;
 }
-.screen[data-game="mgs1"] .menu { top: 50.3vh; --accent: #d60001; }
+.screen[data-game="mgs1"] .menu { --accent: #d60001; }
 .screen[data-game="mg12"] .menu { --accent: #013686; }
 .screen[data-game="mgs3"] .menu { --accent: #79a036; }
 .screen[data-game="mgs4"] .menu { --accent: #e20000; }
@@ -109,14 +111,14 @@
   align-self: flex-start;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick {
+.screen:is([data-game="mgs1"], [data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick {
   left: -1.9vw;
   top: 0.5vh;
   height: 8.5vh;
   width: 0.3vw;
 }
 
-.screen:is([data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick::after {
+.screen:is([data-game="mgs1"], [data-game="mg12"], [data-game="mgs2"], [data-game="mgs3"], [data-game="mgs4"], [data-game="mgspw"]) .head .tick::after {
   top: 4vh;
   width: 0.8vw;
 }
