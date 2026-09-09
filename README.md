@@ -75,7 +75,9 @@ Choose **Game Selection > Bonus Content** for one combined library of Vol.1 and 
 Steam library locations are detected automatically. Install the relevant Bonus Content app and
 its optional movie downloads through Steam first. Missing volumes or individual media files do
 not prevent the rest of the library from working. Retry refreshes detection after an installation.
-Small menu and sleeve images are extracted into the launcher's local cache; movies and tracks
+The first startup prepares installed content behind a progress screen before opening menus.
+Completed files are reused after interruption; failures offer Retry. New or changed installations
+are prepared on the next startup. Small menu and sleeve images use the local cache; movies and tracks
 play directly from the Steam library without being copied. No bonus media ships with the launcher.
 Bonus Content has its own artwork and transition in Game Selection. Its menus play a sequential
 playlist of classic themes and vocal finales found in your local game music folders, including
@@ -90,8 +92,9 @@ hidden from titles. The last song returns to the first; individual songs do not 
 
 Master Books and Screenplay Books appear under **Bonus Content → Books** for installed games.
 Choose English or Japanese, browse the contents, zoom and pan, and resume your last page.
-Startup detects books without extracting them; metadata and page images are prepared only when
-needed and cached locally. No book content is bundled. See [book support](docs/books.md).
+Pages fill the window, with controls overlaid and hidden when idle. Startup prepares all available
+book pages in the local cache so opening books later does not require extraction. No book content
+is bundled. See [book support](docs/books.md).
 
 ## Menu music
 

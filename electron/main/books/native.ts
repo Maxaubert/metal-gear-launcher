@@ -8,6 +8,8 @@ import { cachedExtraction, fileIdentity, filesIn } from "./cache";
 import { isFile, metadataSource, type BookInstall } from "./discovery";
 import type { BookRequest } from "@shared/books";
 import { withBookDecoderSlot } from "./decoders";
+import { rememberBookFile } from "./memory";
+import { decoderIdentity } from "../extract/identity";
 
 export type NativeRow = Record<string, unknown> & { pageNo: number };
 const rowsSchema = z.object({ data: z.array(z.object({ pageNo: z.number().int().nonnegative() }).passthrough()).min(1).max(20000) });
@@ -18,6 +20,8 @@ async function run(executable: string, args: string[]): Promise<void> {
   if (result.code !== 0) throw new Error(`Book extraction failed: ${result.stderr || result.stdout}`);
 }
 const decodeJson = async (file: string): Promise<unknown> => JSON.parse((await readFile(file, "utf8")).replace(/^\uFEFF/, ""));
+const decodeRows = (file: string): Promise<NativeRow[]> => rememberBookFile(file, "rows", async () => rowsSchema.parse(await decodeJson(file)).data);
+const decodeMapping = (file: string): Promise<Record<string, string>> => rememberBookFile(file, "mapping", async () => z.object({ files: z.record(z.string()) }).parse(await decodeJson(file)).files);
 const safeAsset = (name: string): string => {
   if (name.length > 200 || !/^[\p{L}\p{N}_ -]+$/u.test(name)) throw new Error("Invalid native book asset name");
   return name;
@@ -29,10 +33,10 @@ export class NativeBooks {
 
   private async identity(source: string, type: string): Promise<string> {
     const tool = this.install.gameId === "mgs1" ? toolPaths().psbDecompile : toolPaths().assetStudio;
-    return JSON.stringify([3, this.install.build, type, await fileIdentity(source), await fileIdentity(tool)]);
+    return JSON.stringify([3, this.install.build, type, await fileIdentity(source), await decoderIdentity(tool)]);
   }
 
-  private async m2Table(): Promise<Map<string, { offset: number; size: number }>> {
+  private async m2Table(): Promise<Map<string, { source: string; offset: number; size: number }>> {
     const file = join(this.install.path, "windata/alldata.psb.m");
     const directory = await cachedExtraction(this.root, await this.identity(file, "m2-table"), async temporary => {
       const local = join(temporary, "alldata.psb.m");
@@ -44,7 +48,9 @@ export class NativeBooks {
       for (const item of await filesIn(temporary)) await rm(item, { force: true });
       await writeFile(join(temporary, "table.json"), JSON.stringify(value));
     });
-    return parseM2FileTable(await decodeJson(join(directory, "table.json")));
+    const path = join(directory, "table.json");
+    return rememberBookFile(path, "m2-table-lookup", async () => new Map([...parseM2FileTable(await decodeJson(path))]
+      .map(([source, entry]) => [source.toLowerCase(), { source, ...entry }])));
   }
 
   private async decompile(local: string, temporary: string): Promise<void> {
@@ -55,8 +61,8 @@ export class NativeBooks {
   private async m2(file: string, images: boolean): Promise<string> {
     const archive = join(this.install.path, "windata/alldata.bin");
     const table = await this.m2Table();
-    const source = [...table.keys()].find(key => key.toLowerCase() === file.toLowerCase());
-    const entry = source && table.get(source);
+    const entry = table.get(file.toLowerCase());
+    const source = entry?.source;
     if (!source || !entry || entry.size > 128 * 1024 * 1024) throw new Error(`Book asset unavailable: ${basename(file)}`);
     const identity = `${await this.identity(archive, images ? "m2-image" : "m2-json")}:${await fileIdentity(join(this.install.path, "windata/alldata.psb.m"))}:${source}`;
     return cachedExtraction(this.root, identity, async temporary => {
@@ -103,7 +109,7 @@ export class NativeBooks {
     if (this.install.gameId === "mgs1") {
       const prefix = request.kind === "master" ? "bonusbook" : "output";
       const file = `087/config/${prefix}_${type === "textdata" ? "TextData" : type}_${request.language.toUpperCase()}.psb.m`;
-      if (optional && ![...(await this.m2Table()).keys()].some(key => key.toLowerCase() === file.toLowerCase())) return [];
+      if (optional && !(await this.m2Table()).has(file.toLowerCase())) return [];
       directory = await this.m2(file, false);
     } else {
       const source = await metadataSource(this.install, request.kind, request.language, type);
@@ -111,7 +117,7 @@ export class NativeBooks {
       if (!source) throw new Error("This book language is not installed");
       directory = await this.unity(source, false);
     }
-    return rowsSchema.parse(await decodeJson(join(directory, "data.json"))).data;
+    return decodeRows(join(directory, "data.json"));
   }
 
   async book(request: BookRequest): Promise<NativeBook> {
@@ -123,7 +129,7 @@ export class NativeBooks {
     let mapping: Record<string, string> = {};
     if (this.install.gameId === "mgs1" && request.kind === "screenplay") {
       const directory = await this.m2("087/config/title_scenariobook_files.psb.m", false);
-      mapping = z.object({ files: z.record(z.string()) }).parse(await decodeJson(join(directory, "data.json"))).files;
+      mapping = await decodeMapping(join(directory, "data.json"));
     }
     return { pages, index, text, backgrounds, mapping };
   }

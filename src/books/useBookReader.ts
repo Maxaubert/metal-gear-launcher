@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import type { BookDocument, BookPage, BookRequest } from "@shared/books";
+import { PageWindow, type PreparedPage } from "./pageWindow";
 
-function decodeImage(url: string): Promise<void> {
+function decodeImage(url: string, signal: AbortSignal): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
+    signal.throwIfAborted();
     const image = new Image();
-    const timer = window.setTimeout(() => reject(new Error("A book image took too long to load.")), 30000);
-    image.onload = () => { window.clearTimeout(timer); resolve(); };
-    image.onerror = () => { window.clearTimeout(timer); reject(new Error("A book image could not be loaded.")); };
+    const clean = () => { window.clearTimeout(timer); signal.removeEventListener("abort", abort); };
+    const abort = () => { clean(); image.src = ""; reject(new Error("Book closed")); };
+    const timer = window.setTimeout(() => { clean(); image.src = ""; reject(new Error("A book image took too long to load.")); }, 30000);
+    signal.addEventListener("abort", abort, { once: true });
     image.src = url;
+    void image.decode().then(() => { clean(); resolve(image); }, () => {
+      clean(); reject(new Error("A book image could not be loaded."));
+    });
   });
 }
 
@@ -20,28 +26,36 @@ export function useBookReader(request: BookRequest) {
   const [attempt, setAttempt] = useState(0);
   const [pageAttempt, setPageAttempt] = useState(0);
   const saves = useRef(Promise.resolve());
+  const pages = useRef<PageWindow | null>(null);
   const [loading, setLoading] = useState(true);
   const { gameId, kind, language } = request;
   useEffect(() => {
     let active = true;
+    const pageCache = new PageWindow(async (index, signal) => {
+      const result = await window.hub.getBookPage({ gameId, kind, language, page: index });
+      signal.throwIfAborted();
+      if (!result.ok) throw new Error(result.error);
+      const urls = [...new Set([result.value.imageUrl, ...result.value.artworkUrls].filter((url): url is string => Boolean(url)))];
+      const images = await Promise.all(urls.map(url => decodeImage(url, signal)));
+      return { page: result.value, images, bytes: images.reduce((bytes, image) => bytes + image.naturalWidth * image.naturalHeight * 4, 0) } satisfies PreparedPage;
+    });
+    pages.current = pageCache;
     void window.hub.openBook({ gameId, kind, language }).then(result => {
       if (!active) return;
       if (!result.ok) throw new Error(result.error);
       setDocument(result.value);
       setPageIndex(Math.min(Math.max(0, result.value.lastPage), Math.max(0, result.value.pageCount - 1)));
     }).catch(reason => { if (active) { setError(reason instanceof Error ? reason.message : "This book could not be opened."); setLoading(false); } });
-    return () => { active = false; };
+    return () => { active = false; pageCache.dispose(); };
   }, [gameId, kind, language, attempt]);
 
   useEffect(() => {
-    if (!document) return;
+    if (!document || document.gameId !== gameId || document.kind !== kind || document.language !== language || !pages.current) return;
     let active = true;
-    void window.hub.getBookPage({ gameId, kind, language, page: pageIndex }).then(async result => {
+    pages.current.focus(pageIndex, document.pageCount);
+    void pages.current.get(pageIndex).then(result => {
       if (!active) return;
-      if (!result.ok) throw new Error(result.error);
-      await Promise.all([result.value.imageUrl, ...result.value.artworkUrls].filter((url): url is string => Boolean(url)).map(decodeImage));
-      if (!active) return;
-      setPage(result.value); setLoading(false);
+      setPage(result.page); setLoading(false);
       saves.current = saves.current.then(async () => {
         if (!active) return;
         const saved = await window.hub.saveBookProgress({ gameId, kind, language, page: pageIndex });
@@ -52,14 +66,18 @@ export function useBookReader(request: BookRequest) {
   }, [document, gameId, kind, language, pageIndex, pageAttempt]);
 
   function goTo(index: number) {
-    if (!document || !Number.isFinite(index)) return;
+    if (!document || !Number.isFinite(index) || !pages.current) return;
     const next = Math.max(0, Math.min(document.pageCount - 1, Math.floor(index)));
     if (next === pageIndex) return;
-    setLoading(true); setPage(null); setError(""); setSaveError(""); setPageIndex(next);
+    pages.current.focus(next, document.pageCount);
+    const prepared = pages.current.peek(next);
+    if (prepared) setPage(prepared);
+    setLoading(!prepared); setError(""); setSaveError(""); setPageIndex(next);
   }
   function retry() {
-    setLoading(true); setPage(null); setError(""); setSaveError("");
-    if (document) setPageAttempt(value => value + 1); else setAttempt(value => value + 1);
+    setLoading(true); setError(""); setSaveError("");
+    if (document) { pages.current?.retry(pageIndex, document.pageCount); setPageAttempt(value => value + 1); }
+    else setAttempt(value => value + 1);
   }
   return { document, page, pageIndex, loading, error, saveError, goTo, retry };
 }

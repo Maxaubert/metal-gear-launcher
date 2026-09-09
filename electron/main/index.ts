@@ -25,6 +25,7 @@ import { checkForUpdate } from "./update";
 import { settingsGameId, settingsReadRequest, saveSettingsRequest } from "@shared/settings";
 import { getGameSettings, saveGameSettings } from "./settings/service";
 import { readMenuSounds } from "./music/sounds";
+import { readNativeMenuSounds } from "./music/nativeSounds";
 import { achievementsRequest } from "@shared/achievements";
 import { getAchievements } from "./achievements/service";
 import { getBonusLibrary } from "./bonus/library";
@@ -34,6 +35,7 @@ import { getBonusPresentation } from "./bonus/presentation";
 import { getBonusPlaylist } from "./bonus/playlist";
 import { bookPageRequest, bookRequest } from "@shared/books";
 import { getBooksCatalog, openBook, getBookPage, saveBookProgress } from "./books";
+import { prepareLibrary } from "./preparation";
 
 const execAsync = promisify(exec);
 
@@ -286,7 +288,8 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("hub:sounds:get", async (_event, arg) => {
       try {
         z.undefined().parse(arg);
-        return ok(await readMenuSounds(dataDir()));
+        const config = await readConfig();
+        return ok(await readMenuSounds(dataDir(), async () => readNativeMenuSounds(await findSteamRoot(config.steamPath), dataDir())));
       } catch (e) { return err(asError(e)); }
     });
 
@@ -309,6 +312,14 @@ if (!gotSingleInstanceLock) {
         const game = state.games.find((game) => game.pack.id === parsed.data.gameId);
         if (!game?.installed || !game.installDir) return err("This game is not installed.");
         return ok(await saveGameSettings(parsed.data, game.installDir, dataDir()));
+      } catch (error) { return err(asError(error)); }
+    });
+
+    ipcMain.handle("hub:preparation:run", async (_e, arg) => {
+      if (!z.undefined().safeParse(arg).success) return err("Invalid preparation request.");
+      try {
+        const steamRoot = await findSteamRoot((await readConfig()).steamPath);
+        return ok(await prepareLibrary(steamRoot, dataDir(), progress => mainWindow?.webContents.send("hub:preparation:progress", progress)));
       } catch (error) { return err(asError(error)); }
     });
 

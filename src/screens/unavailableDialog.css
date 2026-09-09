@@ -1,0 +1,7 @@
+.unavailable-dialog{width:min(680px,calc(100vw - 48px));max-height:calc(100vh - 48px);box-sizing:border-box;margin:auto;padding:clamp(24px,2vw,48px);border:1px solid #777;background:#f7f7f4;color:#151515;font-family:"MenuEnglish","Rodin","Segoe UI",sans-serif}
+.unavailable-dialog::backdrop{background:rgb(0 0 0/.65)}
+.unavailable-dialog h2{font-size:clamp(24px,1.8vw,36px);line-height:1.2;margin:0 0 20px;font-weight:700}
+.unavailable-dialog p{font-size:clamp(20px,1.3vw,28px);line-height:1.5;margin:0 0 28px}
+.unavailable-dialog button{display:block;margin-left:auto;min-width:144px;min-height:48px;border:1px solid #111;background:#222;color:#fff;padding:10px 24px;font:inherit;font-size:clamp(20px,1.3vw,28px);cursor:pointer}
+.unavailable-dialog button:hover{background:#444}
+.unavailable-dialog button:focus-visible{outline:3px solid #111;outline-offset:4px}
