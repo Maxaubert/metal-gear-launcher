@@ -98,7 +98,7 @@ test("combined bonus content handles missing installs, both volumes, playback, c
     }, vol2Only);
     await page.getByTestId("tile-bonus").click();
     await expect(page.getByTestId("bonus-content")).toHaveAttribute("data-art-volume", "vol2");
-    await expect(page.getByTestId("bonus-menu-videos")).toHaveCount(0);
+    await expect(page.getByTestId("bonus-menu-videos")).toBeVisible();
     await expect(page.getByRole("button", { name: "Refresh Library (R)" })).toBeVisible();
     await app.evaluate(({ ipcMain }, result) => {
       ipcMain.removeHandler("hub:bonus:get");
