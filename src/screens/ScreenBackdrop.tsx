@@ -81,8 +81,8 @@ function HeaderMark({ serialLines, indexLabel, src, artwork }: HeaderMarkProps) 
 
 /**
  * The persistent left-hand art and header block shared by the main and selection menus:
- * ground, background effect, logo strip, main visual (or its fallback), divider, the two ghost
- * layers, and the header (tick/year/subtitle/mark). Extracted so the two screens render the same
+ * ground, background effect, logo strip, main visual (or its fallback), divider, game number,
+ * and the header (tick/year/subtitle/mark). Extracted so the two screens render the same
  * markup for the same pack/assetUrls and cannot drift apart. `PersistentBackdrop` keeps it
  * mounted while the foreground changes between main, selection and Options menus.
  *
@@ -170,7 +170,6 @@ export default function ScreenBackdrop({ pack, assetUrls }: ScreenBackdropProps)
       <div className="divider" />
 
       <div key={`${pack.id}-ghosts`} className="fade-in">
-        {assetUrls.year && <img className="ghost-timeline" src={pack.id === "mgs1" ? assetUrls.settingsTimeline ?? assetUrls.year : assetUrls.year} alt="" />}
         {assetUrls.numbering && <img className="ghost-number" src={assetUrls.numbering} alt="" />}
       </div>
 

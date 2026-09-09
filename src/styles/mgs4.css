@@ -19,13 +19,6 @@
   opacity: 0.3;
 }
 
-.screen[data-game="mgs4"] .ghost-timeline {
-  left: 62.3vw;
-  top: -10.5vh;
-  height: 47.6vh;
-  opacity: 0.25;
-}
-
 .screen[data-game="mgs4"] .description {
   right: 0.6vw;
   font-size: 2.2vh;

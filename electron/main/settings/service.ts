@@ -12,9 +12,9 @@ import { findSteamRoot } from "../steam/library";
 
 const saving = new Set<string>();
 
-async function readSources(gameId: GameId, installDir: string, accountId?: string) {
+async function readSources(gameId: GameId, installDir: string, accountId?: string, resolvedSteamRoot?: string) {
   const display = await readNativeDisplayContext();
-  const steamRoot = gameId === "mgs1" ? await findSteamRoot((await readConfig()).steamPath) : null;
+  const steamRoot = gameId === "mgs1" ? resolvedSteamRoot ?? await findSteamRoot((await readConfig()).steamPath) : null;
   const [native, patches] = await Promise.all([
     readNativeSettings(gameId, installDir, accountId, display, steamRoot ?? undefined),
     readPatchSettings(gameId, installDir),
@@ -29,8 +29,8 @@ async function readSources(gameId: GameId, installDir: string, accountId?: strin
   return { result, native, patches };
 }
 
-export async function getGameSettings(gameId: GameId, installDir: string, accountId?: string): Promise<GameSettings> {
-  return (await readSources(gameId, installDir, accountId)).result;
+export async function getGameSettings(gameId: GameId, installDir: string, accountId?: string, steamRoot?: string): Promise<GameSettings> {
+  return (await readSources(gameId, installDir, accountId, steamRoot)).result;
 }
 
 export async function saveGameSettings(request: SaveSettingsRequest, installDir: string, hubDataDir: string): Promise<GameSettings> {

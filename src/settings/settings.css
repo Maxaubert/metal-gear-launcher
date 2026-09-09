@@ -104,7 +104,7 @@
 .settings-row-label small { font-size: 1.9vh; }
 .settings-screen:has(.settings-native-mgs1-header) .head { display: none; }
 .settings-native-mgs1-header img { position: absolute; object-fit: fill; }
-.settings-screen[data-game="mgs1"] .ghost-timeline { top: -7.685185vh; }
+.settings-header-rule { position: absolute; left: 61.666667vw; top: 23.333333vh; width: 39.583333vw; height: 11.759259vh; overflow: hidden; }
 .settings-year-subtitle { left: 63.542vw; top: 23.333vh; width: 11.042vw; height: 10.741vh; }
 .settings-screen[data-game="mgspw"] { --accent: #ffd400 !important; }
 .settings-screen[data-detail="true"] .settings-row { border-width: 1px; border-color: #080808; }

@@ -32,7 +32,7 @@ describe("game settings session cache", () => {
   it("caches failed reads until an explicit retry and handles rejected IPC calls", async () => {
     const reader = vi.fn().mockRejectedValueOnce(new Error("Read failed")).mockResolvedValue(ok(value()));
     const cache = new GameSettingsCache(reader);
-    await cache.preload(["mgs2"]);
+    await expect(cache.preload(["mgs2"])).rejects.toThrow("MGS2: Read failed");
     expect(await cache.read("mgs2")).toEqual({ ok: false, error: "Read failed" });
     expect(reader).toHaveBeenCalledTimes(1);
     expect((await cache.read("mgs2", undefined, { refresh: true })).ok).toBe(true);
@@ -43,8 +43,8 @@ describe("game settings session cache", () => {
     vi.useFakeTimers();
     const stalled = deferred();
     const reader = vi.fn().mockReturnValueOnce(stalled.promise).mockResolvedValue(ok(value("mgs2", "retry")));
-    const cache = new GameSettingsCache(reader, 100);
-    const preload = cache.preload(["mgs2"]);
+    const cache = new GameSettingsCache(reader, 100, 100);
+    const preload = expect(cache.preload(["mgs2"])).rejects.toThrow("timed out");
     await vi.advanceTimersByTimeAsync(101);
     await preload;
     expect(cache.peek("mgs2")).toEqual({ ok: false, error: expect.stringContaining("timed out") });
@@ -52,6 +52,43 @@ describe("game settings session cache", () => {
     stalled.resolve(ok(value("mgs2", "stale")));
     await Promise.resolve();
     expect(cache.peek("mgs2")).toEqual(ok(value("mgs2", "retry")));
+  });
+
+  it("retries failed startup reads without rereading games already prepared", async () => {
+    const reader = vi.fn(async (id: GameId) => id === "mgs1"
+      ? { ok: false as const, error: "Temporary read failure" } : ok(value(id)));
+    const cache = new GameSettingsCache(reader);
+    await expect(cache.preload(["mgs1", "mgs2"])).rejects.toThrow("MGS1: Temporary read failure");
+    reader.mockImplementation(async id => ok(value(id)));
+    await cache.preload(["mgs1", "mgs2"]);
+    expect(reader.mock.calls.map(([id]) => id)).toEqual(["mgs1", "mgs2", "mgs1"]);
+    expect(cache.peek("mgs1")?.ok).toBe(true);
+  });
+
+  it("waits longer during startup so slow reads are ready before revealing the launcher", async () => {
+    vi.useFakeTimers();
+    const slow = deferred();
+    const cache = new GameSettingsCache(() => slow.promise);
+    let ready = false;
+    const preload = cache.preload(["mgs1"]).then(() => { ready = true; });
+    await vi.advanceTimersByTimeAsync(11000);
+    expect(ready).toBe(false);
+    expect(cache.peek("mgs1")).toBeUndefined();
+    slow.resolve(ok(value("mgs1")));
+    await preload;
+    expect(cache.peek("mgs1")?.ok).toBe(true);
+  });
+
+  it("recovers a late success after the interactive deadline without another read", async () => {
+    vi.useFakeTimers();
+    const slow = deferred();
+    const cache = new GameSettingsCache(() => slow.promise, 100);
+    const pending = cache.read("mgs1");
+    await vi.advanceTimersByTimeAsync(101);
+    expect((await pending).ok).toBe(false);
+    slow.resolve(ok(value("mgs1")));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(cache.peek("mgs1")).toEqual(ok(value("mgs1")));
   });
 
   it("deduplicates refreshes and prevents a pending read from replacing a successful save", async () => {

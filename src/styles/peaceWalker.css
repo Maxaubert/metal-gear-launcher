@@ -15,13 +15,6 @@
   display: none;
 }
 
-.screen[data-game="mgspw"] .ghost-timeline {
-  left: 62.3vw;
-  top: 3vh;
-  height: 97vh;
-  opacity: 0.3;
-}
-
 .screen[data-game="mgspw"] .description {
   right: 1vw;
   color: #fff;
