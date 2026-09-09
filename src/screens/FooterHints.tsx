@@ -1,4 +1,5 @@
 import type { InputKind } from "../input/useNavigation";
+import type { ReactNode } from "react";
 
 type Hint = { glyph: string | readonly string[]; label: string };
 
@@ -35,9 +36,10 @@ export function ControlHint({ lastInputKind, keyboard, gamepad, label }: Control
 }
 
 /** Shared footer keeps game and selection controls on the same baseline. */
-export default function FooterHints({ lastInputKind }: FooterHintsProps) {
+export default function FooterHints({ lastInputKind, children }: FooterHintsProps & { children?: ReactNode }) {
   return (
     <footer className="hints">
+      {children}
       {HINTS_OTHER.map((hint, index) => (
         <ControlHint key={hint.label} lastInputKind={lastInputKind} keyboard={hint.glyph}
           gamepad={HINTS_GAMEPAD[index]!.glyph} label={hint.label} />

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const RELEASES_URL = "https://api.github.com/repos/Maxaubert/mgs-master-hub/releases/latest";
+const RELEASES_URL = "https://api.github.com/repos/Maxaubert/metal-gear-launcher/releases/latest";
 const TIMEOUT_MS = 5000;
 
 const releaseSchema = z.object({ tag_name: z.string(), html_url: z.string() });

@@ -130,7 +130,7 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
     await page.reload();
     const splash = page.getByTestId("startup-screen");
     await expect(splash).toBeVisible();
-    await expect(splash.getByRole("heading", { name: "MGS MASTER HUB", exact: true })).toBeVisible();
+    await expect(splash.getByRole("heading", { name: "METAL GEAR LAUNCHER", exact: true })).toBeVisible();
     await expect(splash.getByRole("status")).toHaveText("Preparing your games");
     const logo = splash.locator(".startup-logo");
     await expect(logo).toBeVisible();
@@ -164,21 +164,22 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
   } finally { await app.close(); await clean(setup.root); }
 });
 
-test("failed game artwork retains neutral hub branding and existing keyboard recovery", async () => {
+test("failed game artwork retains neutral hub branding and retries mandatory preparation", async () => {
   const setup = await fixture();
   await writeFile(join(setup.data, "assets", "mgs1", "logo.png"), "broken logo fixture");
   const app = await electron.launch(setup.options);
   try {
     const page = await app.firstWindow();
     const splash = page.getByTestId("startup-screen");
-    await expect(splash.getByRole("heading", { name: "MGS MASTER HUB", exact: true })).toBeVisible();
+    await expect(splash.getByRole("heading", { name: "METAL GEAR LAUNCHER", exact: true })).toBeVisible();
     await expect(splash.locator(".startup-logo")).toBeVisible();
-    await expect(splash.getByRole("alert")).toBeVisible();
-    await expect(splash.getByRole("button", { name: "Retry", exact: true })).toBeFocused();
+    await expect(splash.getByRole("alert")).toBeVisible({ timeout: 20000 });
+    await expect(splash.getByRole("button", { name: "Retry preparation", exact: true })).toBeFocused();
     await page.keyboard.press("ArrowDown");
-    await expect(splash.getByRole("button", { name: "Re-extract Artwork", exact: true })).toBeFocused();
+    await expect(splash.getByRole("button", { name: "Retry preparation", exact: true })).toBeFocused();
+    await cp(join(__dirname, "fixtures", "assets", "mgs1", "logo.png"), join(setup.data, "assets", "mgs1", "logo.png"));
     await page.keyboard.press("Enter");
-    await expect(splash).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByRole("heading", { name: "Preparing your games", exact: true })).toBeVisible();
+    await expect(splash).toHaveCount(0, { timeout: 20000 });
+    await expect(page.getByTestId("game-screen")).toBeVisible();
   } finally { await app.close(); await clean(setup.root); }
 });

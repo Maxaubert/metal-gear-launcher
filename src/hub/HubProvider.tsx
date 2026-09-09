@@ -4,12 +4,13 @@ import { PACK_ORDER } from "@shared/packs";
 import { navigate, type Action, type NavState } from "../input/navigationReducer";
 import { useNavigation } from "../input/useNavigation";
 import { useMenuMusic } from "../audio/useMenuMusic";
-import { playMenuSound, preloadMenuSounds, setMenuSoundVolume } from "../audio/menuSounds";
+import { menuSoundSourceKey, playMenuSound, preloadMenuSounds, setMenuSoundVolume } from "../audio/menuSounds";
 import { themeVars } from "../theme/theme";
 import GameScreen, { type MenuKey } from "../screens/GameScreen";
 import GameSelection from "../screens/GameSelection";
 import FirstRun, { type ExtractProgress } from "../screens/FirstRun";
 import NotInstalled from "../screens/NotInstalled";
+import UnavailableDialog from "../screens/UnavailableDialog";
 import SettingsScreen from "../settings/SettingsScreen";
 import PersistentBackdrop from "../screens/PersistentBackdrop";
 import { useGameSettingsCache } from "../settings/useGameSettingsCache";
@@ -17,8 +18,14 @@ import { preloadPresentation } from "./preloadPresentation";
 import StartupSplash from "./StartupSplash";
 import { useStartupPresentation } from "./useStartupPresentation";
 import { resolveMenuMusic, type MenuMusicLibrary, type MenuMusicSelections } from "@shared/menuMusic";
+import TrophiesScreen from "../achievements/TrophiesScreen";
+import BonusContentScreen from "../bonus/BonusContentScreen";
+import { useBonusResources } from "../bonus/useBonusResources";
+import { useBonusPlaylist } from "../bonus/useBonusPlaylist";
+import { useBooksCatalog } from "./useBooksCatalog";
+import { useLibraryPreparation } from "./useLibraryPreparation";
 
-const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 4, gameCount: PACK_ORDER.length };
+const INITIAL_NAV: NavState = { screen: "hub", game: 0, item: 0, menuLength: 5, gameCount: PACK_ORDER.length + 1 };
 const LAUNCH_MESSAGE_MS = 3000;
 const MAX_PADS = 4;
 
@@ -40,6 +47,10 @@ function presentationState(state: HubState): HubState {
 
 export default function HubProvider() {
   const [hubState, setHubState] = useState<HubState | null>(null);
+  const libraryPreparation = useLibraryPreparation(hubState?.steamPath);
+  useEffect(() => {
+    if (libraryPreparation.hub) setHubState(presentationState(libraryPreparation.hub));
+  }, [libraryPreparation.hub]);
   const [preparedState, setPreparedState] = useState<HubState | null>(null);
   const [startedState, setStartedState] = useState<HubState | null>(null);
   const [musicAttempt, setMusicAttempt] = useState(0);
@@ -50,6 +61,22 @@ export default function HubProvider() {
   const [nav, rawDispatch] = useReducer(reduceNav, INITIAL_NAV);
   const [quitOpen, setQuitOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [trophiesOpen, setTrophiesOpen] = useState(false);
+  const [bonusOpen, setBonusOpen] = useState(false);
+  const [unavailable, setUnavailable] = useState<{ title: string; message: string } | null>(null);
+  const showUnavailable = (title: string, message: string) => setUnavailable({ title, message });
+  const closeUnavailable = () => { void playMenuSound("back"); setUnavailable(null); };
+  const [bonusMusicSelected, setBonusMusicSelected] = useState(false);
+  const { catalog: booksCatalog, preload: preloadBooks } = useBooksCatalog();
+  function openBonus() { setBonusMusicSelected(true); setBonusOpen(true); }
+  useEffect(() => {
+    if (!bonusOpen && nav.screen !== "selection") setBonusMusicSelected(false);
+  }, [bonusOpen, nav.screen]);
+  const [bonusMediaOpen, setBonusMediaOpen] = useState(false);
+  const { presentation: bonusPresentation, playlist: bonusPlaylist, preload: preloadBonus } = useBonusResources();
+  const bonusActionRef = useRef<((action: Action) => void) | null>(null);
+  const missingActionRef = useRef<((action: Action) => void) | null>(null);
+  const trophiesActionRef = useRef<((action: Action) => void) | null>(null);
   const [settingsDetail, setSettingsDetail] = useState(false);
   const settingsOpenRef = useRef(false);
   useEffect(() => { settingsOpenRef.current = settingsOpen; }, [settingsOpen]);
@@ -67,7 +94,7 @@ export default function HubProvider() {
   const [musicPreview, setMusicPreview] = useState<string>();
   const [mutedStartupGame, setMutedStartupGame] = useState<string>();
   const [configLoaded, setConfigLoaded] = useState(false);
-  const [soundsReady, setSoundsReady] = useState(false);
+  const [soundsReadyKey, setSoundsReadyKey] = useState<string | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   // The "Launching..." overlay (and the dimmed screen behind it) was otherwise only cleared by
@@ -81,6 +108,15 @@ export default function HubProvider() {
   }
   function userDispatch(action: Action | SelectGame): void {
     const next = reduceNav(nav, action);
+    if (nav.screen === "selection" && (action === "confirm" || typeof action === "object") && next.screen === "hub") {
+      const selected = hubState?.games[next.game];
+      if (selected && !selected.installed) {
+        document.querySelector<HTMLElement>(`[data-testid="tile-${selected.pack.id}"]`)?.focus();
+        void playMenuSound("select");
+        showUnavailable(selected.pack.title, "This game is not installed. Install it through Steam to play it.");
+        return;
+      }
+    }
     if (next.screen !== nav.screen || next.game !== nav.game) void playMenuSound(action === "back" || action === "menu" && nav.screen === "selection" ? "back" : "select");
     else if (next.item !== nav.item) void playMenuSound("navigate");
     dispatch(action);
@@ -123,13 +159,13 @@ export default function HubProvider() {
       if (index >= 0) {
         const action: SelectGame = { type: "selectGame", index };
         if (settingsOpenRef.current) pendingNavigation.current = action;
-        else dispatch(action);
+        else { setBonusOpen(false); setTrophiesOpen(false); dispatch(action); }
       }
     });
     const offSelectionOpen = window.hub.onSelectionOpen(() => {
       if (!cancelled) {
         if (settingsOpenRef.current) pendingNavigation.current = "menu";
-        else dispatch("menu");
+        else { setBonusOpen(false); setTrophiesOpen(false); dispatch("menu"); }
       }
     });
     const off = window.hub.onExtractProgress((p: Progress) => {
@@ -158,23 +194,29 @@ export default function HubProvider() {
   const currentGame: GameState | undefined = games[nav.game];
   const needsFirstRun = Boolean(hubState && !hubState.steamPath) || games.some((g) => g.installed && (!g.assets || g.stale));
   const ready = Boolean(hubState && preparedState === hubState && startedState === hubState);
+  const bonusFocused = nav.screen === "selection" && nav.item === PACK_ORDER.length;
+  const bonusActive = bonusOpen || bonusFocused;
+  const bonusAudioActive = bonusOpen || (nav.screen === "selection" && bonusMusicSelected);
   const musicUrl = configLoaded && !needsFirstRun && currentGame && musicLibraries[currentGame.pack.id]
     ? musicPreview ?? (mutedStartupGame === currentGame.pack.id ? undefined : resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id], musicLibraries[currentGame.pack.id])) : undefined;
-  const music = useMenuMusic(musicUrl, volume, musicAttempt, Boolean(musicPreview));
+  const music = useMenuMusic(musicUrl, volume, musicAttempt, Boolean(musicPreview), bonusAudioActive);
+  const soundSourceKey = hubState ? menuSoundSourceKey(hubState) : null;
+  const soundsReady = soundSourceKey !== null && soundsReadyKey === soundSourceKey;
   useEffect(() => { setMenuSoundVolume(volume); }, [volume]);
   useEffect(() => {
-    if (!configLoaded) return;
+    if (!configLoaded || soundSourceKey === null) return;
     let cancelled = false;
-    void preloadMenuSounds().then(() => { if (!cancelled) setSoundsReady(true); });
+    void preloadMenuSounds(soundSourceKey).then(() => { if (!cancelled) setSoundsReadyKey(soundSourceKey); });
     return () => { cancelled = true; };
-  }, [configLoaded]);
-  const startupError = preparationError || (!ready ? music.error : "");
-  const canReveal = Boolean(hubState && !startupError && soundsReady && (needsFirstRun || ready));
+  }, [configLoaded, soundSourceKey]);
+  const startupError = libraryPreparation.error || preparationError || (!ready ? music.error : "");
+  const canReveal = Boolean(hubState && libraryPreparation.ready && !startupError && soundsReady && (needsFirstRun || ready));
   const startup = useStartupPresentation(canReveal);
+  useBonusPlaylist({ playlist: bonusPlaylist, active: bonusAudioActive, suspended: bonusMediaOpen || startup.visible, volume });
   // Keep a completed startup latched while later tracks buffer or fail. This conditional
   // state adjustment finishes before React commits the newly visible menu.
   if (hubState && preparedState === hubState && music.ready && startedState !== hubState) setStartedState(hubState);
-  const startupActions = ["Retry", ...(games.some(game => game.installed) ? ["Re-extract Artwork"] : []), ...(music.error ? ["Continue Without Music"] : [])];
+  const startupActions = libraryPreparation.error ? ["Retry preparation"] : ["Retry", ...(games.some(game => game.installed) ? ["Re-extract Artwork"] : []), ...(music.error ? ["Continue Without Music"] : [])];
   const startupRowCount = startupActions.length;
 
   useEffect(() => {
@@ -182,12 +224,14 @@ export default function HubProvider() {
   }, [startupError, startupItem, startupRowCount]);
 
   useEffect(() => {
-    if (!hubState || needsFirstRun || !configLoaded) return;
+    if (!hubState || needsFirstRun || !configLoaded || !libraryPreparation.ready) return;
     let cancelled = false;
     void Promise.all([
       settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
       preloadPresentation(hubState.games),
-      preloadMenuSounds(),
+      preloadMenuSounds(menuSoundSourceKey(hubState)),
+      preloadBonus(),
+      preloadBooks(),
       Promise.all(hubState.games.map(async game => {
         const result = await window.hub.getMenuMusic(game.pack.id);
         if (!result.ok) throw new Error(result.error);
@@ -200,7 +244,7 @@ export default function HubProvider() {
       setPreparedState(hubState);
     }).catch(error => { if (!cancelled) setStartupError(error instanceof Error ? error.message : String(error)); });
     return () => { cancelled = true; };
-  }, [hubState, needsFirstRun, settingsCache, configLoaded]);
+  }, [hubState, needsFirstRun, settingsCache, configLoaded, preloadBonus, preloadBooks, libraryPreparation.ready]);
 
   useEffect(() => { if (ready && !startup.visible) void window.hub.ready(); }, [ready, startup.visible]);
 
@@ -216,7 +260,7 @@ export default function HubProvider() {
   // Y/retry effect (same button, same polling shape) since both are global "press Y for the
   // thing the footer/overlay is telling you about" affordances rather than menu navigation.
   useEffect(() => {
-    if (!updateInfo || settingsOpen || startup.visible) return;
+    if (!updateInfo || settingsOpen || trophiesOpen || bonusOpen || startup.visible || unavailable) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "KeyY") void window.hub.openUpdate();
     };
@@ -239,7 +283,7 @@ export default function HubProvider() {
       window.removeEventListener("keydown", onKeyDown);
       cancelAnimationFrame(frame);
     };
-  }, [updateInfo, settingsOpen, startup.visible]);
+  }, [updateInfo, settingsOpen, trophiesOpen, bonusOpen, startup.visible, unavailable]);
 
   async function refreshState(): Promise<void> {
     try {
@@ -259,6 +303,7 @@ export default function HubProvider() {
   }
 
   function recoverStartup(index: number): void {
+    if (libraryPreparation.error) { libraryPreparation.retry(); return; }
     setStartupError("");
     setStartupItem(0);
     if (index === 0) void refreshState();
@@ -283,6 +328,9 @@ export default function HubProvider() {
       void playMenuSound("options");
       setSettingsDetail(false);
       setSettingsOpen(true);
+    } else if (key === "trophies") {
+      void playMenuSound("select");
+      setTrophiesOpen(true);
     } else {
       void playMenuSound("select");
       setQuitItem(0);
@@ -338,6 +386,10 @@ export default function HubProvider() {
 
   const onAction = (action: Action) => {
     if (quitting.current) return;
+    if (unavailable) {
+      if (action === "confirm" || action === "back") closeUnavailable();
+      return;
+    }
     if (startup.visible) {
       if (startupError) {
         if (action === "up" || action === "down") setStartupItem(index => (index + (action === "up" ? startupRowCount - 1 : 1)) % startupRowCount);
@@ -345,8 +397,21 @@ export default function HubProvider() {
       }
       return;
     }
+    if (bonusOpen) {
+      bonusActionRef.current?.(action);
+      return;
+    }
+    if (nav.screen === "selection" && nav.item === PACK_ORDER.length && action === "confirm") {
+      void playMenuSound("select");
+      openBonus();
+      return;
+    }
     if (settingsOpen) {
       settingsActionRef.current?.(action);
+      return;
+    }
+    if (trophiesOpen) {
+      trophiesActionRef.current?.(action);
       return;
     }
     if (needsFirstRun) {
@@ -367,6 +432,10 @@ export default function HubProvider() {
     }
 
     if (nav.screen === "hub") {
+      if (currentGame && !currentGame.installed) {
+        missingActionRef.current?.(action);
+        return;
+      }
       if (action === "confirm" && currentGame) {
         void handleMenuChoice(currentGame.pack.menu[nav.item] ?? "start");
         return;
@@ -387,13 +456,14 @@ export default function HubProvider() {
   // place a consumer can read it.
   const { lastInputKind, focusByMouse } = useNavigation(onAction);
   const hoverItem = (index: number) => {
+    if (unavailable) return;
     focusByMouse(index);
     if (index === nav.item) return;
     void playMenuSound("navigate");
     rawDispatch({ type: "focusItem", index });
   };
 
-  const updateBanner = updateInfo && !settingsOpen && (
+  const updateBanner = updateInfo && !settingsOpen && !trophiesOpen && !bonusOpen && (
     <div
       data-testid="update-banner"
       style={{
@@ -430,8 +500,15 @@ export default function HubProvider() {
     content = (
       <>
         <div style={{ position: "absolute", inset: 0 }}>
-          <PersistentBackdrop game={displayedGame} view={settingsOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail} />
-          {settingsOpen ? (
+          <div hidden={!displayedGame.installed && !bonusActive}>
+            <PersistentBackdrop scene={bonusActive ? { kind: "bonus", presentation: bonusPresentation } : { kind: "game", game: displayedGame }} view={settingsOpen || trophiesOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail || trophiesOpen} />
+          </div>
+          {bonusOpen ? <BonusContentScreen actionRef={bonusActionRef} lastInputKind={lastInputKind} volume={volume}
+            onUnavailable={showUnavailable}
+            booksCatalog={booksCatalog} onRefreshBooks={preloadBooks}
+            presentation={bonusPresentation} onPlaybackViewChange={setBonusMediaOpen}
+            onClose={() => setBonusOpen(false)} /> : trophiesOpen ? <TrophiesScreen key={currentGame.pack.id} game={currentGame} lastInputKind={lastInputKind}
+            actionRef={trophiesActionRef} onClose={() => setTrophiesOpen(false)} /> : settingsOpen ? (
             <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
               musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={selections => { setMusicSelections(selections); setMutedStartupGame(undefined); }}
               musicLibrary={musicLibraries[currentGame.pack.id]!} onMusicPreview={setMusicPreview}
@@ -448,10 +525,14 @@ export default function HubProvider() {
           ) : nav.screen === "selection" ? (
             <GameSelection
               games={games}
+              bonusPresentation={bonusPresentation}
               focusIndex={nav.item}
               onFocusItem={hoverItem}
               lastInputKind={lastInputKind}
-              onSelect={(index) => userDispatch({ type: "selectGame", index })}
+              onSelect={(index) => {
+                if (index === games.length) { rawDispatch({ type: "focusItem", index }); void playMenuSound("select"); openBonus(); }
+                else userDispatch({ type: "selectGame", index });
+              }}
             />
           ) : currentGame.installed ? (
             <GameScreen
@@ -468,7 +549,12 @@ export default function HubProvider() {
               onRetryExtract={() => void handleRetryExtract()}
             />
           ) : (
-            <NotInstalled game={currentGame} onInstall={() => { void playMenuSound("select"); void window.hub.launch(currentGame.pack.id, { install: true }); }} />
+            <NotInstalled game={currentGame} installedCount={games.filter(game => game.installed).length}
+              actionRef={missingActionRef} lastInputKind={lastInputKind}
+              onGameSelection={() => userDispatch("menu")}
+              onLocateSteam={() => void handlePickFolder()}
+              onQuit={() => void handleQuitChoice(0)}
+              onInstall={() => { void playMenuSound("select"); void window.hub.launch(currentGame.pack.id, { install: true }); }} />
           )}
         </div>
         {updateBanner}
@@ -480,7 +566,9 @@ export default function HubProvider() {
     <div data-testid="hub-content" inert={startup.visible} aria-hidden={startup.visible || undefined}>
       {content}
     </div>
+    {unavailable && <UnavailableDialog {...unavailable} onClose={closeUnavailable} />}
     {startup.visible && <StartupSplash error={startupError} actions={startupActions} selectedAction={startupItem}
+      preparation={libraryPreparation.progress}
       exiting={startup.exiting} progress={startup.progress} buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />}
   </>;
 }
