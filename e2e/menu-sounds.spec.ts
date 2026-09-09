@@ -24,6 +24,7 @@ test("menu sounds follow semantic actions once, with no passive or ineffective-i
   for (const [index, sound] of MENU_SOUNDS.entries()) await writeFile(join(data, "sounds", `${sound}.wav`), wavFixture((index + 5) / 100, .065 + index * .003));
   await mkdir(join(data, "music", "mgs2"), { recursive: true });
   await writeFile(join(data, "music", "mgs2", "Custom Theme.wav"), wavFixture(1));
+  await writeFile(join(data, "music", "mgs2", "Second Theme.wav"), wavFixture(1));
   const app = await electron.launch({
     args: [join(__dirname, "..", "out", "main", "index.js"), "--game", "mgs2"],
     env: { ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: join(__dirname, "fixtures", "steam"), HUB_FAKE_LAUNCH: "1", HUB_WINDOWED: "1" },
