@@ -74,7 +74,7 @@ test("Menu Music previews without saving and autosaves confirmed hub-only prefer
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     await page.getByRole("button", { name: "Refresh Music", exact: true }).click();
-    await expect(page.getByText(/No music files have been added/).first()).toBeVisible();
+    await expect(page.getByText(/No soundtrack music was found/).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);
     await app.close();
     app = await electron.launch(options);
@@ -119,7 +119,7 @@ test("all six games hide built-in themes while empty libraries retain folder and
       await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Open Music Folder", exact: true })).toBeVisible();
       await page.getByRole("button", { name: "Refresh Music", exact: true }).click();
-      await expect(page.getByText(/No music files have been added/).first()).toBeVisible();
+      await expect(page.getByText(/No soundtrack music was found/).first()).toBeVisible();
       await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Open Music Folder", exact: true })).toBeVisible();
       await expect(page.getByRole("button", { name: "Refresh Music", exact: true })).toBeVisible();

@@ -4,7 +4,7 @@
 - Typecheck/lint: `npm run typecheck` and `npm run lint`
 - Unit: `npm test`
 - E2E (headless): `npm run e2e`    Run when: UI or Electron app-shell changes
-- Build / package: `npm run dist`   Artifact: `MetalGearLauncher-Full/Lite-Setup-x64-<version>.exe` (Full includes the optional local music pack).
+- Build / package: `npm run dist`   Artifact: `MetalGearLauncher-Setup-x64-<version>.exe`. Music comes from local game installations or user files, never the installer.
 - Known failures to tolerate: none
 - Version source: `package.json`   Release: release.yml on push to main
 - Local test installs must be clean: `pwsh -File scripts/install-clean.ps1` after packaging; confirm ProductVersion.

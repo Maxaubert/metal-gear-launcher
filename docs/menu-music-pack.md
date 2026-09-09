@@ -1,42 +1,42 @@
-# Optional menu music at build time
+# Local music and packaging
 
-The launcher accepts personal FLAC, MP3, WAV, OGG and M4A files in each game's
-Menu Music folder. The displayed title is the filename without its extension.
+Music comes from the user's installed games and personal files. No soundtrack
+files are bundled with the launcher, downloaded during release builds, or copied
+from the developer's music library into an installer.
 
-For a local installer containing music, prepare MP3 playback copies:
+Installed Bonus Content M4A tracks play directly from the Steam library. The MG2
+opening themes and MGS2 opening main theme use a bundled open-source decoder,
+vgmstream, to create WAV playback copies under the launcher's `native-music` cache.
+Only tracks found in the user's installation are decoded. Cache entries include
+the source and decoder identities and are rebuilt after those change.
+MGS1, MGS3, MGS4 and Peace Walker use their installed Bonus Content soundtracks.
+Optional tracks that are not installed are omitted. Personal music remains supported.
+
+`npm run dist` produces `MetalGearLauncher-Setup-x64-<version>.exe`.
+`node scripts/package-launcher.mjs --dry-run` reports the artifact name without
+packaging. Full and Lite editions are retired. Existing private files under
+`resources/menu-music` are ignored by packaging and can remain untouched.
+
+GitHub Releases publishes only the current version's exact installer filename.
+The old `MENU_MUSIC_PACK_URL` and `MENU_MUSIC_PACK_SHA256` repository variables
+are no longer read. The local clean-install helper also requires the new filename
+so a stale Full installer cannot be chosen accidentally.
+
+## Personal music
+
+The launcher accepts FLAC, MP3, WAV, OGG and M4A files in each game's Menu Music
+folder. The displayed title is the filename without its extension. Use Options >
+Menu Music > Open Music Folder to find the writable folder on your PC.
+
+Conversion is optional. To create smaller MP3 playback copies for personal use,
+choose an explicit output folder separate from the original collection:
 
 ```powershell
-pwsh -NoProfile -File scripts/prepare-menu-music.ps1 -Source 'C:\path\to\mgs-hub-music' -FfmpegPath 'C:\path\to\ffmpeg.exe'
-npm run dist
+pwsh -NoProfile -File scripts/prepare-menu-music.ps1 -Source 'C:\path\to\mgs-hub-music' -Output 'C:\path\to\personal-music-copies' -FfmpegPath 'C:\path\to\ffmpeg.exe'
 ```
 
-The source uses the folders `MG`, `MGS`, `MGS2`, `MGS3`, `MGS4`, and `MGSPW`.
-Conversion uses MP3 at 256 kbps and preserves the original FLACs. Existing prepared
-files are skipped. The ignored output under `resources/menu-music` is included by
-electron-builder. A checkout containing only `.gitkeep` builds successfully without
-music; CI does not download a private music collection.
-
-`scripts/package-launcher.mjs` labels the installer explicitly as
-`MetalGearLauncher-Full-Setup-x64-<version>.exe` when prepared MP3s are present,
-or `MetalGearLauncher-Lite-Setup-x64-<version>.exe` when absent. Run with
-`--dry-run` to check the edition without packaging. Full includes the supplied
-music pack; books are still optional local imports in both editions.
-
-For reproducible Full releases, publish an approved music ZIP as a separate
-GitHub release asset, with `mg12`, `mgs1`, `mgs2`, `mgs3`, `mgs4`, and `mgspw`
-folders at its root. Set repository Actions variables `MENU_MUSIC_PACK_URL` to
-that asset's HTTPS download URL and `MENU_MUSIC_PACK_SHA256` to its SHA256.
-Release CI downloads and verifies the pack before building Full. A missing pair
-produces an explicitly labelled Lite build. When configured, the release provides both Lite and Full installers; incomplete configuration or an invalid
-pack fails the release. No media is uploaded by the preparation scripts.
-
-On startup the pack fills missing tracks in the user's writable music folders.
-Files with the same title in another supported format are preserved and do not
-receive a duplicate MP3. Explicit user selections remain intact; a selection also
-follows a same-named track after converting its extension. The default titles work
-in all supported formats. The pack never reintroduces the extracted original menu
-themes removed from the launcher.
-
-Media is not tracked in Git. Include only music you have permission to redistribute
-when producing a public installer. Local full builds and public builds can use the
-same code and differ only in which optional resource files are supplied.
+The source uses folders `MG`, `MGS`, `MGS2`, `MGS3`, `MGS4` and `MGSPW`.
+Output folders use `mg12`, `mgs1`, `mgs2`, `mgs3`, `mgs4` and `mgspw`.
+Conversion uses MP3 at 256 kbps, preserves original FLACs, and skips existing
+prepared files. Copy the desired output into your Menu Music folders and refresh
+the list. This utility does not change the installer or upload media.

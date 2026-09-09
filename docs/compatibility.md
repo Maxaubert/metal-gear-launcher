@@ -36,7 +36,9 @@ Automated tests create disposable Steam libraries and data directories on Window
 Extraction tools are bundled in the installer. AssetStudio uses its official .NET Framework
 build, verified against an original font export byte for byte and an original sprite export.
 Users do not need the .NET 9 runtime. The tools require .NET Framework 4.8, available in modern
-Windows 10 and Windows 11. Original game launchers must have created their settings files
+Windows 10 and Windows 11. The pinned vgmstream Windows x64 audio decoder and its codec DLLs
+are bundled as well; users do not need to install a separate audio decoder.
+Original game launchers must have created their settings files
 before all native settings can be edited. No community patch is required.
 
 These checks exercise installation variations on this Windows machine; they are not tests on

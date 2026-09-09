@@ -6,13 +6,15 @@ import { getBonusPlaylist } from "../electron/main/bonus/playlist";
 import { ensureMenuMusicFolder } from "../electron/main/music/library";
 import { discoverBonus } from "../electron/main/bonus/discovery";
 import { BonusCache } from "../electron/main/bonus/cache";
+import { getGameSoundtracks } from "../electron/main/music/gameSoundtracks";
 
 vi.mock("../electron/main/bonus/discovery", () => ({ discoverBonus: vi.fn(async () => []) }));
 vi.mock("../electron/main/bonus/cache", () => ({ BonusCache: { open: vi.fn() } }));
+vi.mock("../electron/main/music/gameSoundtracks", () => ({ getGameSoundtracks: vi.fn(async () => []) }));
 
 describe("bonus background playlist discovery", () => {
   let root: string;
-  beforeEach(async () => { vi.clearAllMocks(); vi.mocked(discoverBonus).mockResolvedValue([]); root = await mkdtemp(join(tmpdir(), "bonus-playlist-")); });
+  beforeEach(async () => { vi.clearAllMocks(); vi.mocked(discoverBonus).mockResolvedValue([]); vi.mocked(getGameSoundtracks).mockResolvedValue([]); root = await mkdtemp(join(tmpdir(), "bonus-playlist-")); });
   afterEach(async () => { await rm(root, { recursive: true, force: true }); });
 
   it("curates existing local themes in series order without depending on Steam or changing files", async () => {
@@ -74,5 +76,28 @@ describe("bonus background playlist discovery", () => {
     expect(await getBonusPlaylist(join(root, "fresh"), null)).toEqual([]);
     vi.mocked(discoverBonus).mockRejectedValue(new Error("Unavailable drive"));
     expect(await getBonusPlaylist(root, "missing-drive")).toEqual([]);
+  });
+
+  it("keeps installed classics when a user adds just one personal theme", async () => {
+    const folder = await ensureMenuMusicFolder(root, "mgs3");
+    await writeFile(join(folder, "Snake Eater.flac"), "personal");
+    vi.mocked(getGameSoundtracks).mockResolvedValue([
+      { sourceId: "game:mgs2:opening", gameId: "mgs2", title: "Metal Gear Solid Main Theme", url: "hub-bonus://media/main" },
+      { sourceId: "bonus:snake", gameId: "mgs3", title: "Snake Eater ( Cynthia Harrell )", url: "hub-bonus://media/snake" },
+    ]);
+    const tracks = await getBonusPlaylist(root, "steam");
+    expect(tracks.map(track => track.title)).toEqual(["Metal Gear Solid Main Theme", "Snake Eater"]);
+    expect(tracks[1]?.url).toMatch(/^hub-music:/);
+  });
+
+  it("keeps distinct main theme recordings from different games", async () => {
+    const folder = await ensureMenuMusicFolder(root, "mgs1");
+    await writeFile(join(folder, "Metal Gear Solid Main Theme.flac"), "personal");
+    vi.mocked(getGameSoundtracks).mockResolvedValue([
+      { sourceId: "game:mgs2:opening", gameId: "mgs2", title: "Metal Gear Solid Main Theme", url: "hub-bonus://media/main" },
+    ]);
+    const tracks = await getBonusPlaylist(root, "steam");
+    expect(tracks.map(track => track.title)).toEqual(["Metal Gear Solid Main Theme", "Metal Gear Solid Main Theme"]);
+    expect(new Set(tracks.map(track => track.url)).size).toBe(2);
   });
 });

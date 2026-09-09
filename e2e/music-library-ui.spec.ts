@@ -12,6 +12,7 @@ test("music filenames preview on focus, autosave on confirmation, and refresh wi
   const silent = join(data, "assets", "mgs1", "bgm.wav");
   const labels = Array.from({ length: 12 }, (_, index) => `Theme ${String(index + 1).padStart(2, "0")} - Evening at Shadow Moses`);
   await Promise.all(labels.map(label => cp(silent, join(folder, `${label}.wav`))));
+  await cp(silent, join(folder, `${labels[0]}.mp3`));
   const options = {
     args: [join(__dirname, "..", "out", "main", "index.js"), "--game", "mgs1"],
     env: { ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: join(__dirname, "fixtures", "steam"), HUB_FAKE_LAUNCH: "1", HUB_WINDOWED: "1" },
@@ -29,6 +30,8 @@ test("music filenames preview on focus, autosave on confirmation, and refresh wi
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     const first = page.getByRole("button", { name: labels[0], exact: true });
+    await expect(first).toHaveCount(1);
+    expect(library.value.themes).toHaveLength(labels.length);
     await first.hover();
     await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(firstId), { timeout: 1000 });
     await expect(first.locator(".settings-selected")).toBeVisible();

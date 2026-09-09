@@ -16,7 +16,6 @@ import { assetsDir, dataDir } from "./paths";
 import { configSchema, readConfig, writeConfig } from "./config";
 import { MUSIC_PROTOCOL } from "../../shared/menuMusic";
 import { ensureMenuMusicFolder, getMenuMusicLibrary, MUSIC_CONTENT_TYPES, resolveMenuMusicFile, validateMenuMusicSelection } from "./music/library";
-import { seedBundledMenuMusic } from "./music/bundled";
 import { findSteamRoot, listLibraries } from "./steam/library";
 import { resolveInstall } from "./steam/resolve";
 import { extractGame, isStale, readManifest, readToolVersions } from "./extract/extractor";
@@ -86,6 +85,7 @@ function createWindow(): BrowserWindow {
   // this machine.
   const shootMode = Boolean(process.env.HUB_SHOOT);
   const win = new BrowserWindow({
+    icon: join(app.isPackaged ? process.resourcesPath : app.getAppPath(), app.isPackaged ? "icon.ico" : "resources/icon.ico"),
     width: shootMode ? 3840 : 1920, height: shootMode ? 2160 : 1080,
     show: false, backgroundColor: "#000000",
     fullscreen: shootMode ? false : !process.env.HUB_WINDOWED,
@@ -186,8 +186,6 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
-    const musicReady = seedBundledMenuMusic(dataDir(), join(app.isPackaged ? process.resourcesPath : join(app.getAppPath(), "resources"), "menu-music"))
-      .catch(error => { console.error("Could not prepare bundled menu music", error); });
     protocol.handle("hub-bonus", async request => {
       try {
         if (request.method !== "GET" && request.method !== "HEAD") return new Response(null, { status: 405 });
@@ -258,7 +256,6 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("hub:bonus:playlist", async (_event, arg) => {
       try {
         z.undefined().parse(arg);
-        await musicReady;
         const config = await readConfig();
         return ok(await getBonusPlaylist(dataDir(), await findSteamRoot(config.steamPath)));
       } catch (error) { return err(asError(error)); }
@@ -393,14 +390,17 @@ if (!gotSingleInstanceLock) {
 
     ipcMain.handle("hub:music:save", async (_e, arg) => {
       try {
-        const { gameId, themeId } = await validateMenuMusicSelection(dataDir(), arg);
+        const config = await readConfig();
+        const { gameId, themeId } = await validateMenuMusicSelection(dataDir(), arg, await findSteamRoot(config.steamPath));
         return ok(await writeConfig({ menuMusic: { [gameId]: themeId } }));
       } catch (e) { return err(asError(e)); }
     });
 
     ipcMain.handle("hub:music:get", async (_e, arg) => {
-      await musicReady;
-      try { return ok(await getMenuMusicLibrary(dataDir(), settingsGameId.parse(arg))); }
+      try {
+        const config = await readConfig();
+        return ok(await getMenuMusicLibrary(dataDir(), settingsGameId.parse(arg), await findSteamRoot(config.steamPath)));
+      }
       catch (e) { return err(asError(e)); }
     });
 

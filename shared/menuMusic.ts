@@ -2,7 +2,7 @@ import { z } from "zod";
 import { settingsGameId } from "./settings";
 
 export type MusicGameId = z.infer<typeof settingsGameId>;
-export type MenuTheme = { id: string; label: string; assetRole?: "bgm"; url?: string; formatAliases?: string[] };
+export type MenuTheme = { id: string; label: string; assetRole?: "bgm"; url?: string; formatAliases?: string[]; normalizationGain?: number };
 export type MenuMusicLibrary = { gameId: MusicGameId; themes: MenuTheme[]; defaultThemeId: string; folderPath: string };
 export const MUSIC_PROTOCOL = "hub-music";
 export const DEFAULT_MENU_MUSIC_FILENAMES: Partial<Record<MusicGameId, string>> = {

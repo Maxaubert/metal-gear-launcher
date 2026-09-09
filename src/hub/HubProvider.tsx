@@ -199,7 +199,8 @@ export default function HubProvider() {
   const bonusAudioActive = bonusOpen || (nav.screen === "selection" && bonusMusicSelected);
   const musicUrl = configLoaded && !needsFirstRun && currentGame && musicLibraries[currentGame.pack.id]
     ? musicPreview ?? (mutedStartupGame === currentGame.pack.id ? undefined : resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id], musicLibraries[currentGame.pack.id])) : undefined;
-  const music = useMenuMusic(musicUrl, volume, musicAttempt, Boolean(musicPreview), bonusAudioActive);
+  const musicGain = currentGame ? musicLibraries[currentGame.pack.id]?.themes.find(theme => theme.url === musicUrl)?.normalizationGain : undefined;
+  const music = useMenuMusic(musicUrl, volume, musicAttempt, Boolean(musicPreview), bonusAudioActive, musicGain);
   const soundSourceKey = hubState ? menuSoundSourceKey(hubState) : null;
   const soundsReady = soundSourceKey !== null && soundsReadyKey === soundSourceKey;
   useEffect(() => { setMenuSoundVolume(volume); }, [volume]);

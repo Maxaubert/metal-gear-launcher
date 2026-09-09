@@ -10,6 +10,10 @@ test("keyboard keycaps replace controller circles across main, selection and set
     env: { ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: join(__dirname, "fixtures", "steam"), HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1" } });
   try {
     const page = await app.firstWindow();
+    // Absence of the splash can also mean React has not mounted yet. The menu is
+    // rendered beneath the splash before keyboard navigation becomes available.
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2", { timeout: 15000 });
+    await expect(page.getByTestId("hub-content")).not.toHaveAttribute("inert", "", { timeout: 15000 });
     await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 15000 });
     await expect(page.locator("kbd", { hasText: "Esc" })).toBeVisible();
     await expect(page.locator(".control-gamepad")).toHaveCount(0);
