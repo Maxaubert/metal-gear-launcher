@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdtemp, mkdir, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { getNativeSoundtracks } from "../electron/main/music/nativeSoundtracks";
 import { getMenuMusicLibrary, musicFileId, validateMenuMusicSelection } from "../electron/main/music/library";
 import { effectiveMenuTheme } from "../shared/menuMusic";
@@ -46,7 +46,7 @@ describe("installed menu soundtracks", () => {
       .toEqual(["INTRODUCTION", "Cant Say Goodbye To Yesterday", "Snake Eater"]);
     for (const library of libraries) for (const theme of library.themes) {
       const { file } = await resolveBonusFile(theme.url!);
-      expect(file.startsWith(stream)).toBe(true);
+      expect(dirname(file)).toBe(await realpath(stream));
       expect(await readFile(file, "utf8")).toBe("installed-audio");
     }
     await expect(readFile(join(root, "music", "mgs3", "Snake Eater.m4a"))).rejects.toMatchObject({ code: "ENOENT" });

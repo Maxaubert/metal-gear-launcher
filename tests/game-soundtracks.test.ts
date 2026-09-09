@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("electron", () => ({ app: { isPackaged: false } }));
-import { mkdir, mkdtemp, readFile, readdir, rm, rmdir, symlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, mkdtemp, readFile, readdir, realpath, rm, rmdir, symlink, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { loadPacks } from "../shared/packs";
 import { createGameSoundtrackReader } from "../electron/main/music/gameSoundtracks";
@@ -38,7 +38,7 @@ it("finds a custom install path, extracts once concurrently and preserves origin
   await install(); const original = await readFile(source); await write(join(data, "music/mg12/User.flac"), "user");
   const read = reader(); const lists = await Promise.all([read(data, steam), read(data, steam)]);
   expect(lists[0]).toHaveLength(1); expect(lists[0]![0]!.title).toBe("Zanzibar Breeze (Opening BGM 2)"); expect(run).toHaveBeenCalledTimes(1);
-  const media = await resolveBonusFile(lists[0]![0]!.url); expect(media.file.startsWith(join(data, "native-music"))).toBe(true);
+  const media = await resolveBonusFile(lists[0]![0]!.url); expect(dirname(dirname(media.file))).toBe(await realpath(join(data, "native-music")));
   expect(await readFile(source)).toEqual(original); expect(await readFile(join(data, "music/mg12/User.flac"), "utf8")).toBe("user");
   await read(data, steam); expect(run).toHaveBeenCalledTimes(1);
   await writeFile(media.file, "corrupt"); await read(data, steam); expect(run).toHaveBeenCalledTimes(2);
