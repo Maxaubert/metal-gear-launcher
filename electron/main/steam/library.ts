@@ -62,7 +62,15 @@ async function isSteamRoot(path: string): Promise<boolean> {
   return false;
 }
 
-async function registrySteamPath(): Promise<string | null> {
+let pendingRegistryPath: Promise<string | null> | undefined;
+
+function registrySteamPath(): Promise<string | null> {
+  // Startup asks for settings, books and music concurrently. Share only the active
+  // registry query so they do not launch competing PowerShell processes.
+  return pendingRegistryPath ??= readRegistrySteamPath().finally(() => { pendingRegistryPath = undefined; });
+}
+
+async function readRegistrySteamPath(): Promise<string | null> {
   try {
     const { stdout } = await promisify(execFile)(join(process.env.SystemRoot ?? "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe"), [
       "-NoProfile", "-NonInteractive", "-Command",

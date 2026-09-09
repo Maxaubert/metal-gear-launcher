@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { lstat, mkdir, readdir, realpath, stat } from "node:fs/promises";
 import { extname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { DEFAULT_MENU_MUSIC_FILENAMES, MENU_THEMES, MUSIC_PROTOCOL, menuMusicRequest, type MenuMusicLibrary, type MusicGameId } from "../../../shared/menuMusic";
+import { DEFAULT_MENU_MUSIC_FILENAMES, MUSIC_PROTOCOL, menuMusicRequest, type MenuMusicLibrary, type MusicGameId } from "../../../shared/menuMusic";
 import { settingsGameId } from "../../../shared/settings";
 
 export const MUSIC_CONTENT_TYPES: Record<string, string> = {
@@ -64,9 +64,9 @@ export async function getMenuMusicLibrary(root: string, gameId: MusicGameId): Pr
   const desiredFile = DEFAULT_MENU_MUSIC_FILENAMES[gameId];
   const desiredId = desiredFile ? musicFileId(gameId, desiredFile) : undefined;
   return { gameId, folderPath: resolve(root, "music", gameId),
-    defaultThemeId: tracks.find(track => track.id === desiredId)?.id ?? `${gameId}-original`,
-    themes: [...MENU_THEMES[gameId], ...tracks.map(track => ({ id: track.id, label: track.label,
-      url: `${MUSIC_PROTOCOL}://${gameId}/${track.id}?v=${track.revision}` }))] };
+    defaultThemeId: tracks.find(track => track.id === desiredId)?.id ?? tracks[0]?.id ?? "",
+    themes: tracks.map(track => ({ id: track.id, label: track.label,
+      url: `${MUSIC_PROTOCOL}://${gameId}/${track.id}?v=${track.revision}` })) };
 }
 
 export async function validateMenuMusicSelection(root: string, request: unknown): Promise<{ gameId: MusicGameId; themeId: string }> {

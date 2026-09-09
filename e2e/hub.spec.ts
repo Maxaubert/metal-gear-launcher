@@ -24,7 +24,7 @@ test.describe("hub", () => {
       writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest));
     }
     app = await electron.launch({
-      args: [join(__dirname, "..", "out", "main", "index.js")],
+      args: [join(__dirname, "..", "out", "main", "index.js"), "--game", "mg12"],
       env: {
         ...process.env,
         HUB_DATA_DIR: data,
@@ -44,7 +44,7 @@ test.describe("hub", () => {
     await app.close();
   });
 
-  test("shows the first game and navigates with the keyboard", async () => {
+  test("shows the requested game and navigates with the keyboard", async () => {
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mg12");
     await page.keyboard.press("Tab");
     await page.keyboard.press("ArrowRight");

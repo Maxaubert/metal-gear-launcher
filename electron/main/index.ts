@@ -23,7 +23,8 @@ import { launchGame } from "./launch/launcher";
 import { minimizeForLaunch, restoreAfterLaunch } from "./launch/windowTransition";
 import { checkForUpdate } from "./update";
 import { settingsGameId, settingsReadRequest, saveSettingsRequest } from "@shared/settings";
-import { getGameSettings, saveGameSettings } from "./settings/service";
+import { saveGameSettings } from "./settings/service";
+import { getInstalledGameSettings } from "./settings/installed";
 import { readMenuSounds } from "./music/sounds";
 import { readNativeMenuSounds } from "./music/nativeSounds";
 import { achievementsRequest } from "@shared/achievements";
@@ -297,10 +298,7 @@ if (!gotSingleInstanceLock) {
       const parsed = settingsReadRequest.safeParse(arg);
       if (!parsed.success) return err("Invalid settings request.");
       try {
-        const state = await buildState();
-        const game = state.games.find((game) => game.pack.id === parsed.data.gameId);
-        if (!game?.installed || !game.installDir) return err("This game is not installed.");
-        return ok(await getGameSettings(parsed.data.gameId, game.installDir, parsed.data.accountId));
+        return ok(await getInstalledGameSettings(parsed.data.gameId, parsed.data.accountId));
       } catch (error) { return err(asError(error)); }
     });
 

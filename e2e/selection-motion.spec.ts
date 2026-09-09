@@ -7,7 +7,7 @@ test("selection motion is interruptible, keeps rows fixed, and respects reduced 
   const data = mkdtempSync(join(tmpdir(), "hub-motion-"));
   cpSync(join(__dirname, "fixtures/assets"), join(data, "assets"), { recursive: true });
   const app = await electron.launch({
-    args: [join(__dirname, "../out/main/index.js")],
+    args: [join(__dirname, "../out/main/index.js"), "--game", "mg12"],
     env: { ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: join(__dirname, "fixtures/steam"), HUB_FAKE_LAUNCH: "1", HUB_WINDOWED: "1" },
   });
   try {

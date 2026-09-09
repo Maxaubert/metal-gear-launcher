@@ -10,24 +10,12 @@
   z-index: 2;
 }
 
-.screen[data-game="mgs1"] .ghost-timeline {
-  left: 61.666667vw;
-  top: -19.537037vh;
-  width: 39.583333vw;
-  height: 90.833333vh;
-  object-fit: fill;
-  opacity: 1;
-}
 .screen[data-game="mgs1"] .ghost-number {
   left: 91.614583vw;
   top: 2.87037vh;
   width: 5.833333vw;
   height: 39.722222vh;
   object-fit: fill;
-}
-.persistent-backdrop[data-game="mgs1"]:not(.settings-screen) .ghost-timeline {
-  /* Keep historical dates; the shared header now owns the tick, rule and barcode. */
-  mask-image: linear-gradient(#000 20.59%, transparent 20.59%, transparent 72.98%, #000 72.98%);
 }
 .screen[data-game="mgs1"] .menu { --accent: #d60001; }
 .screen[data-game="mg12"] .menu { --accent: #013686; }
@@ -67,12 +55,6 @@
   top: 2vh;
   height: 40vh;
   width: 12vw;
-}
-
-.screen:is([data-game="mgs2"], [data-game="mgs3"]) .ghost-timeline {
-  left: 62.4vw;
-  top: 0;
-  height: 100vh;
 }
 
 .screen .head .year,
@@ -231,15 +213,6 @@
   opacity: 0.17;
 }
 
-.screen[data-game="mgs2"] .ghost-timeline {
-  top: -13.8vh;
-  height: 52.78vh;
-}
-
-.screen[data-game="mg12"] .ghost-timeline {
-  display: none;
-}
-
 .screen:is([data-game="mgs1"], [data-game="mgs2"], [data-game="mgs3"]) .description {
   right: 4vw;
   line-height: 1.2;
@@ -255,11 +228,6 @@
   top: 0;
   width: 38vw;
   opacity: 0.05;
-}
-
-.screen[data-game="mgs3"] .ghost-timeline {
-  top: 44vh;
-  height: 38.3vh;
 }
 
 .screen .menu::before {

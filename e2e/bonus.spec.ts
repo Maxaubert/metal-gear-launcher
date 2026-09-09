@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron } from "@playwright/test";
-import { cp, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import type { BonusLibrary } from "../shared/bonus";
@@ -8,6 +8,10 @@ test("combined bonus content handles missing installs, both volumes, playback, c
   const root = await mkdtemp(join(tmpdir(), "hub-bonus-e2e-"));
   const data = join(root, "hub");
   await cp(join(__dirname, "fixtures/assets"), join(data, "assets"), { recursive: true });
+  for (const game of ["mgs2", "mgs3"]) {
+    await mkdir(join(data, "music", game), { recursive: true });
+    await cp(join(data, "assets", game, "bgm.wav"), join(data, "music", game, "Custom Theme.wav"));
+  }
   await cp(join(__dirname, "fixtures/bonus/test-video.mp4"), join(data, "assets/mg12/bonus-test.mp4"));
   const app = await electron.launch({ args: [join(__dirname, "../out/main/index.js"), "--game", "mgs2"],
     env: { ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: join(__dirname, "fixtures/steam"), HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1" } });

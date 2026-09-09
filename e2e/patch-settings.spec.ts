@@ -42,7 +42,7 @@ test("patch text remains a draft while typing and commits on Enter, blur, and Ba
     await expect(page.getByRole("button", { name: "Retry Saving", exact: true })).toHaveCount(0);
     await fov.fill("OFF");
     await fov.press("Enter");
-    await expect.poll(() => readFile(config, "utf8")).toContain("FieldOfView=OFF");
+    await expect.poll(() => readFile(config, "utf8")).toMatch(/^FieldOfView=OFF\r?$/m);
 
     await fov.fill("90");
     await page.getByRole("heading", { name: "Sunny Side Up", exact: true }).click();

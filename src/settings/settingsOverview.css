@@ -1,21 +1,6 @@
-/* MG/MG2 Options has a compact two-chapter header and its own background placement. */
+/* Compact the MG/MG2 header while preserving the main menu artwork underneath. */
 .settings-screen[data-game="mg12"]:not([data-detail="true"]) .chapter-block + .chapter-block {
   top: 14.2vh;
-}
-
-.settings-screen[data-game="mg12"]:not([data-detail="true"]) .ghost-timeline {
-  display: block;
-  left: 63.5vw;
-  top: -1.5vh;
-  height: 96vh;
-  width: auto;
-  opacity: .8;
-}
-
-.settings-screen[data-game="mg12"]:not([data-detail="true"]) .ghost-effect {
-  top: -29vh;
-  opacity: .36;
-  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, transparent 73%);
 }
 
 .settings-overview-overlay {
@@ -42,53 +27,6 @@
 
 .settings-screen[data-game="mgs2"]:not([data-detail="true"]) .logo-strip,
 .settings-screen[data-game="mgs2"]:not([data-detail="true"]) .head {
-  z-index: 1;
-}
-
-.mg12-settings-grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-  mask-mode: alpha;
-}
-
-.mg12-settings-grid-backing {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.mg12-settings-grid-tiles {
-  position: absolute;
-  width: 155vw;
-  height: 155vw;
-  left: calc(50% - 77.5vw);
-  top: calc(50% - 77.5vw);
-  background-image: var(--grid-coarse), var(--grid-fine);
-  background-size: 38.75vw 38.75vw;
-  transform: rotate(53.252deg);
-}
-
-.settings-screen[data-game="mg12"]:not([data-detail="true"]) .chapter-logo-img {
-  filter: drop-shadow(0 0 .35vh #fff) drop-shadow(0 0 .7vh #fff);
-}
-
-/* Keep the decorative grid below the original logo and header artwork. */
-.settings-screen[data-game="mg12"]:not([data-detail="true"]) .left-zone {
-  animation: none;
-}
-
-.settings-screen[data-game="mg12"]:not([data-detail="true"]) .chapter-logo-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.settings-screen[data-game="mg12"]:not([data-detail="true"]) .chapters {
   z-index: 1;
 }
 

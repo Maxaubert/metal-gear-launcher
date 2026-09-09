@@ -63,7 +63,8 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
   const listRef = useRef<HTMLDivElement>(null);
   const musicPage = category === "Menu Music";
   const [leaving, setLeaving] = useState(false);
-  const musicThemes = availableMenuThemes(game.pack.id, game.assetUrls, musicLibrary);
+  // The music menu lists user files; extracted fallback audio is not a selectable song.
+  const musicThemes = availableMenuThemes(game.pack.id, game.assetUrls, musicLibrary).filter(theme => theme.url);
   const selectedMusicId = effectiveMenuTheme(game.pack.id, game.assetUrls, musicDraft ?? musicSelection, musicLibrary)?.id;
   const focusRef = useRef(focus);
   focusRef.current = focus;
@@ -84,7 +85,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
       if (current !== generation.current) return;
       if (!result.ok) { setMessage(result.error); return; }
       onMusicLibraryChanged(result.value);
-      const available = availableMenuThemes(game.pack.id, game.assetUrls, result.value);
+      const available = availableMenuThemes(game.pack.id, game.assetUrls, result.value).filter(theme => theme.url);
       setFocus(available.length + 1);
       setMessage("Music library refreshed.");
     } catch (error) {
@@ -287,7 +288,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     }
   }
   const contextMessage = musicPage ? musicThemes.length ? "Move through songs to preview. Confirm to use this theme. Your choice saves automatically."
-    : "No menu music is available. Open Music Folder to add songs, then choose Refresh Music."
+    : "No music files have been added. Open Music Folder to add songs, then choose Refresh Music."
     : selectedPatch?.message ?? native.find((section) => section.id === category)?.message
     ?? (category === "Community Fixes" ? rows[focus]?.section?.status === "needsSetup" ? "Open to review setup for this installed fix."
       : rows[focus]?.section?.fields.length ? "Open to review and edit this installed fix's settings." : "This installed component has no editable settings." : undefined);

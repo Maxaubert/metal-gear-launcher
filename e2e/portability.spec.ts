@@ -23,7 +23,7 @@ test("a partial Unicode library needs no community fixes and uses its separate d
       ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
     } });
     const page = await app.firstWindow();
-    await expect(page.getByTestId("not-installed-screen")).toBeVisible();
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".tile.not-installed")).toHaveCount(5);

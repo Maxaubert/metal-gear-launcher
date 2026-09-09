@@ -11,11 +11,11 @@ describe("local menu music library", () => {
   beforeEach(async () => { root = await mkdtemp(join(tmpdir(), "hub-music-")); });
   afterEach(async () => { DEFAULT_MENU_MUSIC_FILENAMES.mgs2 = originalDefault; await rm(root, { recursive: true, force: true }); });
 
-  it("keeps first-run and missing-game music usable without creating files", async () => {
+  it("leaves first-run and missing libraries silent without creating files", async () => {
     const library = await getMenuMusicLibrary(join(root, "not-created"), "mgs2");
-    expect(library.themes).toEqual([{ id: "mgs2-original", label: "Original Menu Theme", assetRole: "bgm" }]);
-    expect(library.defaultThemeId).toBe("mgs2-original");
-    expect(resolveMenuMusic("mgs2", { bgm: "original-url" }, undefined, library)).toBe("original-url");
+    expect(library.themes).toEqual([]);
+    expect(library.defaultThemeId).toBe("");
+    expect(resolveMenuMusic("mgs2", { bgm: "original-url" }, undefined, library)).toBeUndefined();
   });
 
   it("discovers supported files, uses exact filenames as titles and ignores directories or unrelated files", async () => {
@@ -24,8 +24,8 @@ describe("local menu music library", () => {
     for (const name of [...names, "Artwork.png", "notes.txt"]) await writeFile(join(folder, name), "fixture");
     await mkdir(join(folder, "Fake.flac"));
     const library = await getMenuMusicLibrary(root, "mgs2");
-    expect(library.themes.slice(1).map(theme => theme.label).sort()).toEqual(names.map(name => name.slice(0, name.lastIndexOf("."))).sort());
-    for (const theme of library.themes.slice(1)) {
+    expect(library.themes.map(theme => theme.label).sort()).toEqual(names.map(name => name.slice(0, name.lastIndexOf("."))).sort());
+    for (const theme of library.themes) {
       expect(theme.url).toMatch(/^hub-music:\/\/mgs2\/mgs2-file-[a-f0-9]{64}\?v=/);
       expect(await readFile(await resolveMenuMusicFile(root, theme.url!), "utf8")).toBe("fixture");
     }
@@ -34,9 +34,9 @@ describe("local menu music library", () => {
   it("keeps IDs stable across content updates and separate across games", async () => {
     const folder = await ensureMenuMusicFolder(root, "mgs2");
     await writeFile(join(folder, "Theme.flac"), "one");
-    const before = (await getMenuMusicLibrary(root, "mgs2")).themes[1]!;
+    const before = (await getMenuMusicLibrary(root, "mgs2")).themes[0]!;
     await writeFile(join(folder, "Theme.flac"), "new-longer-content");
-    const after = (await getMenuMusicLibrary(root, "mgs2")).themes[1]!;
+    const after = (await getMenuMusicLibrary(root, "mgs2")).themes[0]!;
     expect(after.id).toBe(before.id);
     expect(after.url).not.toBe(before.url);
     expect(musicFileId("mgs3", "Theme.flac")).not.toBe(after.id);
@@ -46,25 +46,32 @@ describe("local menu music library", () => {
     const folder = await ensureMenuMusicFolder(root, "mgs2");
     await writeFile(join(folder, "Theme.flac"), "fixture");
     const library = await getMenuMusicLibrary(root, "mgs2");
-    const theme = library.themes[1]!;
+    const theme = library.themes[0]!;
     expect(await validateMenuMusicSelection(root, { gameId: "mgs2", themeId: theme.id })).toEqual({ gameId: "mgs2", themeId: theme.id });
     expect(resolveMenuMusic("mgs2", { bgm: "original" }, theme.id, library)).toBe(theme.url);
     await rename(join(folder, "Theme.flac"), join(folder, "Renamed.flac"));
     await expect(validateMenuMusicSelection(root, { gameId: "mgs2", themeId: theme.id })).rejects.toThrow("no longer available");
     const refreshed = await getMenuMusicLibrary(root, "mgs2");
-    expect(resolveMenuMusic("mgs2", { bgm: "original" }, theme.id, refreshed)).toBe("original");
+    expect(resolveMenuMusic("mgs2", { bgm: "original" }, theme.id, refreshed)).toBe(refreshed.themes[0]!.url);
     await expect(resolveMenuMusicFile(root, theme.url!)).rejects.toThrow();
   });
 
   it("uses a declared first-run filename only when that file exists, preserving explicit selections", async () => {
     DEFAULT_MENU_MUSIC_FILENAMES.mgs2 = "Preferred.flac";
     const folder = await ensureMenuMusicFolder(root, "mgs2");
-    expect((await getMenuMusicLibrary(root, "mgs2")).defaultThemeId).toBe("mgs2-original");
+    expect((await getMenuMusicLibrary(root, "mgs2")).defaultThemeId).toBe("");
     await writeFile(join(folder, "Preferred.flac"), "fixture");
     const library = await getMenuMusicLibrary(root, "mgs2");
     expect(library.defaultThemeId).toBe(musicFileId("mgs2", "Preferred.flac"));
-    expect(resolveMenuMusic("mgs2", { bgm: "original" }, undefined, library)).toBe(library.themes[1]!.url);
-    expect(resolveMenuMusic("mgs2", { bgm: "original" }, "mgs2-original", library)).toBe("original");
+    expect(resolveMenuMusic("mgs2", { bgm: "original" }, undefined, library)).toBe(library.themes[0]!.url);
+    expect(resolveMenuMusic("mgs2", { bgm: "original" }, "mgs2-original", library)).toBe(library.themes[0]!.url);
+    await expect(validateMenuMusicSelection(root, { gameId: "mgs2", themeId: "mgs2-original" })).rejects.toThrow();
+    await writeFile(join(folder, "Alternative.flac"), "fixture");
+    const updated = await getMenuMusicLibrary(root, "mgs2");
+    const alternative = updated.themes.find(theme => theme.id === musicFileId("mgs2", "Alternative.flac"))!;
+    expect(updated.defaultThemeId).toBe(musicFileId("mgs2", "Preferred.flac"));
+    expect(resolveMenuMusic("mgs2", {}, "mgs2-original", updated)).toBe(updated.themes.find(theme => theme.id === updated.defaultThemeId)!.url);
+    expect(resolveMenuMusic("mgs2", {}, alternative.id, updated)).toBe(alternative.url);
   });
 
   it("rejects paths, malformed IDs, other games and unsupported file URLs", async () => {
@@ -76,13 +83,13 @@ describe("local menu music library", () => {
     await expect(validateMenuMusicSelection(root, { gameId: "mgs2", themeId: musicFileId("mgs2", "Missing.flac") })).rejects.toThrow();
   });
 
-  it("falls back to an available custom track when the original has not been extracted", async () => {
+  it("uses the first imported track when the preferred filename is unavailable", async () => {
     const folder = await ensureMenuMusicFolder(root, "mgs2");
     await writeFile(join(folder, "Only local track.flac"), "fixture");
     const library = await getMenuMusicLibrary(root, "mgs2");
-    expect(availableMenuThemes("mgs2", {}, library)).toEqual([library.themes[1]]);
-    expect(effectiveMenuTheme("mgs2", {}, "mgs2-original", library)?.id).toBe(library.themes[1]!.id);
-    expect(resolveMenuMusic("mgs2", {}, undefined, library)).toBe(library.themes[1]!.url);
+    expect(availableMenuThemes("mgs2", {}, library)).toEqual([library.themes[0]]);
+    expect(effectiveMenuTheme("mgs2", {}, "mgs2-original", library)?.id).toBe(library.themes[0]!.id);
+    expect(resolveMenuMusic("mgs2", {}, undefined, library)).toBe(library.themes[0]!.url);
   });
 
   it("rejects a music directory junction before scanning or creating game folders outside the data root", async () => {

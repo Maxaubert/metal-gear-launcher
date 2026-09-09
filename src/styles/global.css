@@ -282,24 +282,6 @@ body {
   background: color-mix(in srgb, var(--ink) 25%, transparent);
 }
 
-.ghost-timeline {
-  position: absolute;
-  left: var(--col-x);
-  /* D10 (round 6): shifted down and shrunk so it sits beside the description/menu instead of
-     rising into the header - at the old `top: 0; height: 100vh` it collided with the subtitle. */
-  top: 12vh;
-  height: 88vh;
-  /* The extracted PNG's alpha channel is already normalized into a legible 45-170/255 band
-     (electron/main/extract/ghostAlpha.ts, mean around 42%) - this CSS opacity is a second,
-     multiplicative dimming pass on top of it, not the final on-screen density: at the old 0.1 the
-     combined result (round 8 critique finding 2) read as "effectively invisible", the right
-     column looking like a flat white field instead of carrying a legible ghost watermark like the
-     reference. Raised so the two dimming passes together land near the reference's visible-but-
-     secondary strength. */
-  opacity: 0.32;
-  pointer-events: none;
-}
-
 .ghost-number {
   /* Round 9 critique finding 1 (a regression this pass introduced): this used to be a plain
      `height: 58vh` with auto width. That was tuned against an *untrimmed* numbering asset, whose
@@ -320,8 +302,7 @@ body {
   width: 10vw;
   object-fit: contain;
   object-position: top right;
-  /* Unlike .ghost-timeline (whose pre-baked alpha band IS the final on-screen density per
-     round 3), the numbering role's real extracted assets are not all numeral-shaped cutouts -
+  /* The numbering role's real extracted assets are not all numeral-shaped cutouts -
      MG1/2's bound texture (`mg12_grid_mask`, see round 2's report: no dedicated numeral/timeline
      asset exists in that bundle) is a near-full-screen 1920x1080 diagonal vignette, verified
      against the real cached PNG at ~77% of its own width non-transparent. At `opacity: 1` that
