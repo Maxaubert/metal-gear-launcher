@@ -10,10 +10,6 @@ test("Menu Music previews without saving and autosaves confirmed hub-only prefer
   await writeFile(join(data, "config.json"), JSON.stringify({ volume: 0.7 }));
   await cp(join(__dirname, "fixtures", "steam"), steam, { recursive: true });
   await writeFile(join(steam, "steamapps", "libraryfolders.vdf"), `"libraryfolders" { "0" { "path" "${steam.replaceAll("\\", "/")}" } }`);
-  const manifestPath = join(data, "assets", "mg12", "manifest.json");
-  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  delete manifest.files.bgm;
-  await writeFile(manifestPath, JSON.stringify(manifest));
   const launcherDir = join(steam, "steamapps", "common", "MGS3", "mgs3_savedata_win", "76561198000000001", "launcher");
   await mkdir(launcherDir, { recursive: true });
   const nativeConfig = join(launcherDir, "launcher_sv");
@@ -57,12 +53,18 @@ test("Menu Music previews without saving and autosaves confirmed hub-only prefer
     expect(JSON.parse(await readFile(join(data, "config.json"), "utf8")).menuMusic).toEqual({ mgs2: "mgs2-original", mgs3: "mgs3-original" });
     expect(await readFile(nativeConfig, "utf8")).toBe(nativeBytes);
     expect(await readdir(steam, { recursive: true })).toEqual(originalFiles);
+    // Exercise an empty runtime music catalog after startup has prepared all assets.
+    await app.evaluate(({ ipcMain }) => {
+      ipcMain.removeHandler("hub:music:get");
+      ipcMain.handle("hub:music:get", () => ({ ok: true, value: { gameId: "mg12", themes: [], defaultThemeId: "", folderPath: "" } }));
+    });
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mg12").click();
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
+    await page.getByRole("button", { name: "Refresh Music", exact: true }).click();
     await expect(page.getByText(/No menu music is available/).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);
     await app.close();

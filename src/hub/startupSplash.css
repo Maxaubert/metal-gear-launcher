@@ -95,6 +95,15 @@
 }
 
 .startup-status p { margin: 0; }
+.startup-loading-rail[data-indeterminate="true"] span{width:35%;animation:library-scanning 1.5s ease-in-out infinite;transform:none!important}
+.startup-preparation-details{max-width:58vw;margin:2vh auto 0;font-size:clamp(18px,2vh,42px);line-height:1.5}
+.startup-status:has(.startup-preparation-details) .startup-loading-rail{width:min(48vw,1200px);height:max(6px,.55vh)}
+.startup-preparation-item{color:#333;overflow-wrap:anywhere}
+.startup-preparation-count{margin-top:1.2vh!important;font-variant-numeric:tabular-nums}
+.startup-preparation-count strong{margin-left:1.4em;color:#bb0014}
+.startup-preparation-note{margin:2.5vh auto 0!important;max-width:54ch;color:#555;font-size:clamp(16px,1.7vh,36px)}
+.startup-preparation-failure{margin-top:1.5vh!important;color:#9c0011}
+@keyframes library-scanning{0%,100%{translate:-100% 0}50%{translate:285% 0}}
 .startup-splash[data-error="true"] .startup-brand { height: 20vh; }
 .startup-splash[data-error="true"] .startup-brand { width: min(54vw, 96vh); }
 .startup-splash[data-error="true"] .startup-status { margin-top: 3vh; }
@@ -108,7 +117,7 @@
 }
 
 .startup-splash .startup-actions button {
-  min-height: 6vh;
+  min-height: max(44px, 6vh);
   padding: 1vh 1.7vw;
   border: 1px solid #666;
   color: #111;
@@ -134,4 +143,5 @@
   .startup-splash[data-exiting="true"] .startup-content,
   .startup-splash[data-exiting="true"] { animation: none; }
   .startup-loading-rail span { transition: none; }
+  .startup-loading-rail[data-indeterminate="true"] span{animation:none;transform:none!important;width:100%;opacity:.5}
 }

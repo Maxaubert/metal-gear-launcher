@@ -4,8 +4,8 @@
   left: var(--col-x);
   right: calc(100vw - var(--col-right));
   top: calc(var(--desc-top) + 4.5vh);
-  height: 9.5vh;
-  transform: translateY(calc(var(--selection-index) * 10.5vh));
+  height: var(--selection-row-height, 9.5vh);
+  transform: translateY(calc(var(--selection-index) * (var(--selection-row-height, 9.5vh) + 1vh)));
   transition: transform 220ms cubic-bezier(.22,.8,.25,1);
   pointer-events: none;
   z-index: 2;
