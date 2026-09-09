@@ -26,7 +26,7 @@ async function removeFixture(root: string) {
   await rm(root, { recursive: true, force: true });
 }
 
-test("initial music plays at saved volume without input and delayed playback keeps startup visible", async () => {
+test("initial music applies its boost to saved volume without input and delayed playback keeps startup visible", async () => {
   const fixture = await musicFixture();
   const app = await electron.launch(fixture.options);
   try {
@@ -38,7 +38,7 @@ test("initial music plays at saved volume without input and delayed playback kee
       paused: element.paused, ready: element.readyState, volume: element.volume, loop: element.loop,
       source: element.currentSrc,
     }));
-    expect(initial).toMatchObject({ paused: false, ready: 4, volume: 0.35, loop: true });
+    expect(initial).toMatchObject({ paused: false, ready: 4, volume: 0.4375, loop: true });
     expect(initial.source).toContain(musicFileId("mgs1", "Custom Theme.wav"));
 
     // A fresh document with the real play() call held proves readiness gates presentation.

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { lstat, mkdir, readdir, realpath, stat } from "node:fs/promises";
 import { extname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { DEFAULT_MENU_MUSIC_FILENAMES, MUSIC_PROTOCOL, menuMusicRequest, type MenuMusicLibrary, type MusicGameId } from "../../../shared/menuMusic";
+import { DEFAULT_MENU_MUSIC_FILENAMES, MUSIC_PROTOCOL, menuMusicRequest, type MenuMusicLibrary, type MenuTheme, type MusicGameId } from "../../../shared/menuMusic";
 import { settingsGameId } from "../../../shared/settings";
 import { getNativeSoundtracks, normalizeTrackTitle } from "./nativeSoundtracks";
 
@@ -10,6 +10,21 @@ export const MUSIC_CONTENT_TYPES: Record<string, string> = {
 };
 export const musicFileId = (gameId: MusicGameId, filename: string): string =>
   `${gameId}-file-${createHash("sha256").update(filename).digest("hex")}`;
+
+const titleKey = (title: string) => title.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
+const formatOrder = [".flac", ".wav", ".m4a", ".ogg", ".mp3"];
+
+/** One menu row per title, retaining every source ID for existing saved selections. */
+function uniqueThemes(themes: MenuTheme[]): MenuTheme[] {
+  const result = new Map<string, MenuTheme>();
+  for (const theme of themes) {
+    const key = titleKey(theme.label);
+    const existing = result.get(key);
+    if (!existing) result.set(key, { ...theme, formatAliases: [...(theme.formatAliases ?? [])] });
+    else existing.formatAliases = [...new Set([...(existing.formatAliases ?? []), theme.id, ...(theme.formatAliases ?? [])])];
+  }
+  return [...result.values()].sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+}
 
 function within(root: string, target: string): boolean {
   const part = relative(root, target);
@@ -78,12 +93,18 @@ export async function getMenuMusicLibrary(root: string, gameId: MusicGameId, ste
     mgs3: "Snake Eater ( Cynthia Harrell )", mgs4: "Old Snake", mgspw: "Metal Gear Solid Peace Walker Main Theme",
   };
   const fallback = installed.find(track => normalizeTrackTitle(track.label) === normalizeTrackTitle(fallbackTitles[gameId] ?? ""));
-  return { gameId, folderPath: resolve(root, "music", gameId),
-    defaultThemeId: preferred?.id ?? tracks.find(track => track.id === desiredId)?.id
-      ?? tracks.find(track => track.label.toLowerCase() === desiredLabel)?.id ?? fallback?.id ?? installed[0]?.id ?? tracks[0]?.id ?? "",
-    themes: [...installed, ...tracks.map(track => ({ id: track.id, label: track.label,
+  // User files take precedence over matching installed titles. Prefer lossless formats
+  // when older imports left both the original and a compressed playback copy.
+  const personal = [...tracks].sort((a, b) => formatOrder.indexOf(extname(a.file).toLowerCase()) - formatOrder.indexOf(extname(b.file).toLowerCase()))
+    .map(track => ({ id: track.id, label: track.label,
       formatAliases: Object.keys(MUSIC_CONTENT_TYPES).map(extension => musicFileId(gameId, `${track.label}${extension}`)),
-      url: `${MUSIC_PROTOCOL}://${gameId}/${track.id}?v=${track.revision}` }))] };
+      url: `${MUSIC_PROTOCOL}://${gameId}/${track.id}?v=${track.revision}` }));
+  const themes = uniqueThemes([...personal, ...installed]);
+  const defaultId = preferred?.id ?? tracks.find(track => track.id === desiredId)?.id
+    ?? tracks.find(track => track.label.toLowerCase() === desiredLabel)?.id ?? fallback?.id ?? installed[0]?.id ?? tracks[0]?.id ?? "";
+  return { gameId, folderPath: resolve(root, "music", gameId),
+    defaultThemeId: themes.find(theme => theme.id === defaultId || theme.formatAliases?.includes(defaultId))?.id ?? "",
+    themes };
 }
 
 export async function validateMenuMusicSelection(root: string, request: unknown, steamPath: string | null = null): Promise<{ gameId: MusicGameId; themeId: string }> {

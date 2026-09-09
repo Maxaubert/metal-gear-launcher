@@ -30,7 +30,7 @@ describe("bonus sequential background transport", () => {
     player.setPlayback(true, false, 0.6);
     await settle();
     expect(audio.loop).toBe(false);
-    expect(audio.volume).toBe(0.6);
+    expect(audio.volume).toBe(0.75);
     for (const expected of ["two", "three", "one"]) {
       audio.dispatchEvent(new Event("ended"));
       await settle();
@@ -110,6 +110,20 @@ describe("bonus sequential background transport", () => {
     expect(audio.src).toBe(playlist[1]!.url);
     player.setPlayback(true, false, Number.NaN);
     expect(audio.volume).toBe(0);
+    player.dispose();
+  });
+
+  it("keeps mute and applies the music boost when volume changes without restarting playback", async () => {
+    const { audio, player } = setup();
+    player.setPlayback(true, false, 0.6);
+    await settle();
+    audio.currentTime = 42;
+    player.setPlayback(true, false, 0);
+    expect(audio.volume).toBe(0);
+    player.setPlayback(true, false, 0.4);
+    expect(audio.volume).toBe(0.5);
+    expect(audio.currentTime).toBe(42);
+    expect(audio.play).toHaveBeenCalledTimes(1);
     player.dispose();
   });
 });

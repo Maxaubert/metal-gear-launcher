@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron } from "@playwright/test";
-import { cp, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 test("installed soundtracks play on startup and preview through the strict media protocol", async () => {
   const root = await mkdtemp(join(tmpdir(), "hub-native-music-e2e-"));
   await cp(join(__dirname, "fixtures/assets"), join(root, "assets"), { recursive: true });
+  await writeFile(join(root, "config.json"), JSON.stringify({ volume: 0.6 }));
   const app = await electron.launch({ args: [join(__dirname, "../out/main/index.js"), "--game", "mgs3"],
     env: { ...process.env, HUB_DATA_DIR: root, HUB_STEAM_ROOT: join(__dirname, "fixtures/steam"), HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1" } });
   try {
@@ -27,13 +28,16 @@ test("installed soundtracks play on startup and preview through the strict media
     await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 20000 });
     await expect(page.locator("#menu-music")).toHaveAttribute("src", urls[0]!);
     await expect.poll(() => page.locator("#menu-music").evaluate((el: HTMLAudioElement) => el.currentTime)).toBeGreaterThan(0.1);
+    await expect(page.locator("#menu-music")).toHaveJSProperty("volume", 0.75);
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     await page.getByRole("button", { name: "Operation Snake Eater", exact: true }).hover();
     await expect(page.locator("#menu-music")).toHaveAttribute("src", urls[1]!);
     await expect(page.locator("#menu-music")).toHaveJSProperty("paused", false);
+    await expect(page.locator("#menu-music")).toHaveJSProperty("volume", 0.75);
     await page.keyboard.press("Escape");
     await expect(page.locator("#menu-music")).toHaveAttribute("src", urls[0]!);
     await expect(page.locator("#menu-music")).toHaveJSProperty("paused", false);
+    expect(JSON.parse(await readFile(join(root, "config.json"), "utf8")).volume).toBe(0.6);
   } finally { await app.close(); await rm(root, { recursive: true, force: true }); }
 });

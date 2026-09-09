@@ -74,6 +74,23 @@ describe("installed menu soundtracks", () => {
     expect(library.themes).toHaveLength(3);
   });
 
+  it("combines matching installed and personal copies while retaining their saved IDs", async () => {
+    const original = await getMenuMusicLibrary(root, "mgs1", "steam-root");
+    const installedId = original.themes.find(theme => theme.label === "INTRODUCTION")!.id;
+    const folder = join(root, "music", "mgs1");
+    await mkdir(folder, { recursive: true });
+    await writeFile(join(folder, "Introduction.flac"), "personal");
+    await writeFile(join(folder, "Introduction.mp3"), "converted");
+    const combined = await getMenuMusicLibrary(root, "mgs1", "steam-root");
+    expect(combined.themes).toHaveLength(original.themes.length);
+    const preferred = musicFileId("mgs1", "Introduction.flac");
+    expect(combined.defaultThemeId).toBe(preferred);
+    for (const selected of [installedId, preferred, musicFileId("mgs1", "Introduction.mp3")]) {
+      expect(effectiveMenuTheme("mgs1", {}, selected, combined)?.id).toBe(preferred);
+    }
+    expect(await readFile(join(folder, "Introduction.mp3"), "utf8")).toBe("converted");
+  });
+
   it("handles absent libraries, incomplete optional DLC and disappearing drives", async () => {
     expect(await getNativeSoundtracks(root, null)).toEqual([]);
     vi.mocked(discoverBonus).mockResolvedValue([]);

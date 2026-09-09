@@ -82,7 +82,20 @@ describe("local menu music library", () => {
     expect(effectiveMenuTheme("mgs3", {}, selection, converted)?.id).toBe(musicFileId("mgs3", "The Pain.mp3"));
     await writeFile(join(folder, "The Pain.flac"), "personal-lossless");
     const both = await getMenuMusicLibrary(root, "mgs3");
+    expect(both.themes).toHaveLength(1);
     expect(effectiveMenuTheme("mgs3", {}, selection, both)?.id).toBe(selection);
+    expect(effectiveMenuTheme("mgs3", {}, musicFileId("mgs3", "The Pain.mp3"), both)?.id).toBe(selection);
+    expect(await readFile(join(folder, "The Pain.mp3"), "utf8")).toBe("personal-converted");
+  });
+
+  it("collapses format copies without merging distinct arrangements or non-Latin titles", async () => {
+    const folder = await ensureMenuMusicFolder(root, "mgs1");
+    for (const name of ["Intruder 2.mp3", "Intruder 2.flac", "INTRUDER 2.wav", "Intruder 2 (Live).flac", "夜.mp3", "朝.mp3"]) {
+      await writeFile(join(folder, name), "audio");
+    }
+    const library = await getMenuMusicLibrary(root, "mgs1");
+    expect(library.themes).toHaveLength(4);
+    expect(effectiveMenuTheme("mgs1", {}, musicFileId("mgs1", "INTRUDER 2.wav"), library)?.id).toBe(musicFileId("mgs1", "Intruder 2.flac"));
   });
 
   it("rejects paths, malformed IDs, other games and unsupported file URLs", async () => {

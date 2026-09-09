@@ -1,4 +1,5 @@
 import type { BonusPlaylist, BonusPlaylistTrack } from "../../shared/bonusPlaylist";
+import { musicPlaybackVolume } from "../audio/musicVolume";
 
 export interface BonusPlaylistState { currentTrack?: BonusPlaylistTrack; unavailable: boolean }
 
@@ -35,7 +36,7 @@ export class BonusPlaylistPlayer {
     const reactivate = active && !this.active;
     this.active = active;
     this.suspended = suspended;
-    this.audio.volume = Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : 0;
+    this.audio.volume = musicPlaybackVolume(volume);
     if (!this.shouldPlay()) {
       this.generation++;
       this.pending = false;

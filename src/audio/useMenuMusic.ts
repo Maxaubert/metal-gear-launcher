@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { musicPlaybackVolume } from "./musicVolume";
 
 const FADE_MS = 300;
 const FADE_STEP_MS = 25;
@@ -52,7 +53,7 @@ type PlaybackState = { url?: string; attempt: number; ready: boolean; error: str
 /** Starts automatically, then fades between games without restarting on menu navigation. */
 export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0, preview = false, suspended = false): { ready: boolean; error: string } {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const volumeRef = useRef(volume);
+  const volumeRef = useRef(musicPlaybackVolume(volume));
   const previewRef = useRef(preview);
   const suspendedRef = useRef(suspended);
   useEffect(() => { suspendedRef.current = suspended; }, [suspended]);
@@ -63,8 +64,8 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
   }, [preview]);
 
   useEffect(() => {
-    volumeRef.current = volume;
-    if (audioRef.current) audioRef.current.volume = volume;
+    volumeRef.current = musicPlaybackVolume(volume);
+    if (audioRef.current) audioRef.current.volume = volumeRef.current;
   }, [volume]);
 
   useEffect(() => {
