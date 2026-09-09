@@ -23,7 +23,7 @@ test("a partial Unicode library needs no community fixes and uses its separate d
       ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
     } });
     const page = await app.firstWindow();
-    await expect(page.getByText("Not installed", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("not-installed-screen")).toBeVisible();
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".tile.not-installed")).toHaveCount(5);
@@ -54,7 +54,7 @@ test("a fresh empty Steam install opens without artwork or font caches", async (
       ...process.env, HUB_DATA_DIR: join(root, "Fresh data 日本語"), HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
     } });
     const page = await app.firstWindow();
-    await expect(page.getByText("Not installed", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("not-installed-screen")).toBeVisible();
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".tile.not-installed")).toHaveCount(6);

@@ -35,7 +35,7 @@ async function fixture(installMgs3: boolean) {
     });
     await page.setViewportSize({ width: 1920, height: 1080 });
     if (installMgs3) await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
-    else await expect(page.getByText("Not installed", { exact: true })).toBeVisible();
+    else await expect(page.getByTestId("not-installed-screen")).toBeVisible();
     await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 20000 });
     return { app, page, close };
   } catch (error) { await close(); throw error; }
