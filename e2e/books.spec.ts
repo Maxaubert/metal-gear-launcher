@@ -75,6 +75,8 @@ test('books are discovered before opening, load pages on demand, navigate, recov
     await expect(page.getByTestId('book-controls')).toHaveAttribute('inert', '');
     await expect(page.getByTestId('book-reader').getByRole('button')).toHaveCount(0);
     await expect(page.getByTestId('book-show-controls')).toHaveCount(0);
+    await expect(page.getByTestId('book-controls')).toHaveCSS('opacity', '0');
+    await expect(page.locator('.book-controls-footer')).toHaveCSS('opacity', '0');
     await page.screenshot({ path: 'e2e/out/books-hidden-controls.png' });
     expect(await page.evaluate(() => Boolean(document.activeElement?.closest('[data-book-overlay]')))).toBe(false);
     await page.mouse.move(100, 100); await page.mouse.move(1200, 650);
