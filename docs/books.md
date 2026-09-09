@@ -50,6 +50,7 @@ loaded successfully. The reader offers a contents list, direct page entry, Previ
 zoom, Fit and pointer panning. Pages occupy the full window. Floating controls fade after 2.5
 seconds idle and return on input; hover, focus, contents and errors keep them visible without
 resizing the page. Keyboard and controller hints follow the active input method.
+Use Hide or H to keep the compact controls hidden while reading. H or the small Controls button restores them; pointer movement and page turns do not cancel manual hiding.
 An extraction failure has a retry action and does not replace the last successful position.
 
 ## Native formats
@@ -73,3 +74,13 @@ libraries, cache corruption, retry, navigation, language selection and safe text
 The MGS4 Database is a separate Unreal IoStore application and is not included in this reader.
 Other regional manuals have not been fully inventoried. Previously extracted research files
 under the separate `books` directory are not required by the application.
+
+## Clean local installation checks
+
+After packaging, run `pwsh -File scripts/install-clean.ps1` for local first-run testing.
+It archives `%LOCALAPPDATA%\MGSMasterHub` and `%APPDATA%\MGS Master Hub` under
+`%LOCALAPPDATA%\MetalGearLauncher-install-backups`, then installs without existing settings,
+reading history, extracted files, imported music or Chromium state. The archived files remain
+available for recovery. Steam installations, game settings and saves are untouched.
+The next launch discovers and prepares the installed library as it would for a new user.
+This is a local testing helper; normal release installers continue to preserve user data.

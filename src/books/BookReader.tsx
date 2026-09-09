@@ -20,7 +20,7 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
     const timer = window.setTimeout(() => setSlowPage(reader.pageIndex), 250);
     return () => window.clearTimeout(timer);
   }, [reader.loading, reader.pageIndex, reader.page]);
-  const controls = useBookControls(contents || reader.loading || Boolean(reader.error) || Boolean(reader.saveError));
+  const controls = useBookControls(contents || reader.loading || Boolean(reader.error) || Boolean(reader.saveError), contents || Boolean(reader.error));
   const viewport = useRef<HTMLDivElement>(null);
   const contentsList = useRef<HTMLDivElement>(null);
   const document = reader.document;
@@ -75,19 +75,20 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
     else if (action === "confirm") { if (reader.error) reader.retry(); else setZoom(value => value === 1 ? 1.75 : 1); }
   });
   return <main className="bonus-screen books-screen book-reader" data-testid="book-reader" aria-busy={reader.loading}
-    data-controls-visible={controls.visible} onPointerMove={controls.reveal} onPointerDown={controls.reveal} onWheel={controls.reveal}>
-    <div className="book-controls-overlay" data-testid="book-controls" data-visible={controls.visible} {...controls.overlayEvents}>
-    <header className="book-reader-heading"><h1>{document?.title ?? (request.kind === "master" ? "Master Book" : "Screenplay Book")}<span>{request.language === "en" ? "English" : "日本語"}</span></h1></header>
+    data-controls-visible={controls.visible} data-controls-hidden={controls.manuallyHidden} onPointerMove={controls.reveal} onPointerDown={controls.reveal} onWheel={controls.reveal}>
+    <div className="book-controls-overlay" data-book-overlay data-testid="book-controls" data-visible={controls.visible} inert={!controls.visible} aria-hidden={!controls.visible} {...controls.overlayEvents}>
+    <header className="book-reader-heading"><h1>{document?.title ?? (request.kind === "master" ? "Master Book" : "Screenplay Book")}</h1><span aria-label={request.language === "en" ? "English" : "Japanese"}>{request.language === "en" ? "EN" : "日本語"}</span></header>
     <nav className="book-toolbar" aria-label="Book controls">
       <button data-testid="book-contents" disabled={!document?.contents.length} aria-expanded={contents} onClick={toggleContents}>Contents</button>
       <div className="book-page-navigation">
-        <button data-testid="book-previous" aria-label="Previous page" disabled={!document || reader.pageIndex === 0} onClick={() => changePage(reader.pageIndex - 1)}>Previous</button>
+        <button data-testid="book-previous" className="book-page-arrow" aria-label="Previous page" title="Previous page (Page Up)" disabled={!document || reader.pageIndex === 0} onClick={() => changePage(reader.pageIndex - 1)}><PageArrow previous /></button>
         <form onSubmit={event => { event.preventDefault(); jump(); }}><label htmlFor="book-page-number">Page</label><input id="book-page-number" aria-label="Page number" type="number" min="1" max={document?.pageCount ?? 1}
           value={pageInput ?? reader.pageIndex + 1} disabled={!document} onChange={event => setPageInput(event.target.value)} onBlur={jump} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); event.stopPropagation(); event.currentTarget.blur(); } }} />
           <span>/ {document?.pageCount ?? "…"}</span></form>
-        <button data-testid="book-next" aria-label="Next page" disabled={!document || reader.pageIndex >= document.pageCount - 1} onClick={() => changePage(reader.pageIndex + 1)}>Next</button>
+        <button data-testid="book-next" className="book-page-arrow" aria-label="Next page" title="Next page (Page Down)" disabled={!document || reader.pageIndex >= document.pageCount - 1} onClick={() => changePage(reader.pageIndex + 1)}><PageArrow /></button>
       </div>
       <div className="book-zoom-controls"><button data-testid="book-zoom-out" aria-label="Zoom out" disabled={zoom === 1} onClick={() => changeZoom(-.25)}>−</button><span aria-live="polite">{Math.round(zoom * 100)}%</span><button data-testid="book-zoom-in" aria-label="Zoom in" disabled={zoom === 3} onClick={() => changeZoom(.25)}>+</button><button data-testid="book-fit" onClick={() => setZoom(1)}>Fit</button></div>
+      <button data-testid="book-hide-controls" className="book-visibility-toggle" onClick={controls.hide} aria-label="Hide controls" aria-keyshortcuts="H">Hide <kbd>H</kbd></button>
     </nav>
     </div>
     <section className="book-content-area">
@@ -101,12 +102,14 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
           onPointerMove={() => setContentFocus(index)} onFocus={() => setContentFocus(index)} onClick={() => { changePage(entry.page); setContents(false); }}><span>{entry.title}</span><span>{entry.page + 1}</span></button>)}</div>
       </section>}
     </section>
-    <footer className="bonus-player-hints books-footer book-controls-footer" data-visible={controls.visible} {...controls.overlayEvents}>
+    <footer className="bonus-player-hints books-footer book-controls-footer" data-book-overlay data-visible={controls.visible} inert={!controls.visible} aria-hidden={!controls.visible} {...controls.overlayEvents}>
       <ControlHint lastInputKind={lastInputKind} keyboard={["PgUp", "PgDn"]} gamepad="LB RB" label="Turn page" />
-      <ControlHint lastInputKind={lastInputKind} keyboard={["↑", "↓", "←", "→"]} gamepad="L" label={zoom > 1 ? "Pan" : "Navigate"} />
-      <ControlHint lastInputKind={lastInputKind} keyboard="Enter" gamepad="A" label="Zoom / Fit" />
-      <ControlHint lastInputKind={lastInputKind} keyboard="C" gamepad="Start" label="Contents" />
+      {zoom > 1 && <ControlHint lastInputKind={lastInputKind} keyboard={["↑", "↓", "←", "→"]} gamepad="L" label="Pan" />}
       <button data-testid="book-back" className="bonus-hint-button" onClick={back}><ControlHint lastInputKind={lastInputKind} keyboard="Esc" gamepad="B" label="Back" /></button>
     </footer>
   </main>;
+}
+
+function PageArrow({ previous = false }: { previous?: boolean }) {
+  return <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d={previous ? "m12 4-6 6 6 6" : "m8 4 6 6-6 6"} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="square" /></svg>;
 }
