@@ -22,9 +22,9 @@ async function fixture(partial: boolean) {
       await cp(join(__dirname, "fixtures/assets/mgs3"), join(data, "assets/mgs3"), { recursive: true });
       await writeFile(join(steam, "steamapps/appmanifest_2131650.acf"), '"AppState" { "installdir" "MGS3" "buildid" "100004" }');
     }
-    // New data means the default MG/MG2 page is absent in both cases. The empty case
+    // Explicitly request the absent MG/MG2 page in both cases. The empty case
     // deliberately has no artwork or font cache at all.
-    app = await electron.launch({ args: [join(__dirname, "../out/main/index.js")], env: {
+    app = await electron.launch({ args: [join(__dirname, "../out/main/index.js"), "--game", "mg12"], env: {
       ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
     } });
     const page = await app.firstWindow();

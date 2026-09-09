@@ -65,6 +65,6 @@ describe("config", () => {
     expect(startGameFor([], config)).toBe("mgs3");
     expect(startGameFor(["--game", "mgs4"], config)).toBe("mgs4");
     expect(startGameFor([], { lastGame: "mgs2" })).toBe("mgs2");
-    expect(startGameFor([], { lastGame: "invalid" })).toBeUndefined();
+    expect(startGameFor([], { lastGame: "invalid" })).toBe("mgs3");
   });
 });

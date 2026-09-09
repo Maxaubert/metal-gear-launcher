@@ -1,14 +1,27 @@
 # Local first-run testing only. Release installers continue to preserve user data.
 [CmdletBinding(SupportsShouldProcess)]
-param()
+param([string]$RecoveryMediaRoot)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'preserve-user-media.ps1')
+. (Join-Path $PSScriptRoot 'unpackaged-install.ps1')
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $version = (Get-Content -LiteralPath (Join-Path $repoRoot 'package.json') -Raw | ConvertFrom-Json).version
 $installer = Join-Path $repoRoot "dist\MetalGearLauncher-Setup-x64-$version.exe"
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw "Build the $version installer before installing: $installer" }
 if (Get-Process -Name 'Metal Gear Launcher' -ErrorAction SilentlyContinue) { throw 'Close Metal Gear Launcher before a clean installation.' }
 if (-not $env:LOCALAPPDATA -or -not $env:APPDATA) { throw 'Windows application-data folders are unavailable.' }
+
+if (-not $RecoveryMediaRoot) {
+    if (-not $PSCmdlet.ShouldProcess('Metal Gear Launcher local installation', 'Stage user media and install outside packaged AppData virtualization')) { return }
+    $staging = Join-Path $repoRoot ('.superpowers\install-clean-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $staging | Out-Null
+    $media = Join-Path $staging 'media'
+    Copy-LauncherUserMedia -SourceRoot (Join-Path $env:LOCALAPPDATA 'MGSMasterHub') -DestinationRoot $media
+    Write-Output "User media staged safely at $staging. Installing in the ordinary Windows user context."
+    Invoke-UnpackagedInstallScript -ScriptPath $PSCommandPath -WorkDirectory $staging -RecoveryMediaRoot $media
+    return
+}
+if (Test-CurrentProcessPackaged) { throw 'Installation must run outside the packaged terminal.' }
 
 $localRoot = [IO.Path]::GetFullPath($env:LOCALAPPDATA)
 $roamingRoot = [IO.Path]::GetFullPath($env:APPDATA)
@@ -47,4 +60,5 @@ foreach ($target in $targets) {
     if ((Test-Path -LiteralPath $target.Path) -and (Get-ChildItem -LiteralPath $target.Path -Force | Select-Object -First 1)) { throw "The installer unexpectedly populated $($target.Path). Inspect before first-run testing." }
 }
 Copy-LauncherUserMedia -SourceRoot (Join-Path $backup 'launcher-data') -DestinationRoot (Join-Path $localRoot 'MGSMasterHub')
+if ($RecoveryMediaRoot) { Restore-MissingLauncherMedia -SourceRoot $RecoveryMediaRoot -DestinationRoot (Join-Path $localRoot 'MGSMasterHub') }
 Write-Output "Installed $version with no launcher configuration, reading history, extracted content or browser profile. Imported music and custom sounds are preserved. First launch will prepare the detected library."

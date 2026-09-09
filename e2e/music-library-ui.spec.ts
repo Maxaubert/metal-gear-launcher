@@ -31,13 +31,13 @@ test("music filenames preview on focus, autosave on confirmation, and refresh wi
     const first = page.getByRole("button", { name: labels[0], exact: true });
     await first.hover();
     await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(firstId), { timeout: 1000 });
-    await expect(first.locator(".settings-selected")).toHaveCount(0);
+    await expect(first.locator(".settings-selected")).toBeVisible();
     await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toHaveCount(0);
     await expect(first.locator("canvas, img")).toHaveCount(0);
     await page.keyboard.press("ArrowDown");
     await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(secondId), { timeout: 1000 });
     await page.keyboard.press("Escape");
-    await expect(page.locator("#menu-music")).toHaveAttribute("src", /mgs1\/bgm\.wav/);
+    await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(firstId));
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     await first.click();
     await page.getByRole("button", { name: labels[1], exact: true }).hover();

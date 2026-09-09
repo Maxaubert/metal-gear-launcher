@@ -111,8 +111,9 @@ test("all six games hide built-in themes while empty libraries retain folder and
       await page.keyboard.press("Tab");
       await page.getByTestId(`tile-${gameId}`).click();
       await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", gameId);
-      // The extracted original exists, so its absence is deliberate, not an asset failure.
-      await expect.poll(() => page.locator("#menu-music").getAttribute("src")).toContain(`${gameId}/bgm.wav`);
+      // Cached originals exist, but an empty imported library must remain silent.
+      await expect(page.locator("#menu-music")).not.toHaveAttribute("src");
+      await expect(page.locator("#menu-music")).toHaveJSProperty("paused", true);
       await page.getByTestId("menu-item-options").click();
       await page.getByRole("button", { name: "Menu Music", exact: true }).click();
       await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);

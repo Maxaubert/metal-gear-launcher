@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron, type Page } from "@playwright/test";
-import { cp, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -7,6 +7,8 @@ async function fixture() {
   const root = await mkdtemp(join(tmpdir(), "hub-splash-"));
   const data = join(root, "hub"), steam = join(root, "steam");
   await cp(join(__dirname, "fixtures", "assets"), join(data, "assets"), { recursive: true });
+  await mkdir(join(data, "music", "mgs1"), { recursive: true });
+  await cp(join(data, "assets", "mgs1", "bgm.wav"), join(data, "music", "mgs1", "Custom Theme.wav"));
   await cp(join(__dirname, "fixtures", "steam"), steam, { recursive: true });
   await writeFile(join(steam, "steamapps", "libraryfolders.vdf"), `"libraryfolders" { "0" { "path" "${steam.replaceAll("\\", "/")}" } }`);
   await writeFile(join(data, "config.json"), JSON.stringify({ volume: 0.35, menuMusic: { mgs1: "mgs1-original" } }));

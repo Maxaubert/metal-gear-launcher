@@ -16,6 +16,8 @@ function silence() {
 test("bonus selection owns its scene and playlist through transitions, media playback and returning", async () => {
   const data = await mkdtemp(join(tmpdir(), "hub-bonus-presentation-"));
   await cp(join(__dirname, "fixtures/assets"), join(data, "assets"), { recursive: true });
+  await mkdir(join(data, "music/mgs4"), { recursive: true });
+  await writeFile(join(data, "music/mgs4/Custom Theme.wav"), silence());
   await mkdir(join(data, "music/bonus"), { recursive: true });
   await writeFile(join(data, "music/bonus/01 First.wav"), silence());
   await writeFile(join(data, "music/bonus/02 Second.wav"), silence());

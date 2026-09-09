@@ -1,12 +1,17 @@
 import { test, expect, _electron as electron } from "@playwright/test";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { musicFileId } from "../electron/main/music/library";
 
 async function musicFixture() {
   const root = await mkdtemp(join(tmpdir(), "hub-audio-startup-"));
   const data = join(root, "hub"), steam = join(root, "steam");
   await cp(join(__dirname, "fixtures", "assets"), join(data, "assets"), { recursive: true });
+  for (const game of ["mgs1", "mgs2"]) {
+    await mkdir(join(data, "music", game), { recursive: true });
+    await cp(join(data, "assets", game, "bgm.wav"), join(data, "music", game, "Custom Theme.wav"));
+  }
   await cp(join(__dirname, "fixtures", "steam"), steam, { recursive: true });
   await writeFile(join(steam, "steamapps", "libraryfolders.vdf"), `"libraryfolders" { "0" { "path" "${steam.replaceAll("\\", "/")}" } }`);
   await writeFile(join(data, "config.json"), JSON.stringify({ volume: 0.35, lastGame: "mgs1", menuMusic: { mgs1: "mgs1-original" } }));
@@ -34,7 +39,7 @@ test("initial music plays at saved volume without input and delayed playback kee
       source: element.currentSrc,
     }));
     expect(initial).toMatchObject({ paused: false, ready: 4, volume: 0.35, loop: true });
-    expect(initial.source).toContain("mgs1/bgm.wav");
+    expect(initial.source).toContain(musicFileId("mgs1", "Custom Theme.wav"));
 
     // A fresh document with the real play() call held proves readiness gates presentation.
     await page.addInitScript(() => {
@@ -59,7 +64,7 @@ test("initial music plays at saved volume without input and delayed playback kee
 
 test("broken initial music offers Retry while later track failures keep menus mounted", async () => {
   const fixture = await musicFixture();
-  const song = join(fixture.data, "assets", "mgs1", "bgm.wav");
+  const song = join(fixture.data, "music", "mgs1", "Custom Theme.wav");
   const original = await readFile(song);
   await writeFile(song, "broken audio fixture");
   const app = await electron.launch(fixture.options);
@@ -78,7 +83,7 @@ test("broken initial music offers Retry while later track failures keep menus mo
     expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
     await page.keyboard.press("Escape");
 
-    await writeFile(join(fixture.data, "assets", "mgs2", "bgm.wav"), "broken subsequent track");
+    await writeFile(join(fixture.data, "music", "mgs2", "Custom Theme.wav"), "broken subsequent track");
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs2").click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
@@ -95,7 +100,7 @@ test("broken initial music offers Retry while later track failures keep menus mo
     }
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
-    await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => !element.paused && element.currentSrc.includes("mgs1/bgm.wav"))).toBe(true);
+    await expect.poll(() => audio.evaluate((element: HTMLAudioElement, id) => !element.paused && element.currentSrc.includes(id), musicFileId("mgs1", "Custom Theme.wav"))).toBe(true);
     expect(await node!.evaluate(element => element.isConnected)).toBe(true);
   } finally { await app.close(); await removeFixture(fixture.root); }
 });

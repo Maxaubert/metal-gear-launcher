@@ -19,6 +19,8 @@ async function fixture(installMgs3: boolean) {
     await mkdir(join(steam, "steamapps"), { recursive: true });
     await writeFile(join(steam, "steam.exe"), "synthetic fixture");
     await cp(join(__dirname, "fixtures/assets"), join(data, "assets"), { recursive: true });
+    await mkdir(join(data, "music/mgs3"), { recursive: true });
+    await cp(join(data, "assets/mgs3/bgm.wav"), join(data, "music/mgs3/Custom Theme.wav"));
     await cp(join(__dirname, "fixtures/bonus/test-video.mp4"), join(data, "assets/mg12/bonus-test.mp4"));
     if (installMgs3) {
       await cp(join(__dirname, "fixtures/steam/steamapps/common/MGS3"), join(steam, "steamapps/common/MGS3"), { recursive: true });

@@ -55,7 +55,7 @@ test("local filenames preview on focus, save independently, survive restart and 
     let page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
-    await expectPlaying(page, "mgs2/bgm.wav");
+    await expectPlaying(page, musicFileId("mgs2", "Alert.wav"));
     const result = await page.evaluate(() => window.hub.getMenuMusic("mgs2"));
     if (!result.ok) throw new Error(result.error);
     const local = result.value.themes.filter(theme => theme.url);
@@ -81,7 +81,7 @@ test("local filenames preview on focus, save independently, survive restart and 
     await page.keyboard.press("ArrowDown");
     await expectPlaying(page, third.id);
     await page.keyboard.press("Escape");
-    await expectPlaying(page, "mgs2/bgm.wav");
+    await expectPlaying(page, first.id);
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     await page.getByRole("button", { name: first.label, exact: true }).hover();
     await page.keyboard.press("Enter");
@@ -107,7 +107,7 @@ test("local filenames preview on focus, save independently, survive restart and 
     page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
-    await expectPlaying(page, "mgs2/bgm.wav");
+    await expectPlaying(page, second.id);
     await openMusic(page);
     await expect(page.getByRole("button", { name: first.label, exact: true })).toHaveCount(0);
     const saved = await page.evaluate(id => window.hub.saveMenuMusic({ gameId: "mgs2", themeId: id }), first.id);
@@ -154,6 +154,37 @@ test("startup remembers successful game launches instead of browsed tabs or inst
     const config = JSON.parse(await readFile(join(f.data, "config.json"), "utf8"));
     expect(config.lastLaunchedGame).toBe("mgs2");
     expect(config.lastGame).toBe("mgs1");
+    await app.close();
+    app = await electron.launch(f.options);
+    page = await app.firstWindow();
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
+  } finally { await app.close(); await cleanup(f.root); }
+});
+
+test("a first launch opens MGS3 and later starts at the last successfully launched game", async () => {
+  const f = await fixture();
+  await rm(join(f.data, "config.json"));
+  let app = await electron.launch(f.options);
+  try {
+    let page = await app.firstWindow();
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs1").click();
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await app.close();
+    app = await electron.launch(f.options);
+    page = await app.firstWindow();
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs2").click();
+    await page.getByTestId("menu-item-start").click();
+    await expect.poll(async () => {
+      try { return JSON.parse(await readFile(join(f.data, "config.json"), "utf8")).lastLaunchedGame; }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error; }
+    }).toBe("mgs2");
     await app.close();
     app = await electron.launch(f.options);
     page = await app.firstWindow();
