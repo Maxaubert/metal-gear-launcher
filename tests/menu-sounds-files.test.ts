@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -29,6 +29,32 @@ describe("optional local menu sound files", () => {
 
   it("returns an empty preload for a fresh machine with no sounds or games", async () => {
     expect(await readMenuSounds(join(root, "not-created"))).toEqual({});
+  });
+
+  it("uses native effects on a fresh install and fills partial imports without replacing valid user clips", async () => {
+    const native = vi.fn(async () => ({ navigate: wav(48).toString("base64"), select: wav(50).toString("base64") }));
+    expect(await readMenuSounds(root, native)).toEqual(await native());
+    await mkdir(join(root, "sounds"));
+    await writeFile(join(root, "sounds", "navigate.wav"), wav());
+    const broken = wav(); broken.writeUInt32LE(5000, 40);
+    await writeFile(join(root, "sounds", "select.wav"), broken);
+    expect(await readMenuSounds(root, native)).toEqual({ navigate: wav().toString("base64"), select: wav(50).toString("base64") });
+  });
+
+  it("does not extract native assets when every user effect is present", async () => {
+    await mkdir(join(root, "sounds"));
+    for (const action of MENU_SOUNDS) await writeFile(join(root, "sounds", `${action}.wav`), wav());
+    const native = vi.fn(async () => ({}));
+    expect(Object.keys(await readMenuSounds(root, native))).toHaveLength(MENU_SOUNDS.length);
+    expect(native).not.toHaveBeenCalled();
+  });
+
+  it("reports native failure for retry on a fresh setup while preserving working custom effects", async () => {
+    const native = vi.fn(async () => { throw new Error("Decoder temporarily unavailable"); });
+    await expect(readMenuSounds(root, native)).rejects.toThrow("Decoder temporarily unavailable");
+    await mkdir(join(root, "sounds"));
+    await writeFile(join(root, "sounds", "navigate.wav"), wav());
+    expect(await readMenuSounds(root, native)).toEqual({ navigate: wav().toString("base64") });
   });
 
   it("loads every allowed action exactly, without exposing arbitrary neighboring files", async () => {

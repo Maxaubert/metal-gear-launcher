@@ -100,12 +100,10 @@ test("keyboard Retry rediscovers a repaired artwork manifest instead of reusing 
   } });
   try {
     const page = await app.firstWindow();
-    const retry = page.getByRole("button", { name: "Retry", exact: true });
-    const extract = page.getByRole("button", { name: "Re-extract Artwork", exact: true });
-    await expect(retry).toBeFocused();
+    const retry = page.getByRole("button", { name: "Retry preparation", exact: true });
+    await expect(retry).toBeFocused({ timeout: 20000 });
     await page.keyboard.press("ArrowDown");
-    await expect(extract).toBeFocused();
-    await expect(extract).toHaveClass("focused");
+    await expect(retry).toBeFocused();
     await page.keyboard.press("ArrowUp");
     await expect(retry).toBeFocused();
     // Keep the original URL broken. Only fresh discovery sees the replacement filename.
@@ -125,14 +123,14 @@ test("keyboard Retry rediscovers a repaired artwork manifest instead of reusing 
   }
 });
 
-test("controller recovery reaches the existing artwork extraction screen", async () => {
+test("controller recovery retries preparation and enters only after the library is ready", async () => {
   const fixture = await brokenArtworkFixture();
   const app = await electron.launch({ args: [join(__dirname, "..", "out", "main", "index.js")], env: {
     ...process.env, HUB_DATA_DIR: fixture.data, HUB_STEAM_ROOT: fixture.steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
   } });
   try {
     const page = await app.firstWindow();
-    await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeFocused();
+    await expect(page.getByRole("button", { name: "Retry preparation", exact: true })).toBeFocused({ timeout: 20000 });
     const pad = await page.evaluateHandle(() => {
       const pad = { index: 0, connected: true, id: "Recovery test controller", mapping: "standard", timestamp: 0,
         axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
@@ -140,13 +138,13 @@ test("controller recovery reaches the existing artwork extraction screen", async
       return pad;
     });
     await pad.evaluate(pad => { pad.buttons[13]!.pressed = true; pad.buttons[13]!.value = 1; });
-    await expect(page.getByRole("button", { name: "Re-extract Artwork", exact: true })).toBeFocused();
+    await expect(page.getByRole("button", { name: "Retry preparation", exact: true })).toBeFocused();
+    await writeFile(join(fixture.data, "assets", "mgs2", "mainVisual.png"), fixture.original);
     await pad.evaluate(pad => { pad.buttons[13]!.pressed = false; pad.buttons[13]!.value = 0; pad.buttons[0]!.pressed = true; pad.buttons[0]!.value = 1; });
-    await expect(page.getByRole("heading", { name: "Preparing your games", exact: true })).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 20000 });
     await pad.evaluate(pad => { pad.buttons[0]!.pressed = false; pad.buttons[0]!.value = 0; });
     await pad.dispose();
-    // No extraction is started; fixtures contain no native game resources.
-    await expect(page.getByText("Start", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("game-screen")).toBeVisible();
   } finally {
     await app.close();
     if (dirname(resolve(fixture.root)) !== resolve(tmpdir())) throw new Error("Unexpected test directory");

@@ -206,6 +206,8 @@ test.describe("hub", () => {
           }
           await page.keyboard.press("Tab");
           await page.keyboard.press(direction);
+          // Bonus Content has its own layout; this loop measures the six game menus.
+          if (await page.getByTestId("tile-bonus").getAttribute("data-focused") === "true") await page.keyboard.press(direction);
           await page.keyboard.press("Enter");
         }
       }

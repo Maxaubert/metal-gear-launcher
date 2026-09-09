@@ -66,6 +66,36 @@ Open Galaxy to update its cache. An edition must support Galaxy achievements to 
 list; other storefronts are not connected yet. These trophy sources do not change the hub's
 Steam-based game installation and launch support. See [platform details](docs/achievements.md).
 
+## Bonus Content
+
+Choose **Game Selection > Bonus Content** for one combined library of Vol.1 and Vol.2 extras.
+**Videos** plays installed Vol.1 Digital Graphic Novels with chapter selection.
+**Digital Soundtrack** combines the tracks available in your installed bonus-content apps.
+
+Steam library locations are detected automatically. Install the relevant Bonus Content app and
+its optional movie downloads through Steam first. Missing volumes or individual media files do
+not prevent the rest of the library from working. Retry refreshes detection after an installation.
+The first startup prepares installed content behind a progress screen before opening menus.
+Completed files are reused after interruption; failures offer Retry. New or changed installations
+are prepared on the next startup. Small menu and sleeve images use the local cache; movies and tracks
+play directly from the Steam library without being copied. No bonus media ships with the launcher.
+Bonus Content has its own artwork and transition in Game Selection. Its menus play a sequential
+playlist of classic themes and vocal finales found in your local game music folders, including
+Snake Eater, The Best Is Yet to Come, Old Snake and Heavens Divide. Unavailable songs are skipped.
+The vocal selections follow [Konami's series compilation](https://www.konami.com/mg/mgs5/tpp/jp/goods/item_vtac.html).
+Without matching local songs, the launcher uses available tracks from installed bonus soundtracks.
+The playlist pauses for soundtrack playback and movies, then resumes from the same position.
+
+To replace the playlist, add audio files to `%LOCALAPPDATA%\MGSMasterHub\music\bonus\` and restart
+the launcher. Files play in filename order (numeric prefixes are supported), with extensions
+hidden from titles. The last song returns to the first; individual songs do not loop.
+
+Master Books and Screenplay Books appear under **Bonus Content → Books** for installed games.
+Choose English or Japanese, browse the contents, zoom and pan, and resume your last page.
+Pages fill the window, with controls overlaid and hidden when idle. Startup prepares all available
+book pages in the local cache so opening books later does not require extraction. No book content
+is bundled. See [book support](docs/books.md).
+
 ## Menu music
 
 Open **Options > Menu Music > Open Music Folder** for a game's local music library. Add FLAC,
@@ -143,7 +173,7 @@ alongside them under `resources/tools/LICENSES/`.
 
 - Per-game settings screen (Konami launcher options and community fix-mod settings), see
   `docs/superpowers/specs/2026-09-06-mgs-master-hub-design.md` section 4.5
-- In-hub book/comic viewer for the Master Book, Screenplay Book and MGS4 Database content
+- MGS4 Database content and additional manuals
 - More launch options (borderless, monitor selection) surfaced from the hub itself
 
 ## Development
