@@ -3,7 +3,7 @@ import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
-test("music filenames preview on focus, save explicitly, and refresh without restarting", async () => {
+test("music filenames preview on focus, autosave on confirmation, and refresh without restarting", async () => {
   const root = await mkdtemp(join(tmpdir(), "hub-music-library-ui-"));
   const data = join(root, "hub");
   await cp(join(__dirname, "fixtures", "assets"), join(data, "assets"), { recursive: true });
@@ -42,8 +42,9 @@ test("music filenames preview on focus, save explicitly, and refresh without res
     await first.click();
     await page.getByRole("button", { name: labels[1], exact: true }).hover();
     await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(secondId));
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expect(page.locator("#menu-music")).toHaveAttribute("src", /mgs1\/bgm\.wav/);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(firstId));
+    await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     const last = page.getByRole("button", { name: labels[11], exact: true });
     await last.hover();
     await expect(last).toBeInViewport();
@@ -51,10 +52,11 @@ test("music filenames preview on focus, save explicitly, and refresh without res
     await expect(last.locator(".settings-selected")).toBeVisible();
     await first.hover();
     await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(firstId));
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
     await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
     const lastId = library.value.themes.find(theme => theme.label === labels[11])!.id;
+    await page.keyboard.press("Escape");
     await expect(page.locator("#menu-music")).toHaveAttribute("src", new RegExp(lastId));
+    await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     expect(JSON.parse(await readFile(join(data, "config.json"), "utf8")).menuMusic.mgs1).toBe(lastId);
 
     const addedLabel = "新しい夜 - Guitar Theme";

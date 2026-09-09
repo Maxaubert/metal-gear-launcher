@@ -20,7 +20,11 @@
     "settingsPattern3": "settingsPattern3.png",
     "settingsPattern4": "settingsPattern4.png",
     "settingsPattern5": "settingsPattern5.png",
-    "settingsPattern6": "settingsPattern6.png"
+    "settingsPattern6": "settingsPattern6.png",
+    "fontMedium": "test-font.ttf",
+    "fontBold": "test-font.ttf",
+    "fontUi": "test-font.ttf",
+    "headerMark": "headerMark.png"
   },
   "failed": {}
 }

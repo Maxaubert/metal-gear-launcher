@@ -39,7 +39,7 @@ export async function saveGameSettings(request: SaveSettingsRequest, installDir:
   try {
     await requireGameClosed(installDir);
     const { result, native, patches } = await readSources(request.gameId, installDir, request.accountId);
-    if (request.revision !== result.revision) throw new Error("Settings changed outside the hub. Discard Changes to reload before saving.");
+    if (request.revision !== result.revision) throw new Error("Settings changed outside the hub. Use Current Settings, then make your change again.");
     const changes = request.changes;
     const seen = new Set<string>();
     for (const change of changes) {

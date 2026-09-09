@@ -3,17 +3,13 @@ import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/pr
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
-test("Menu Music saves and discards hub-only preferences without native settings or accounts", async () => {
+test("Menu Music previews without saving and autosaves confirmed hub-only preferences without native settings or accounts", async () => {
   const root = await mkdtemp(join(tmpdir(), "hub-menu-music-e2e-"));
   const data = join(root, "hub"), steam = join(root, "steam");
   await cp(join(__dirname, "fixtures", "assets"), join(data, "assets"), { recursive: true });
   await writeFile(join(data, "config.json"), JSON.stringify({ volume: 0.7 }));
   await cp(join(__dirname, "fixtures", "steam"), steam, { recursive: true });
   await writeFile(join(steam, "steamapps", "libraryfolders.vdf"), `"libraryfolders" { "0" { "path" "${steam.replaceAll("\\", "/")}" } }`);
-  const manifestPath = join(data, "assets", "mg12", "manifest.json");
-  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  delete manifest.files.bgm;
-  await writeFile(manifestPath, JSON.stringify(manifest));
   const launcherDir = join(steam, "steamapps", "common", "MGS3", "mgs3_savedata_win", "76561198000000001", "launcher");
   await mkdir(launcherDir, { recursive: true });
   const nativeConfig = join(launcherDir, "launcher_sv");
@@ -37,12 +33,11 @@ test("Menu Music saves and discards hub-only preferences without native settings
     await expect(page.getByRole("button", { name: "Steam Account", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     const theme = page.getByRole("button", { name: "Original Menu Theme", exact: true });
-    await theme.click();
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toHaveCount(0);
+    await theme.hover();
+    await page.keyboard.press("Escape");
     expect(JSON.parse(await readFile(join(data, "config.json"), "utf8")).menuMusic).toBeUndefined();
+    await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     await theme.click();
-    await page.keyboard.press("Tab");
     await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
     expect(JSON.parse(await readFile(join(data, "config.json"), "utf8")).menuMusic).toEqual({ mgs2: "mgs2-original" });
     const invalid = await page.evaluate(() => window.hub.saveMenuMusic({ gameId: "mgs2", themeId: "mgs3-original" }));
@@ -52,33 +47,24 @@ test("Menu Music saves and discards hub-only preferences without native settings
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs3").click();
     await page.getByTestId("menu-item-options").click();
-    await page.getByRole("button", { name: "Audio", exact: true }).click();
-    await page.getByRole("button", { name: "Decrease Main Menu Volume", exact: true }).click();
-    await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
     await page.getByRole("button", { name: "Original Menu Theme", exact: true }).click();
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await page.keyboard.press("Escape");
-    await page.getByRole("button", { name: "Audio", exact: true }).click();
-    await expect(page.getByTestId("setting-launcherMasterVolume").locator(".volume-number")).toHaveText("9");
-    await page.keyboard.press("Escape");
-    await page.getByRole("button", { name: "Menu Music", exact: true }).click();
-    await page.getByRole("button", { name: "Original Menu Theme", exact: true }).click();
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
     await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
     expect(JSON.parse(await readFile(join(data, "config.json"), "utf8")).menuMusic).toEqual({ mgs2: "mgs2-original", mgs3: "mgs3-original" });
     expect(await readFile(nativeConfig, "utf8")).toBe(nativeBytes);
     expect(await readdir(steam, { recursive: true })).toEqual(originalFiles);
+    // Exercise an empty runtime music catalog after startup has prepared all assets.
+    await app.evaluate(({ ipcMain }) => {
+      ipcMain.removeHandler("hub:music:get");
+      ipcMain.handle("hub:music:get", () => ({ ok: true, value: { gameId: "mg12", themes: [], defaultThemeId: "", folderPath: "" } }));
+    });
     await page.keyboard.press("Escape");
-    // Saving music leaves the independent native draft available to discard.
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expect(page.getByText("Loading settings...", { exact: true })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Discard Changes", exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mg12").click();
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Menu Music", exact: true }).click();
+    await page.getByRole("button", { name: "Refresh Music", exact: true }).click();
     await expect(page.getByText(/No menu music is available/).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);
     await app.close();

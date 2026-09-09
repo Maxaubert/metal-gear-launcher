@@ -23,7 +23,7 @@ test("a partial Unicode library needs no community fixes and uses its separate d
       ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
     } });
     const page = await app.firstWindow();
-    await expect(page.getByText("Not installed", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("not-installed-screen")).toBeVisible();
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".tile.not-installed")).toHaveCount(5);
@@ -54,7 +54,7 @@ test("a fresh empty Steam install opens without artwork or font caches", async (
       ...process.env, HUB_DATA_DIR: join(root, "Fresh data 日本語"), HUB_STEAM_ROOT: steam, HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1",
     } });
     const page = await app.firstWindow();
-    await expect(page.getByText("Not installed", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("not-installed-screen")).toBeVisible();
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".tile.not-installed")).toHaveCount(6);
@@ -67,7 +67,7 @@ test("a fresh empty Steam install opens without artwork or font caches", async (
   }
 });
 
-test("missing Steam can be located manually and a first installed game requests extraction", async () => {
+test("missing Steam can be located manually and a first installed game starts mandatory preparation", async () => {
   const root = await mkdtemp(join(tmpdir(), "hub-discovery-e2e-"));
   let app: Awaited<ReturnType<typeof electron.launch>> | undefined;
   try {
@@ -85,11 +85,14 @@ test("missing Steam can be located manually and a first installed game requests 
     expect(result.ok).toBe(true);
     // Reload to follow the same state path as the folder-picker's successful callback.
     await page.reload();
-    await expect(page.getByRole("heading", { name: "Preparing your games", exact: true })).toBeVisible();
-    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
+    await expect(page.getByTestId("startup-screen")).toBeVisible();
     await expect(page.getByText("Locate Steam folder", { exact: true })).toHaveCount(0);
-    await expect(page.getByText("MGS3", { exact: true })).toBeVisible();
-    await expect(page.getByText("0%", { exact: true })).toBeVisible();
+    // Synthetic game files cannot be decoded. Preparation must report the failure without
+    // exposing an unprepared menu or requiring the old manual Start extraction action.
+    await expect(page.getByRole("button", { name: "Retry preparation", exact: true })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId("game-screen")).toHaveCount(0);
+    await expect(page.getByTestId("hub-content")).toHaveAttribute("inert", "");
+    await expect(page.getByRole("button", { name: "Start", exact: true })).toHaveCount(0);
   } finally {
     await app?.close();
     if (dirname(resolve(root)) !== resolve(tmpdir())) throw new Error("Unexpected temporary directory");

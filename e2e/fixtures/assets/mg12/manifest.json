@@ -29,7 +29,11 @@
     "settingsOverlay": "settingsOverlay.png",
     "settingsGrid": "settingsGrid.png",
     "settingsGridFine": "settingsGridFine.png",
-    "settingsGridBase": "settingsGridBase.png"
+    "settingsGridBase": "settingsGridBase.png",
+    "fontMedium": "test-font.ttf",
+    "fontBold": "test-font.ttf",
+    "fontUi": "test-font.ttf",
+    "headerMark": "headerMark.png"
   },
   "failed": {}
 }

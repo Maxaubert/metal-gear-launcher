@@ -1,4 +1,4 @@
-# MGS Master Hub
+# Metal Gear Launcher
 
 A fullscreen launcher for the Metal Gear Solid Master Collection, styled after the collection's
 own in-game menus. It extracts each game's own menu art and music from its install, shows one
@@ -21,9 +21,12 @@ preview, or install the hub for the real thing.
 ## Install
 
 Download the installer from the
-[latest release](https://github.com/Maxaubert/mgs-master-hub/releases/latest)
-(`MGSMasterHub-Setup-x64-<version>.exe`) and run it. The hub checks GitHub Releases once at
+[latest release](https://github.com/Maxaubert/metal-gear-launcher/releases/latest)
+(`MetalGearLauncher-Setup-x64-<version>.exe`) and run it. The launcher checks GitHub Releases once at
 boot and shows a footer prompt when a newer version is out.
+
+Previously named MGS Master Hub. Upgrades retain your settings, music and extracted artwork in
+the existing `%LOCALAPPDATA%\MGSMasterHub\` data folder.
 
 ## First run and extraction
 
@@ -51,16 +54,63 @@ Moving the mouse over a menu item highlights it without activating it. Keyboard 
 navigation take over when you use them. Change games through **Game Selection**; arrows and
 shoulder buttons do not switch games from the main menu.
 
+## Trophies
+
+Open **Trophies** from a game's main menu to browse each achievement, its description,
+your unlock state, and the percentage of players who earned it. Steam data loads directly
+from Steam, with local stats and cached snapshots available when offline. No API key is needed.
+Private or unavailable unlock states are labeled explicitly.
+
+Matching GOG achievements appear as another source when GOG Galaxy has cached them locally.
+Open Galaxy to update its cache. An edition must support Galaxy achievements to provide that
+list; other storefronts are not connected yet. These trophy sources do not change the hub's
+Steam-based game installation and launch support. See [platform details](docs/achievements.md).
+
+## Bonus Content
+
+Choose **Game Selection > Bonus Content** for one combined library of Vol.1 and Vol.2 extras.
+**Videos** plays installed Vol.1 Digital Graphic Novels with chapter selection.
+**Digital Soundtrack** combines the tracks available in your installed bonus-content apps.
+
+Steam library locations are detected automatically. Install the relevant Bonus Content app and
+its optional movie downloads through Steam first. Missing volumes or individual media files do
+not prevent the rest of the library from working. Retry refreshes detection after an installation.
+The first startup prepares installed content behind a progress screen before opening menus.
+Completed files are reused after interruption; failures offer Retry. New or changed installations
+are prepared on the next startup. Small menu and sleeve images use the local cache; movies and tracks
+play directly from the Steam library without being copied. No bonus media ships with the launcher.
+Bonus Content has its own artwork and transition in Game Selection. Its menus play a sequential
+playlist of classic themes and vocal finales found in your local game music folders, including
+Snake Eater, The Best Is Yet to Come, Old Snake and Heavens Divide. Unavailable songs are skipped.
+The vocal selections follow [Konami's series compilation](https://www.konami.com/mg/mgs5/tpp/jp/goods/item_vtac.html).
+Without matching local songs, the launcher uses available tracks from installed bonus soundtracks.
+The playlist pauses for soundtrack playback and movies, then resumes from the same position.
+
+To replace the playlist, add audio files to `%LOCALAPPDATA%\MGSMasterHub\music\bonus\` and restart
+the launcher. Files play in filename order (numeric prefixes are supported), with extensions
+hidden from titles. The last song returns to the first; individual songs do not loop.
+
+Master Books and Screenplay Books appear under **Bonus Content → Books** for installed games.
+Choose English or Japanese, browse the contents, zoom and pan, and resume your last page.
+Pages fill the window, with controls overlaid and hidden when idle. Startup prepares all available
+book pages in the local cache so opening books later does not require extraction. No book content
+is bundled. See [book support](docs/books.md).
+
 ## Menu music
 
 Open **Options > Menu Music > Open Music Folder** for a game's local music library. Add FLAC,
 MP3, WAV, OGG or M4A files, then choose **Refresh Music**. Tracks appear under their filenames
 without extensions. The folders are `%LOCALAPPDATA%\MGSMasterHub\music\<game-id>\`.
 
-Moving through the song list previews each track immediately. Confirm a song and choose
-**Save Changes** to keep it. Leaving the list or discarding changes restores the saved theme.
+Moving through the song list previews each track immediately. Confirm a song to save it
+automatically. Leaving the list restores the last confirmed theme.
 Renaming or removing a selected file makes the hub fall back to an available default.
 The opening menu waits for its music to start before appearing.
+
+Options save changes automatically. Rapid edits are serialized, and leaving a settings page
+waits for pending writes. If a game or another app changes the same settings file, the hub keeps
+your pending edit and offers recovery instead of overwriting the external change. Keyboard
+hints use keycaps; controller hints retain controller buttons.
 
 When present, these filenames provide the initial defaults. An explicit saved choice takes
 priority; absent files fall back to the extracted original menu theme.
@@ -98,7 +148,7 @@ silently substituted. Restart the hub after replacing effect files.
 Launch straight into one game, skipping the hub's own selection screen:
 
 ```
-MGSMasterHub.exe --game mgs3
+"Metal Gear Launcher.exe" --game mgs3
 ```
 
 Valid ids: `mg12`, `mgs1`, `mgs2`, `mgs3`, `mgs4`, `mgspw`. If the hub is already running, a
@@ -123,7 +173,7 @@ alongside them under `resources/tools/LICENSES/`.
 
 - Per-game settings screen (Konami launcher options and community fix-mod settings), see
   `docs/superpowers/specs/2026-09-06-mgs-master-hub-design.md` section 4.5
-- In-hub book/comic viewer for the Master Book, Screenplay Book and MGS4 Database content
+- MGS4 Database content and additional manuals
 - More launch options (borderless, monitor selection) surfaced from the hub itself
 
 ## Development
