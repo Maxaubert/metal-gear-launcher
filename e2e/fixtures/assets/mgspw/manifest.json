@@ -16,7 +16,11 @@
     "reticle1": "reticle1.png",
     "reticle2": "reticle2.png",
     "reticle3": "reticle3.png",
-    "bgm": "bgm.wav"
+    "bgm": "bgm.wav",
+    "fontMedium": "test-font.ttf",
+    "fontBold": "test-font.ttf",
+    "fontUi": "test-font.ttf",
+    "headerMark": "headerMark.png"
   },
   "failed": {}
 }

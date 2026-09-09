@@ -2,6 +2,16 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { HubApi } from "@shared/ipc";
 
 const api: HubApi = {
+  prepareLibrary: () => ipcRenderer.invoke("hub:preparation:run"),
+  onPreparationProgress: cb => {
+    const handler = (_: unknown, progress: Parameters<typeof cb>[0]) => cb(progress);
+    ipcRenderer.on("hub:preparation:progress", handler);
+    return () => ipcRenderer.off("hub:preparation:progress", handler);
+  },
+  getBooksCatalog: () => ipcRenderer.invoke("hub:books:catalog"),
+  openBook: request => ipcRenderer.invoke("hub:books:open", request),
+  getBookPage: request => ipcRenderer.invoke("hub:books:page", request),
+  saveBookProgress: request => ipcRenderer.invoke("hub:books:progress", request),
   getBonusContent: () => ipcRenderer.invoke("hub:bonus:get"),
   getBonusPresentation: () => ipcRenderer.invoke("hub:bonus:presentation"),
   getBonusPlaylist: () => ipcRenderer.invoke("hub:bonus:playlist"),

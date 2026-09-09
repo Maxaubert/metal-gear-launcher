@@ -42,6 +42,8 @@ test("bonus selection owns its scene and playlist through transitions, media pla
     if (!playlist.ok) throw new Error(playlist.error);
     expect(playlist.value).toHaveLength(3);
     const audio = page.locator("#bonus-playlist");
+    const gameAudio = page.locator("#menu-music");
+    const originalSource = await gameAudio.getAttribute("src");
     await expect(audio).toHaveJSProperty("paused", true);
     await page.keyboard.press("Tab");
     await page.evaluate(() => {
@@ -60,7 +62,14 @@ test("bonus selection owns its scene and playlist through transitions, media pla
     await expect(page.getByTestId("outgoing-scene")).toHaveCount(0);
     await expect(page.getByTestId("scene-backdrop")).toHaveCSS("clip-path", "none");
     expect(await sharp(await page.screenshot()).extract({ left: 600, top: 500, width: 1, height: 1 }).removeAlpha().raw().toBuffer()).toEqual(Buffer.from([117, 106, 53]));
-    await expect(page.locator("#menu-music")).toHaveJSProperty("paused", true);
+    await expect(gameAudio).toHaveJSProperty("paused", false);
+    await expect(gameAudio).toHaveAttribute("src", originalSource!);
+    await expect(audio).toHaveJSProperty("paused", true);
+    // Keyboard browsing also previews artwork without changing the active music.
+    await page.keyboard.press("ArrowUp"); await page.keyboard.press("ArrowDown");
+    await expect(audio).toHaveJSProperty("paused", true);
+    await page.getByTestId("tile-bonus").click();
+    await expect(gameAudio).toHaveJSProperty("paused", true);
     await expect.poll(() => audio.evaluate(el => (el as HTMLAudioElement).currentTime)).toBeGreaterThan(.1);
     await audio.evaluate(el => { const media = el as HTMLAudioElement; media.currentTime = media.duration - .15; });
     await expect(audio).toHaveAttribute("src", playlist.value[1].url);
@@ -69,7 +78,6 @@ test("bonus selection owns its scene and playlist through transitions, media pla
     // An actual media error in track three must skip back to the first song.
     await expect(audio).toHaveAttribute("src", playlist.value[0].url);
     await expect(audio).toHaveJSProperty("paused", false);
-    await page.getByTestId("tile-bonus").click();
     await page.getByTestId("bonus-menu-soundtrack").click();
     await expect(audio).toHaveJSProperty("paused", true);
     await page.keyboard.press("Escape");
@@ -87,6 +95,8 @@ test("bonus selection owns its scene and playlist through transitions, media pla
     await expect(page.getByTestId("scene-backdrop")).toHaveAttribute("data-game", "bonus");
     for (const game of ["mgs1", "mgs4", "mgs3"]) {
       await page.getByTestId(`tile-${game}`).hover();
+      await expect(audio).toHaveJSProperty("paused", false);
+      await expect(gameAudio).toHaveJSProperty("paused", true);
       await page.getByTestId("tile-bonus").hover();
     }
     await expect(page.getByTestId("outgoing-scene")).toHaveCount(0);
@@ -98,6 +108,10 @@ test("bonus selection owns its scene and playlist through transitions, media pla
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs4");
     await expect(audio).toHaveJSProperty("paused", true);
     await expect(page.locator("#menu-music")).toHaveJSProperty("paused", false);
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-bonus").hover();
+    await expect(audio).toHaveJSProperty("paused", true);
+    await expect(gameAudio).toHaveJSProperty("paused", false);
   } finally {
     await app.close();
     if (dirname(resolve(data)) !== resolve(tmpdir())) throw new Error("Unexpected fixture directory");
