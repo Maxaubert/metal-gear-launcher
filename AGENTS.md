@@ -8,7 +8,7 @@
 - Known failures to tolerate: none
 - Version source: `package.json`   Release: release.yml on push to main
 - Local test installs must be clean: `pwsh -File scripts/install-clean.ps1` after packaging; confirm ProductVersion.
-- This archives launcher data/profile before resetting them for first-run testing. Never reset Steam/game settings or saves.
+- This archives launcher data/profile and resets configuration and extracted caches for first-run testing. Imported music and custom sounds are preserved; they are user files, not caches. Never reset Steam/game settings or saves.
 - Leave the final local installation unlaunched and clean after verification, unless Ove asks otherwise.
 - Deploy: installer via GitHub Releases
 - Signing: unsigned

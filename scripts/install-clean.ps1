@@ -2,6 +2,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param()
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'preserve-user-media.ps1')
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $version = (Get-Content -LiteralPath (Join-Path $repoRoot 'package.json') -Raw | ConvertFrom-Json).version
 $installer = Join-Path $repoRoot "dist\MetalGearLauncher-Setup-x64-$version.exe"
@@ -45,4 +46,5 @@ if ($process.ExitCode -ne 0) { throw "Installer exited with $($process.ExitCode)
 foreach ($target in $targets) {
     if ((Test-Path -LiteralPath $target.Path) -and (Get-ChildItem -LiteralPath $target.Path -Force | Select-Object -First 1)) { throw "The installer unexpectedly populated $($target.Path). Inspect before first-run testing." }
 }
-Write-Output "Installed $version with no launcher configuration, reading history, extracted content or browser profile. First launch will prepare the detected library."
+Copy-LauncherUserMedia -SourceRoot (Join-Path $backup 'launcher-data') -DestinationRoot (Join-Path $localRoot 'MGSMasterHub')
+Write-Output "Installed $version with no launcher configuration, reading history, extracted content or browser profile. Imported music and custom sounds are preserved. First launch will prepare the detected library."
