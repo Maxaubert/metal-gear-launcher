@@ -8,7 +8,8 @@ import BonusArtwork from "./BonusArtwork";
 import PlayerIcon, { type PlayerIconName } from "./PlayerIcon";
 import { useBonusShortcuts } from "./useBonusShortcuts";
 
-export default function SoundtrackScreen({ library, actionRef, lastInputKind, onClose, volume }: BonusContentScreenProps & { library: BonusLibrary }) {
+export default function SoundtrackScreen({ library, actionRef, lastInputKind, onClose, volume, onPlaybackViewChange }: BonusContentScreenProps & { library: BonusLibrary }) {
+  useEffect(() => { onPlaybackViewChange?.(true); return () => onPlaybackViewChange?.(false); }, [onPlaybackViewChange]);
   const [focus, setFocus] = useState(0);
   const focusRef = useRef(0);
   const [playing, setPlaying] = useState(false);

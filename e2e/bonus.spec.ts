@@ -15,6 +15,7 @@ test("combined bonus content handles missing installs, both volumes, playback, c
     const page = await app.firstWindow();
     await page.setViewportSize({ width: 1920, height: 1080 });
     await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 15000 });
+    await expect(page.getByTestId("game-screen")).toBeVisible();
     const noInstalls = await page.evaluate(() => window.hub.getBonusContent());
     expect(noInstalls.ok && noInstalls.value.tracks.length).toBe(0);
     expect(noInstalls.ok && noInstalls.value.videos.length).toBe(0);
@@ -24,13 +25,13 @@ test("combined bonus content handles missing installs, both volumes, playback, c
     await expect(page.getByTestId("tile-bonus")).toHaveAttribute("data-focused", "true");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("bonus-content")).toBeVisible();
-    await expect(page.getByTestId("bonus-content")).toContainText("Install Bonus Content");
+    await expect(page.getByTestId("bonus-content")).toContainText("For videos and soundtrack, install Bonus Content through Steam");
     await expect(page.locator("#menu-music")).toHaveJSProperty("paused", true);
 
     const artwork = "hub-asset://mg12/mainVisual.png";
     const url = "hub-asset://mg12/bonus-test.mp4";
     const library: BonusLibrary = { volumes: [{ id: "vol1", installed: true }, { id: "vol2", installed: true }], warnings: [],
-      artwork: { mainVisual: artwork, video1: artwork, video2: artwork },
+      artwork: { mainVisual: artwork, video1: artwork, video2: artwork, "vol1.mainVisual": artwork },
       tracks: Array.from({ length: 12 }, (_, index) => ({ id: `track-${index}`, title: `${String(index + 1).padStart(2, "0")} Test soundtrack ${index + 1}`,
         volume: index < 6 ? "vol1" : "vol2", url: `${url}?track=${index}`, duration: 24, artworkUrl: artwork })),
       videos: [{ id: "novel", title: "Test graphic novel (English)", volume: "vol1", url, duration: 24, artworkUrl: artwork, chapters: [0, 12], language: "en" }] };
@@ -71,7 +72,7 @@ test("combined bonus content handles missing installs, both volumes, playback, c
       expect(await music.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     }
     await page.keyboard.press("Escape");
-    await expect(page.locator("audio:not(#menu-music)")).toHaveCount(0);
+    await expect(page.locator(".bonus-screen audio")).toHaveCount(0);
     await page.getByTestId("bonus-menu-videos").click();
     await page.getByTestId("bonus-video-novel").click();
     await page.mouse.move(0, 0);
@@ -88,8 +89,8 @@ test("combined bonus content handles missing installs, both volumes, playback, c
     await expect(page.getByTestId("bonus-content")).toBeVisible();
     await page.getByTestId("bonus-back").click();
     await expect(page.getByTestId("game-selection")).toBeVisible();
-    await expect(page.locator("#menu-music")).toHaveJSProperty("paused", false);
-    const vol2Only: BonusLibrary = { ...library, volumes: [{ id: "vol1", installed: false }, { id: "vol2", installed: true }],
+    await expect(page.locator("#menu-music")).toHaveJSProperty("paused", true);
+    const vol2Only: BonusLibrary = { ...library, artwork: { "vol2.mainVisual": artwork }, volumes: [{ id: "vol1", installed: false }, { id: "vol2", installed: true }],
       tracks: library.tracks.filter(track => track.volume === "vol2"), videos: [], warnings: ["Some bonus files are unavailable."] };
     await app.evaluate(({ ipcMain }, result) => {
       ipcMain.removeHandler("hub:bonus:get");
@@ -97,19 +98,24 @@ test("combined bonus content handles missing installs, both volumes, playback, c
     }, vol2Only);
     await page.getByTestId("tile-bonus").click();
     await expect(page.getByTestId("bonus-content")).toHaveAttribute("data-art-volume", "vol2");
-    await expect(page.getByTestId("bonus-menu-videos")).toHaveCount(0);
+    await expect(page.getByTestId("bonus-menu-videos")).toBeVisible();
     await expect(page.getByRole("button", { name: "Refresh Library (R)" })).toBeVisible();
     await app.evaluate(({ ipcMain }, result) => {
       ipcMain.removeHandler("hub:bonus:get");
-      ipcMain.handle("hub:bonus:get", () => ({ ok: true, value: { ...result, warnings: [] } }));
+      // Both apps are installed, but only Vol.2's artwork decoded successfully.
+      ipcMain.handle("hub:bonus:get", () => ({ ok: true, value: { ...result,
+        volumes: [{ id: "vol1", installed: true }, { id: "vol2", installed: true }], warnings: [] } }));
     }, vol2Only);
     await page.getByRole("button", { name: "Refresh Library (R)" }).click();
     await expect(page.getByRole("button", { name: "Refresh Library (R)" })).toHaveCount(0);
+    await expect(page.getByTestId("bonus-content")).toHaveAttribute("data-art-volume", "vol2");
+    await expect(page.getByTestId("bonus-content").locator(".bonus-main-art")).toHaveAttribute("src", artwork);
     await page.getByTestId("bonus-menu-soundtrack").click();
     await expect(page.getByTestId("bonus-soundtrack-screen").locator("[data-testid^=bonus-track-]")).toHaveCount(6);
     await page.keyboard.press("Escape");
     await page.getByTestId("bonus-back").click();
     await page.getByTestId("tile-mgs3").click();
+    await expect(page.locator("#menu-music")).toHaveJSProperty("paused", false);
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
   } finally {

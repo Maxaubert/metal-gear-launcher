@@ -1,25 +1,29 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { GameState } from "@shared/ipc";
+import type { BonusPresentation } from "@shared/bonus";
+import BonusScene, { bonusSceneVars } from "../bonus/BonusScene";
 import { layoutVars, themeVars } from "../theme/theme";
 import SettingsOverviewBackdrop from "../settings/SettingsOverviewBackdrop";
 import ScreenBackdrop from "./ScreenBackdrop";
 import "./selectionMotion.css";
 
 const WIPE_DURATION = 360;
-type Layer = { key: number; game: GameState };
+export type BackdropScene = { kind: "game"; game: GameState } | { kind: "bonus"; presentation: BonusPresentation };
+type Layer = { key: number; scene: BackdropScene };
+const sceneId = (scene: BackdropScene) => scene.kind === "game" ? `game:${scene.game.pack.id}` : `bonus:${scene.presentation.volume ?? "none"}`;
 
-export default function PersistentBackdrop({ game, view, detail }: {
-  game: GameState;
+export default function PersistentBackdrop({ scene, view, detail }: {
+  scene: BackdropScene;
   view: "main" | "selection" | "settings";
   detail: boolean;
 }) {
-  const [layers, setLayers] = useState<Layer[]>([{ key: 0, game }]);
+  const [layers, setLayers] = useState<Layer[]>([{ key: 0, scene }]);
   const nodes = useRef(new Map<number, HTMLDivElement>());
   const animations = useRef(new Map<number, Animation>());
   const deadline = useRef<number | null>(null);
   const current = layers[layers.length - 1]!;
-  if (current.game.pack.id !== game.pack.id) {
-    const next = { key: current.key + 1, game };
+  if (sceneId(current.scene) !== sceneId(scene)) {
+    const next = { key: current.key + 1, scene };
     setLayers(view === "selection" ? [...layers, next] : [next]);
   }
 
@@ -77,16 +81,17 @@ export default function PersistentBackdrop({ game, view, detail }: {
 
   return <>{layers.map(layer => {
     const outgoing = layer.key !== current.key;
-    const displayed = outgoing ? layer.game : game;
+    const displayed = outgoing ? layer.scene : scene;
+    const game = displayed.kind === "game" ? displayed.game : undefined;
     const layerView = outgoing ? "selection" : view;
     return <div key={layer.key}
       ref={node => { if (node) nodes.current.set(layer.key, node); else nodes.current.delete(layer.key); }}
       className={`screen persistent-backdrop${outgoing ? " scene-outgoing" : ""}${layerView === "settings" ? " settings-screen" : ""}`}
-      data-testid={outgoing ? "outgoing-scene" : "scene-backdrop"} data-game={displayed.pack.id} data-layout="v2" data-view={layerView}
+      data-testid={outgoing ? "outgoing-scene" : "scene-backdrop"} data-game={game?.pack.id ?? "bonus"} data-layout="v2" data-view={layerView}
       hidden={outgoing ? view !== "selection" : view === "settings" && detail} aria-hidden="true"
-      style={{ ...themeVars(displayed.pack.theme), ...layoutVars(displayed.pack.id) }}>
-      <ScreenBackdrop pack={displayed.pack} assetUrls={displayed.assetUrls} />
-      {layerView === "settings" && <SettingsOverviewBackdrop game={displayed} />}
+      style={displayed.kind === "bonus" ? bonusSceneVars(displayed.presentation) : { ...themeVars(displayed.game.pack.theme), ...layoutVars(displayed.game.pack.id) }}>
+      {displayed.kind === "bonus" ? <BonusScene presentation={displayed.presentation} /> : <ScreenBackdrop pack={displayed.game.pack} assetUrls={displayed.game.assetUrls} />}
+      {layerView === "settings" && game && <SettingsOverviewBackdrop game={game} />}
     </div>;
   })}</>;
 }

@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import type { GameState } from "@shared/ipc";
+import type { BonusPresentation } from "@shared/bonus";
+import { bonusSceneVars, EMPTY_BONUS_PRESENTATION } from "../bonus/BonusScene";
 import type { InputKind } from "../input/useNavigation";
 import { themeVars, layoutVars } from "../theme/theme";
 import FooterHints from "./FooterHints";
@@ -7,7 +9,7 @@ import "./selectionMotion.css";
 
 export type GameSelectionProps = {
   games: GameState[];
-  fallbackGame?: GameState;
+  bonusPresentation?: BonusPresentation;
   focusIndex: number;
   lastInputKind: InputKind;
   onSelect: (index: number) => void;
@@ -20,29 +22,28 @@ export type GameSelectionProps = {
  * visual and header block, exactly as `GameScreen` would - with the description and menu swapped
  * for a small "Game Selection" header row and a banner list, one row per game. Moving the cursor
  * swaps the focused entry, so the left zone's art and header change with it. A tile for a game
- * that isn't installed is still selectable - picking one just lands on that game's `NotInstalled`
- * screen - but stays visually marked (dashed border, dimmed cover, greyed label) so the list still
- * shows which games need Steam install/extraction.
+ * that isn't installed stays focusable and visibly marked; selecting it explains the missing
+ * installation without leaving the list.
  */
-export default function GameSelection({ games, fallbackGame, focusIndex, lastInputKind, onSelect, onFocusItem }: GameSelectionProps) {
+export default function GameSelection({ games, bonusPresentation = EMPTY_BONUS_PRESENTATION, focusIndex, lastInputKind, onSelect, onFocusItem }: GameSelectionProps) {
   const bonusFocused = focusIndex === games.length;
-  const focused = games[focusIndex] ?? fallbackGame ?? games[0];
+  const focused = games[focusIndex] ?? games[0];
   if (!focused) return null;
 
   return (
     <div
       className="screen"
       data-testid="game-selection"
-      data-game={focused.pack.id}
+      data-game={bonusFocused ? "bonus" : focused.pack.id}
       data-bonus-focused={bonusFocused || undefined}
       data-layout="v2"
-      style={{ ...themeVars(focused.pack.theme), ...layoutVars(focused.pack.id), "--selection-row-height": "8vh", ...(bonusFocused ? { "--accent": "#756a35" } : {}) } as CSSProperties}
+      style={{ ...(bonusFocused ? bonusSceneVars(bonusPresentation) : { ...themeVars(focused.pack.theme), ...layoutVars(focused.pack.id) }), "--selection-row-height": "8vh" } as CSSProperties}
     >
 
-      <div className="selection-info">
-        <span className="title">{bonusFocused ? "BONUS CONTENT" : focused.pack.title}</span>
-        <span className="released">{bonusFocused ? "Videos and Digital Soundtrack" : `Originally released in ${focused.pack.releaseYear}`}</span>
-      </div>
+      {!bonusFocused && <div className="selection-info">
+        <span className="title">{focused.pack.title}</span>
+        <span className="released">{`Originally released in ${focused.pack.releaseYear}`}</span>
+      </div>}
 
       <div className="selection-header">
         <span className="tick" aria-hidden="true" />
@@ -58,6 +59,7 @@ export default function GameSelection({ games, fallbackGame, focusIndex, lastInp
             role="menuitem"
             tabIndex={-1}
             aria-current={index === focusIndex ? "true" : undefined}
+            aria-disabled={!g.installed || undefined}
             data-testid={`tile-${g.pack.id}`}
             data-focused={index === focusIndex ? "true" : undefined}
             className={`tile${index === focusIndex ? " focused" : ""}${g.installed ? "" : " not-installed"}`}
@@ -69,6 +71,7 @@ export default function GameSelection({ games, fallbackGame, focusIndex, lastInp
             <span className="tile-scrim" aria-hidden="true" />
             <span className="tile-bar" aria-hidden="true" />
             <span className="tile-title">{g.pack.shortTitle}</span>
+            {!g.installed && <span className="tile-install-status">Not installed</span>}
             {!g.pack.chapters && <span className="tile-number" style={{ color: g.pack.theme.accent }}>
               {g.pack.number}
             </span>}
@@ -78,6 +81,7 @@ export default function GameSelection({ games, fallbackGame, focusIndex, lastInp
           data-focused={bonusFocused ? "true" : undefined} className={`tile bonus-tile${bonusFocused ? " focused" : ""}`}
           onClick={() => onSelect(games.length)} onFocus={() => onFocusItem(games.length)}
           onPointerMove={event => { if (event.pointerType !== "touch") onFocusItem(games.length); }}>
+          {bonusPresentation.artwork.mainVisual && <img className="tile-cover" src={bonusPresentation.artwork.mainVisual} alt="" />}
           <span className="tile-scrim" aria-hidden="true" />
           <span className="tile-title">BONUS CONTENT</span>
         </li>
