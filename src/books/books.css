@@ -49,9 +49,7 @@
 .book-zoom-controls>span{min-width:3em;text-align:center;font-variant-numeric:tabular-nums}
 .book-page-arrow svg{display:block;margin:auto}
 .book-visibility-toggle{display:flex;align-items:center;gap:8px}
-.book-visibility-toggle kbd,.book-show-controls kbd{font:inherit;font-size:16px;border:1px solid #aaa;padding:1px 5px;line-height:1.3}
-.book-show-controls{position:absolute;z-index:3;right:16px;bottom:16px;display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;border:1px solid #777;background:rgb(25 25 25/.96);color:#fff!important;font-size:16px!important;box-shadow:0 3px 12px #0003}
-.book-show-controls:not(:disabled):hover{background:#45443b!important}
+.book-visibility-toggle kbd{font:inherit;font-size:16px;border:1px solid #aaa;padding:1px 5px;line-height:1.3}
 .book-content-area{position:absolute;inset:0;background:#a8a8a4;overflow:hidden}
 .book-viewport{position:absolute;inset:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#70673a #c9c8c1;overscroll-behavior:contain;outline-offset:-3px}
 .book-image-canvas{position:relative;min-width:100%;min-height:100%;overflow:hidden;background:#fff}

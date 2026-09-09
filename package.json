@@ -1,7 +1,7 @@
 {
   "name": "metal-gear-launcher",
   "productName": "Metal Gear Launcher",
-  "version": "0.11.3",
+  "version": "0.11.6",
   "description": "Fullscreen launcher for the Metal Gear Solid Master Collection",
   "author": "Max",
   "private": true,

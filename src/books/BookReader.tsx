@@ -107,7 +107,6 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
       {zoom > 1 && <ControlHint lastInputKind={lastInputKind} keyboard={["↑", "↓", "←", "→"]} gamepad="L" label="Pan" />}
       <button data-testid="book-back" className="bonus-hint-button" onClick={back}><ControlHint lastInputKind={lastInputKind} keyboard="Esc" gamepad="B" label="Back" /></button>
     </footer>
-    {!controls.visible && <button data-testid="book-show-controls" className="book-show-controls" aria-label="Show controls" aria-keyshortcuts="H" onClick={controls.show}>Controls <kbd>H</kbd></button>}
   </main>;
 }
 

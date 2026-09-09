@@ -27,6 +27,10 @@
 .bonus-home-menu button{height:5.56vh;border:.1vw solid #555;background:#fff;text-align:left;font-size:1.67vw;line-height:1;padding:0 .58vw;margin-left:.8vw}
 .bonus-home-menu button.bonus-selected{margin-left:0;padding-left:1.38vw;background:var(--bonus-accent);border-color:var(--bonus-accent);color:#fff;position:relative}
 .bonus-home-menu button.bonus-selected::before{content:"";position:absolute;left:-.7vw;top:0;width:.26vw;height:100%;background:var(--bonus-accent)}
+.bonus-home-menu>button{display:flex;align-items:center;justify-content:space-between;gap:.7vw}
+.bonus-home-menu>button.bonus-unavailable:not(.bonus-selected){color:#65645e;background:#e8e7e2}
+.bonus-home:is([data-art-volume=vol2],[data-art-volume=none]) .bonus-home-menu>button.bonus-unavailable:not(.bonus-selected){color:#aaa99f;background:#151515}
+.bonus-availability{flex:none;font-size:clamp(16px,1.05vw,28px);line-height:1.2;border:.07vw solid currentColor;padding:.3vh .4vw;white-space:nowrap}
 .bonus-home-menu p{font-size:1.25vw;line-height:1.5;margin:1vh 1vw}
 .bonus-home-menu .bonus-warning{font-size:1.05vw}
 .bonus-home-menu .bonus-refresh{height:auto;margin:1vh 0 0;padding:.6vh .5vw;font-size:1.05vw;background:#fff;border:.08vw solid #555}
@@ -43,6 +47,11 @@
 .bonus-video-list button img{display:block;width:100%;height:100%;object-fit:fill}
 .bonus-video-list button[aria-current=true]::before{content:"";position:absolute;left:-.9vw;top:0;bottom:0;width:.3vw;background:var(--bonus-accent)}
 .bonus-video-list button span{padding:1vw}
+.bonus-video-list button.bonus-unavailable{background:#e3e2dd;color:#5e5d56}
+.bonus-video-list button.bonus-unavailable img{opacity:.18;filter:grayscale(1)}
+.bonus-video-list button.bonus-unavailable .bonus-video-title{position:absolute;left:1vw;right:1vw;top:1.2vh;padding:0;line-height:1.25}
+.bonus-video-list button.bonus-unavailable .bonus-availability{position:absolute;bottom:1vh;left:1vw;padding:.3vh .4vw;background:#f4f3ef}
+.bonus-video-list button.bonus-unavailable[aria-current=true]{box-shadow:inset 0 0 0 .15vw var(--bonus-accent)}
 .bonus-chapter-list{position:absolute;left:63.55vw;right:1vw;top:35.8vh;bottom:7vh;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--bonus-accent) transparent}
 .bonus-chapter-list button{display:flex;align-items:center;justify-content:space-between;width:100%;height:7.5vh;margin-bottom:.8vh;padding:0 1vw;font-size:1.5vw;background:#fff;border:.1vw solid #555}
 .bonus-chapter-list button[aria-current=true]{background:var(--bonus-accent);border-color:var(--bonus-accent);color:#fff}
