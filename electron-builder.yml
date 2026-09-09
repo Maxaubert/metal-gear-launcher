@@ -14,6 +14,8 @@ files:
 asarUnpack:
   - node_modules/7zip-bin-full/**
 extraResources:
+  - from: resources/icon.ico
+    to: icon.ico
   - from: resources/tools
     to: tools
   - from: resources/menu-music
@@ -27,6 +29,8 @@ win:
   icon: resources/icon.ico
   artifactName: "MetalGearLauncher-Setup-x64-${version}.exe"
 nsis:
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true

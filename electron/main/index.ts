@@ -86,6 +86,7 @@ function createWindow(): BrowserWindow {
   // this machine.
   const shootMode = Boolean(process.env.HUB_SHOOT);
   const win = new BrowserWindow({
+    icon: join(app.isPackaged ? process.resourcesPath : app.getAppPath(), app.isPackaged ? "icon.ico" : "resources/icon.ico"),
     width: shootMode ? 3840 : 1920, height: shootMode ? 2160 : 1080,
     show: false, backgroundColor: "#000000",
     fullscreen: shootMode ? false : !process.env.HUB_WINDOWED,
