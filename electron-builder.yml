@@ -1,6 +1,6 @@
 # electron-builder configuration: Windows NSIS installer.
 # `resources/tools` (fetched by `npm run fetch-tools`, never committed) ships as extraResources
-# so the extractor can spawn AssetStudioModCLI and FreeMote from the installed app the same way
+# so the extractor can spawn AssetStudioModCLI, FreeMote and vgmstream from the installed app the same way
 # it does in development from `resources/tools` directly.
 # Keep the existing identity so this rename upgrades the installed launcher.
 appId: com.maxaubert.mgsmasterhub
@@ -18,10 +18,6 @@ extraResources:
     to: icon.ico
   - from: resources/tools
     to: tools
-  - from: resources/menu-music
-    to: menu-music
-    filter:
-      - "**/*.mp3"
 win:
   target:
     - target: nsis

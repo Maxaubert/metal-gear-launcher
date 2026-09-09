@@ -1,0 +1,28 @@
+vgmstream r2117 (unmodified official Windows x64 runtime)
+https://github.com/vgmstream/vgmstream/releases/tag/r2117
+Source and build instructions: https://github.com/vgmstream/vgmstream/tree/r2117
+Source archive: https://github.com/vgmstream/vgmstream/archive/refs/tags/r2117.zip
+
+The parent folder retains upstream COPYING and README.md. This directory also
+contains the external library notices provided by upstream at the same tag:
+https://github.com/vgmstream/vgmstream/tree/r2117/ext_libs/licenses
+
+Dynamic codec DLLs remain separate and replaceable. Their upstream source and
+build information are linked from:
+https://github.com/vgmstream/vgmstream/tree/r2117/cmake/dependencies
+https://github.com/vgmstream/vgmstream/tree/r2117/ext_libs/extra
+
+External codec source projects:
+FFmpeg: https://ffmpeg.org/download.html
+FFmpeg build settings: https://github.com/vgmstream/vgmstream/blob/r2117/ext_libs/extra/ffmpeg_options.txt
+mpg123: https://www.mpg123.de/download.shtml
+CELT: https://downloads.xiph.org/releases/celt/
+Ogg: https://downloads.xiph.org/releases/ogg/
+Vorbis: https://downloads.xiph.org/releases/vorbis/
+Speex: https://downloads.xiph.org/releases/speex/
+Opus: https://downloads.xiph.org/releases/opus/
+LibAtrac9: https://github.com/Thealexbarney/LibAtrac9
+G.719 wrapper and reference code: https://github.com/kode54/libg719_decode/tree/da90ad8a676876c6c47889bcea6a753f9bbf7a73
+
+The launcher uses the CLI only to decode the user's local game audio. No game
+soundtracks or other game media are included with these tools.

@@ -74,6 +74,17 @@ describe("local menu music library", () => {
     expect(resolveMenuMusic("mgs2", {}, alternative.id, updated)).toBe(alternative.url);
   });
 
+  it("keeps a personal selection after conversion and prefers its exact format when both exist", async () => {
+    const folder = await ensureMenuMusicFolder(root, "mgs3");
+    await writeFile(join(folder, "The Pain.mp3"), "personal-converted");
+    const selection = musicFileId("mgs3", "The Pain.flac");
+    const converted = await getMenuMusicLibrary(root, "mgs3");
+    expect(effectiveMenuTheme("mgs3", {}, selection, converted)?.id).toBe(musicFileId("mgs3", "The Pain.mp3"));
+    await writeFile(join(folder, "The Pain.flac"), "personal-lossless");
+    const both = await getMenuMusicLibrary(root, "mgs3");
+    expect(effectiveMenuTheme("mgs3", {}, selection, both)?.id).toBe(selection);
+  });
+
   it("rejects paths, malformed IDs, other games and unsupported file URLs", async () => {
     for (const url of ["file:///secret.flac", "hub-music://mgs2/../secret.flac", "hub-music://mgs2/%2e%2e%2fsecret.flac",
       `hub-music://mgs2/${musicFileId("mgs3", "Theme.flac")}`, "hub-music://unknown/theme", "hub-music://mgs2/notes.txt"]) {

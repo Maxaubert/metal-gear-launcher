@@ -6,9 +6,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'unpackaged-install.ps1')
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $version = (Get-Content -LiteralPath (Join-Path $repoRoot 'package.json') -Raw | ConvertFrom-Json).version
-$installer = @("MetalGearLauncher-Full-Setup-x64-$version.exe", "MetalGearLauncher-Lite-Setup-x64-$version.exe", "MetalGearLauncher-Setup-x64-$version.exe") |
-    ForEach-Object { Join-Path $repoRoot "dist\$_" } | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
-if (-not $installer) { throw "Build the $version installer before installing." }
+$installer = Join-Path $repoRoot "dist\MetalGearLauncher-Setup-x64-$version.exe"
+if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw "Build the $version installer before installing." }
 if (Get-Process -Name 'Metal Gear Launcher' -ErrorAction SilentlyContinue) { throw 'Close Metal Gear Launcher before a clean installation.' }
 if (-not $env:LOCALAPPDATA -or -not $env:APPDATA) { throw 'Windows application-data folders are unavailable.' }
 

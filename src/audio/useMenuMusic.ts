@@ -104,7 +104,9 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
         const source = new URL(bgmUrl);
         // Chromium can retain a failed media resource even after load(); Retry must
         // request the repaired file again instead of reusing that failed resource.
-        if (attempt) source.searchParams.set("musicAttempt", String(attempt));
+        // Installed media IDs already include their file revision. Its strict protocol
+        // accepts only that opaque ID, so it must not receive retry query parameters.
+        if (attempt && source.protocol !== "hub-bonus:") source.searchParams.set("musicAttempt", String(attempt));
         await playWhenReady(audio, source.href, controller.signal, previewRef.current);
         if (cancelled) return;
         if (suspendedRef.current) audio.pause();

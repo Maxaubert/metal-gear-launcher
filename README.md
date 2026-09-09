@@ -22,7 +22,8 @@ preview, or install the hub for the real thing.
 
 Download the installer from the
 [latest release](https://github.com/Maxaubert/metal-gear-launcher/releases/latest)
-(`MetalGearLauncher-Lite-Setup-x64-<version>.exe` or `MetalGearLauncher-Full-Setup-x64-<version>.exe`) and run it. Full includes an optional menu-music pack; Lite supports your own music files. Both have the same reader and game features. The launcher checks GitHub Releases once at
+(`MetalGearLauncher-Setup-x64-<version>.exe`) and run it. The installer contains no soundtrack files;
+music is obtained from your local game installations or your own files. The launcher checks GitHub Releases once at
 boot and shows a footer prompt when a newer version is out.
 
 Previously named MGS Master Hub. Upgrades retain your settings, music and extracted artwork in
@@ -83,7 +84,7 @@ Bonus Content has its own artwork and transition in Game Selection. Its menus pl
 playlist of classic themes and vocal finales found in your local game music folders, including
 Snake Eater, The Best Is Yet to Come, Old Snake and Heavens Divide. Unavailable songs are skipped.
 The vocal selections follow [Konami's series compilation](https://www.konami.com/mg/mgs5/tpp/jp/goods/item_vtac.html).
-Without matching local songs, the launcher uses available tracks from installed bonus soundtracks.
+The playlist combines your local classics with available tracks from installed games and bonus soundtracks.
 The playlist pauses for soundtrack playback and movies, then resumes from the same position.
 
 To replace the playlist, add audio files to `%LOCALAPPDATA%\MGSMasterHub\music\bonus\` and restart
@@ -97,6 +98,12 @@ book pages in the local cache so opening books later does not require extraction
 is bundled. You can also choose **Add Books** or **Add Folder** to import personal PDF, CBZ and CBR books without copying or converting the originals. Imported books work without Steam games installed. **Refresh** rechecks file availability, and **Remove from Library** removes only the library entry. See [book support](docs/books.md).
 
 ## Menu music
+
+The launcher detects soundtracks in your Steam libraries. Bonus Content music plays directly
+from its installed files. MG2 opening themes and the MGS2 opening main theme are decoded once
+into the launcher's `native-music` cache. Game files are never changed. These are the in-game
+edits, which can differ in length from album releases. MGS1, MGS3, MGS4 and Peace Walker currently
+use the corresponding installed Bonus Content soundtrack. Missing games or optional tracks are skipped.
 
 Open **Options > Menu Music > Open Music Folder** for a game's local music library. Add FLAC,
 MP3, WAV, OGG or M4A files, then choose **Refresh Music**. Tracks appear under their filenames
@@ -112,9 +119,10 @@ waits for pending writes. If a game or another app changes the same settings fil
 your pending edit and offers recovery instead of overwriting the external change. Keyboard
 hints use keycaps; controller hints retain controller buttons.
 
-When present, these filenames provide the initial defaults. An explicit saved choice takes
-priority. Defaults match the title in any supported format. If absent, another available track
-is used; an empty folder stays silent. Extracted original menu themes are not restored.
+When available, these titles provide the initial defaults from installed content or personal files.
+An explicit saved choice takes priority. Personal files match the title in any supported format.
+If absent, another available track is used; a game with no available music stays silent.
+Original launcher menu themes are not restored.
 
 | Game folder | Default filename |
 | --- | --- |
@@ -125,9 +133,9 @@ is used; an empty folder stays silent. Extracted original menu themes are not re
 | `mgs4` | `Old Snake (Title).flac` |
 | `mgspw` | `Heavens Divide.flac` |
 
-Lite includes no menu music. Full includes a supplied music pack and adds its missing tracks
-to your music folders on startup without replacing existing files. Personal files stay on your
-PC. See [music-pack preparation](docs/menu-music-pack.md) for local builds and release setup.
+There is one installer, with no bundled music pack. Personal files stay on your PC and are
+never included in a build. See [local music and packaging](docs/menu-music-pack.md) for optional
+FLAC conversion and release details.
 
 Menu effects are also local. Place WAV files named `navigate`, `select`, `back`, `options`,
 `adjust` and `start` in `%LOCALAPPDATA%\MGSMasterHub\sounds\` (with the `.wav` extension).
@@ -168,10 +176,12 @@ entries so they don't clutter your library alongside it.
 
 No Metal Gear Solid / Konami media is committed to this repository. Game artwork, books and bonus
 media are read from local installations, while personal books are imported from local files.
-Full installers can include a separately supplied music pack; distributing that media requires
-appropriate permission from its rights holders. The two extraction tools it bundles
-(AssetStudioModCLI, FreeMote) are MIT-licensed and unaffiliated with Konami; their licenses ship
-alongside them under `resources/tools/LICENSES/`.
+Installers contain no soundtrack music or personal books. AssetStudioModCLI and FreeMote are
+MIT-licensed extraction tools; their licenses ship under `resources/tools/LICENSES/`.
+The pinned [vgmstream r2117](https://github.com/vgmstream/vgmstream/releases/tag/r2117) runtime
+decodes local game audio. Its copyright notice ships alongside the executable, with codec
+library notices and source links in `resources/tools/vgmstream/LICENSES/`.
+These tools are unaffiliated with Konami.
 
 The personal comic reader includes 7-Zip. Its LGPL/BSD and unRAR restriction notices ship beside
 the executable. See [7-Zip licensing](https://www.7-zip.org/license.txt) and
@@ -204,7 +214,7 @@ development.
 | `npm run lint` | Lint the codebase |
 | `npm run test` | Run the unit test suite (Vitest) |
 | `npm run e2e` | Build and run end-to-end tests (Playwright) |
-| `npm run fetch-tools` | Download the two MIT extraction tools (first `dist` on a machine) |
+| `npm run fetch-tools` | Download extraction tools and the pinned vgmstream audio decoder |
 | `npm run dist` | Build and package a Windows installer |
 
 Windows x64, Node 24, npm 11.

@@ -1,7 +1,7 @@
 param(
   [Parameter(Mandatory = $true)][string]$Source,
   [string]$FfmpegPath,
-  [string]$Output = (Join-Path $PSScriptRoot '..\resources\menu-music')
+  [Parameter(Mandatory = $true)][string]$Output
 )
 $ErrorActionPreference = 'Stop'
 if (-not $FfmpegPath) {

@@ -288,7 +288,7 @@ export default function SettingsScreen({ game, lastInputKind, actionRef, onClose
     }
   }
   const contextMessage = musicPage ? musicThemes.length ? "Move through songs to preview. Confirm to use this theme. Your choice saves automatically."
-    : "No music files have been added. Open Music Folder to add songs, then choose Refresh Music."
+    : "No soundtrack music was found. Install the game or Bonus Content through Steam, or use Open Music Folder to add your own songs, then choose Refresh Music."
     : selectedPatch?.message ?? native.find((section) => section.id === category)?.message
     ?? (category === "Community Fixes" ? rows[focus]?.section?.status === "needsSetup" ? "Open to review setup for this installed fix."
       : rows[focus]?.section?.fields.length ? "Open to review and edit this installed fix's settings." : "This installed component has no editable settings." : undefined);

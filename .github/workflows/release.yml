@@ -1,7 +1,7 @@
 # Auto-release on every push to main.
 # - Reads the version from package.json.
 # - REFUSES to run if release v<version> already exists: bump the version in the PR.
-# - Fetches the two MIT extraction tools, builds, packages the NSIS installer via
+# - Fetches extraction tools and the audio decoder, builds, packages the NSIS installer via
 #   electron-builder, and publishes v<version> with GitHub-generated notes.
 # - Signing is a no-op until this repo is enrolled with SignPath (see CLAUDE.md).
 name: release
@@ -57,27 +57,8 @@ jobs:
 
       - run: npm run build
 
-      # A clean checkout has no private media. Always retain this smaller installer.
-      - name: Package Lite installer
-        run: node scripts/package-launcher.mjs
-
-      - name: Fetch optional approved music pack
-        id: music
-        shell: pwsh
-        env:
-          MUSIC_PACK_URL: ${{ vars.MENU_MUSIC_PACK_URL }}
-          MUSIC_PACK_SHA256: ${{ vars.MENU_MUSIC_PACK_SHA256 }}
-        run: |
-          if ($env:MUSIC_PACK_URL -or $env:MUSIC_PACK_SHA256) {
-            if (-not $env:MUSIC_PACK_URL -or -not $env:MUSIC_PACK_SHA256) { throw 'Configure both music pack URL and SHA256.' }
-            ./scripts/fetch-menu-music-pack.ps1 -Url $env:MUSIC_PACK_URL -Sha256 $env:MUSIC_PACK_SHA256
-            "ready=true" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Output 'No optional music pack configured. Publishing the Lite installer.'
-          }
-
-      - name: Package Full installer
-        if: steps.music.outputs.ready == 'true'
+      # Soundtracks are discovered on the user's PC, never downloaded into a release.
+      - name: Package installer
         run: node scripts/package-launcher.mjs
 
       - name: Publish release
@@ -86,4 +67,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "v${{ steps.ver.outputs.version }}"
-          gh release create $tag dist/*.exe --generate-notes
+          gh release create $tag "dist/MetalGearLauncher-Setup-x64-${{ steps.ver.outputs.version }}.exe" --generate-notes
