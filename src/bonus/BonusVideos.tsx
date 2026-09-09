@@ -6,6 +6,7 @@ import { playMenuSound } from "../audio/menuSounds";
 import { mediaTime, useBonusActions } from "./bonusMedia";
 import BonusArtwork from "./BonusArtwork";
 import BonusVideoPlayer from "./BonusVideoPlayer";
+import { bonusVideoCatalog, type BonusVideoChoice } from "./videoCatalog";
 
 export default function BonusVideos(props: BonusContentScreenProps & { library: BonusLibrary }) {
   const { library, actionRef, onClose, lastInputKind } = props;
@@ -14,28 +15,35 @@ export default function BonusVideos(props: BonusContentScreenProps & { library: 
   const [chapter, setChapter] = useState<number>();
   if (selected && chapter !== undefined) return <BonusVideoPlayer {...props} video={selected} startTime={chapter} onClose={() => setChapter(undefined)} />;
   if (selected) return <BonusChapters {...props} video={selected} onClose={() => setSelected(undefined)} onPlay={setChapter} />;
-  return <BonusVideoList library={library} actionRef={actionRef} onClose={onClose} lastInputKind={lastInputKind} volume={props.volume}
+  return <BonusVideoList library={library} actionRef={actionRef} onClose={onClose} lastInputKind={lastInputKind} volume={props.volume} onUnavailable={props.onUnavailable}
     focus={focus} setFocus={setFocus} select={setSelected} />;
 }
 
-function videoKeys(library: BonusLibrary, video: BonusVideo | undefined) {
+function videoKeys(library: BonusLibrary, video: Pick<BonusVideoChoice, "id" | "language"> | undefined) {
   const ordinal = video?.id.includes("BD2") ? 2 : 1;
   const suffix = `${ordinal}${video?.language ?? "en"}`;
   return { hero: library.artwork[`video${ordinal}`], logo: library.artwork[`videoLogo${suffix}`], banner: library.artwork[`banner${suffix}`] };
 }
 
-function BonusVideoList({ library, actionRef, onClose, lastInputKind, focus, setFocus, select }: BonusContentScreenProps & {
+function BonusVideoList({ library, actionRef, onClose, lastInputKind, focus, setFocus, select, onUnavailable }: BonusContentScreenProps & {
   library: BonusLibrary; focus: number; setFocus: (index: number) => void; select: (video: BonusVideo) => void;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const focusRef = useRef(focus);
-  const focused = library.videos[focus];
+  const videos = bonusVideoCatalog(library.videos);
+  const focused = videos[focus];
   const { hero, logo } = videoKeys(library, focused);
   const move = (index: number) => { if (index !== focusRef.current) { void playMenuSound("navigate"); focusRef.current = index; setFocus(index); } };
-  const open = (index: number) => { const video = library.videos[index]; if (video) { void playMenuSound("select"); select(video); } };
+  const open = (index: number) => {
+    const choice = videos[index]; if (!choice) return;
+    list.current?.querySelectorAll<HTMLButtonElement>("button")[index]?.focus({ preventScroll: true });
+    void playMenuSound("select");
+    if (choice.video) select(choice.video);
+    else onUnavailable?.(choice.title, "This video is not installed. Install it through Steam to watch it.");
+  };
   useBonusActions(actionRef, action => {
     if (action === "back") { void playMenuSound("back"); onClose(); }
-    else if (action === "up" || action === "down") move((focusRef.current + (action === "up" ? -1 : 1) + library.videos.length) % library.videos.length);
+    else if (action === "up" || action === "down") move((focusRef.current + (action === "up" ? -1 : 1) + videos.length) % videos.length);
     else if (action === "confirm") open(focusRef.current);
   });
   useEffect(() => { list.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest" }); }, [focus]);
@@ -44,12 +52,13 @@ function BonusVideoList({ library, actionRef, onClose, lastInputKind, focus, set
     <BonusHeader artwork={library.artwork} />
     <h1 className="bonus-video-heading">Video</h1>
     <div className="bonus-video-list" ref={list} aria-label="Videos">
-      {library.videos.map((video, index) => <button key={video.id} data-testid={`bonus-video-${video.id}`} aria-label={video.title}
+      {videos.map((video, index) => <button key={video.id} data-testid={`bonus-video-${video.id}`} aria-label={video.title}
+        className={!video.video ? "bonus-unavailable" : undefined} aria-disabled={!video.video || undefined}
         aria-current={focus === index ? "true" : undefined} onPointerMove={() => move(index)} onFocus={() => move(index)} onClick={() => open(index)}>
         <BonusArtwork src={videoKeys(library, video).banner} />
-        {!videoKeys(library, video).banner && <span>{video.title}</span>}
+        {(!video.video || !videoKeys(library, video).banner) && <span className="bonus-video-title">{video.title}</span>}
+        {!video.video && <span className="bonus-availability">Not installed</span>}
       </button>)}
-      {!library.videos.length && <p>No installed videos were found.</p>}
     </div>
     <BonusHints lastInputKind={lastInputKind} onBack={() => { void playMenuSound("back"); onClose(); }} />
   </main>;
