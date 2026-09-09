@@ -4,7 +4,7 @@ import { PACK_ORDER } from "@shared/packs";
 import { navigate, type Action, type NavState } from "../input/navigationReducer";
 import { useNavigation } from "../input/useNavigation";
 import { useMenuMusic } from "../audio/useMenuMusic";
-import { playMenuSound, preloadMenuSounds, setMenuSoundVolume } from "../audio/menuSounds";
+import { menuSoundSourceKey, playMenuSound, preloadMenuSounds, setMenuSoundVolume } from "../audio/menuSounds";
 import { themeVars } from "../theme/theme";
 import GameScreen, { type MenuKey } from "../screens/GameScreen";
 import GameSelection from "../screens/GameSelection";
@@ -89,7 +89,7 @@ export default function HubProvider() {
   const [musicPreview, setMusicPreview] = useState<string>();
   const [mutedStartupGame, setMutedStartupGame] = useState<string>();
   const [configLoaded, setConfigLoaded] = useState(false);
-  const [soundsReady, setSoundsReady] = useState(false);
+  const [soundsReadyKey, setSoundsReadyKey] = useState<string | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   // The "Launching..." overlay (and the dimmed screen behind it) was otherwise only cleared by
@@ -186,13 +186,15 @@ export default function HubProvider() {
   const musicUrl = configLoaded && !needsFirstRun && currentGame && musicLibraries[currentGame.pack.id]
     ? musicPreview ?? (mutedStartupGame === currentGame.pack.id ? undefined : resolveMenuMusic(currentGame.pack.id, currentGame.assetUrls, musicSelections[currentGame.pack.id], musicLibraries[currentGame.pack.id])) : undefined;
   const music = useMenuMusic(musicUrl, volume, musicAttempt, Boolean(musicPreview), bonusAudioActive);
+  const soundSourceKey = hubState ? menuSoundSourceKey(hubState) : null;
+  const soundsReady = soundSourceKey !== null && soundsReadyKey === soundSourceKey;
   useEffect(() => { setMenuSoundVolume(volume); }, [volume]);
   useEffect(() => {
-    if (!configLoaded) return;
+    if (!configLoaded || soundSourceKey === null) return;
     let cancelled = false;
-    void preloadMenuSounds().then(() => { if (!cancelled) setSoundsReady(true); });
+    void preloadMenuSounds(soundSourceKey).then(() => { if (!cancelled) setSoundsReadyKey(soundSourceKey); });
     return () => { cancelled = true; };
-  }, [configLoaded]);
+  }, [configLoaded, soundSourceKey]);
   const startupError = libraryPreparation.error || preparationError || (!ready ? music.error : "");
   const canReveal = Boolean(hubState && libraryPreparation.ready && !startupError && soundsReady && (needsFirstRun || ready));
   const startup = useStartupPresentation(canReveal);
@@ -213,7 +215,7 @@ export default function HubProvider() {
     void Promise.all([
       settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
       preloadPresentation(hubState.games),
-      preloadMenuSounds(),
+      preloadMenuSounds(menuSoundSourceKey(hubState)),
       preloadBonus(),
       preloadBooks(),
       Promise.all(hubState.games.map(async game => {

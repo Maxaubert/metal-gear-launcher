@@ -25,6 +25,7 @@ import { checkForUpdate } from "./update";
 import { settingsGameId, settingsReadRequest, saveSettingsRequest } from "@shared/settings";
 import { getGameSettings, saveGameSettings } from "./settings/service";
 import { readMenuSounds } from "./music/sounds";
+import { readNativeMenuSounds } from "./music/nativeSounds";
 import { achievementsRequest } from "@shared/achievements";
 import { getAchievements } from "./achievements/service";
 import { getBonusLibrary } from "./bonus/library";
@@ -287,7 +288,8 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("hub:sounds:get", async (_event, arg) => {
       try {
         z.undefined().parse(arg);
-        return ok(await readMenuSounds(dataDir()));
+        const config = await readConfig();
+        return ok(await readMenuSounds(dataDir(), async () => readNativeMenuSounds(await findSteamRoot(config.steamPath), dataDir())));
       } catch (e) { return err(asError(e)); }
     });
 
