@@ -11,6 +11,7 @@ export const MENU_LABELS: Record<MenuKey, string> = {
   start: "Start Game",
   gameSelection: "Game Selection",
   options: "Options",
+  trophies: "Trophies",
   quit: "QUIT GAME",
 };
 

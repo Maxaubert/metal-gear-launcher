@@ -27,6 +27,7 @@ test("initial music plays at saved volume without input and delayed playback kee
   try {
     const page = await app.firstWindow();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     const audio = page.locator("#menu-music");
     const initial = await audio.evaluate((element: HTMLAudioElement) => ({
       paused: element.paused, ready: element.readyState, volume: element.volume, loop: element.loop,
@@ -51,6 +52,7 @@ test("initial music plays at saved volume without input and delayed playback kee
     expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
     await page.evaluate(() => (window as unknown as { releaseMusic: () => Promise<void> }).releaseMusic());
     await expect(page.getByTestId("game-screen")).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
   } finally { await app.close(); await removeFixture(fixture.root); }
 });
@@ -68,6 +70,7 @@ test("broken initial music offers Retry while later track failures keep menus mo
     await writeFile(song, original);
     await page.getByRole("button", { name: "Retry", exact: true }).click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     const audio = page.locator("#menu-music");
     expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
     const node = await audio.elementHandle();
@@ -79,6 +82,7 @@ test("broken initial music offers Retry while later track failures keep menus mo
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs2").click();
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     const screen = await page.getByTestId("game-screen").elementHandle();
     await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.error?.code)).toBe(4);
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
@@ -90,6 +94,7 @@ test("broken initial music offers Retry while later track failures keep menus mo
       await page.keyboard.press("Enter");
     }
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs1");
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => !element.paused && element.currentSrc.includes("mgs1/bgm.wav"))).toBe(true);
     expect(await node!.evaluate(element => element.isConnected)).toBe(true);
   } finally { await app.close(); await removeFixture(fixture.root); }

@@ -30,14 +30,14 @@ export class GameSettingsCache {
     const stamp = ++this.stamp;
     let timer: ReturnType<typeof setTimeout>;
     const read = Promise.resolve().then(() => this.reader(gameId, accountId)).catch((error: unknown): SettingsResult => ({
-      ok: false, error: error instanceof Error ? error.message : "Unable to read game settings. Choose Reload to retry.",
+      ok: false, error: error instanceof Error ? error.message : "Unable to read game settings. Choose Try Again to retry.",
     }));
     const timeout = new Promise<SettingsResult>(resolve => {
-      timer = setTimeout(() => resolve({ ok: false, error: "Reading game settings timed out. Choose Reload to retry." }), this.timeoutMs);
+      timer = setTimeout(() => resolve({ ok: false, error: "Reading game settings timed out. Choose Try Again to retry." }), this.timeoutMs);
     });
     const request = Promise.race([read, timeout]).then(result => {
       if (this.pending.get(key) !== request) return this.peek(gameId, accountId)
-        ?? { ok: false as const, error: "The game settings source changed. Choose Reload to retry." };
+        ?? { ok: false as const, error: "The game settings source changed. Choose Try Again to retry." };
       this.pending.delete(key);
       if (!accountId && result.ok && result.value.accountId) {
         const newerAccount = this.entries.get(cacheKey(gameId, result.value.accountId));

@@ -50,10 +50,6 @@
   color: #000;
 }
 
-.screen[data-game="mgspw"] .tile.focused .tile-number {
-  /* The numeral occupies the yellow end cap, while its white title sits on black. */
-  color: #000 !important;
-}
 
 .pw-motion {
   position: absolute;

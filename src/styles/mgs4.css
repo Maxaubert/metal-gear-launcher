@@ -60,8 +60,3 @@
 .screen[data-game="mgs4"] .tile-title {
   color: #fff;
 }
-
-.screen[data-game="mgs4"] .tile.focused .tile-number {
-  /* Override the tile number's per-game inline accent on the red selection fill. */
-  color: #000 !important;
-}

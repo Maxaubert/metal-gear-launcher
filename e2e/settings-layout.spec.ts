@@ -41,6 +41,7 @@ test("settings headings and row origins stay fixed across native and hub categor
     }, settings);
     await page.reload();
     await expect(page.getByTestId("game-screen")).toBeVisible();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
 
     for (const width of [1920, 3840]) {
       await page.setViewportSize({ width, height: width * 9 / 16 });
@@ -73,7 +74,7 @@ test("settings headings and row origins stay fixed across native and hub categor
           if (!bounds) throw new Error(`${id} ${category} row is missing`);
           rowOrigin ??= { x: bounds.x, y: bounds.y };
           expect({ x: bounds.x, y: bounds.y }, `${id} ${category} row origin at ${width}`).toEqual(rowOrigin);
-          const back = page.getByRole("button", { name: "Back", exact: true });
+          const back = page.locator(".settings-hints");
           await expect(back.locator("img, canvas, svg")).toHaveCount(0);
 
           if (category === "Menu Music") {

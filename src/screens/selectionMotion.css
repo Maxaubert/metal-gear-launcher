@@ -1,0 +1,36 @@
+/* The marker moves independently of the fixed banner rows. */
+.selection-marker {
+  position: absolute;
+  left: var(--col-x);
+  right: calc(100vw - var(--col-right));
+  top: calc(var(--desc-top) + 4.5vh);
+  height: var(--selection-row-height, 9.5vh);
+  transform: translateY(calc(var(--selection-index) * (var(--selection-row-height, 9.5vh) + 1vh)));
+  transition: transform 220ms cubic-bezier(.22,.8,.25,1);
+  pointer-events: none;
+  z-index: 2;
+  border-left: .35vw solid var(--accent);
+  box-sizing: border-box;
+}
+
+.selection-marker::before,
+.selection-marker::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 1.2vw;
+  height: 1.5vh;
+  border-right: .15vw solid var(--accent);
+}
+.selection-marker::before { top: 0; border-top: .15vw solid var(--accent); }
+.selection-marker::after { bottom: 0; border-bottom: .15vw solid var(--accent); }
+
+[data-testid="game-selection"] .tile.focused {
+  background: transparent;
+  box-shadow: none;
+}
+[data-testid="game-selection"] .tile-bar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .selection-marker { transition: none; }
+}

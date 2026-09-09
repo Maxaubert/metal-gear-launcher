@@ -2,6 +2,7 @@
 import type {} from "../src/hub/global";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MenuSoundData } from "../shared/menuSounds";
+import type { GameState } from "../shared/ipc";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -221,6 +222,95 @@ describe("preloaded menu sound playback", () => {
     expect(quit).toHaveBeenCalledOnce();
     expect(harness.sources).toHaveLength(0);
     await completion;
+  });
+
+  it("keys refreshes by installed library identity, not artwork or settings refreshes", async () => {
+    const { menuSoundSourceKey } = await import("../src/audio/menuSounds");
+    const game = { pack: { id: "mgs1" }, installed: true, installDir: "D:\\SteamLibrary\\MGS1", buildId: "100", assetUrls: {}, stale: false } as GameState;
+    const state = { steamPath: "C:\\Steam\\", games: [game] };
+    const key = menuSoundSourceKey(state);
+    expect(menuSoundSourceKey({ steamPath: "c:/steam", games: [{ ...game, stale: true, assetUrls: { mainVisual: "new-art" } }] })).toBe(key);
+    expect(menuSoundSourceKey({ ...state, games: [{ ...game, buildId: "101" }] })).not.toBe(key);
+    expect(menuSoundSourceKey({ ...state, games: [{ ...game, installDir: "E:/SteamLibrary/MGS1" }] })).not.toBe(key);
+    expect(menuSoundSourceKey({ ...state, games: [{ ...game, installed: false }] })).not.toBe(key);
+    expect(menuSoundSourceKey({ ...state, steamPath: "D:/Steam" })).not.toBe(key);
+  });
+
+  it("refreshes an empty no-Steam preload when a library becomes available", async () => {
+    const harness = audioHarness({});
+    const sounds = await import("../src/audio/menuSounds");
+    const empty = sounds.preloadMenuSounds("no-steam");
+    await empty;
+    expect(sounds.preloadMenuSounds("no-steam")).toBe(empty);
+    expect(harness.getMenuSounds).toHaveBeenCalledOnce();
+    harness.getMenuSounds.mockResolvedValue({ ok: true, value: { navigate: btoa("found") } });
+    const found = sounds.preloadMenuSounds("steam-A");
+    expect(sounds.preloadMenuSounds("steam-A")).toBe(found);
+    await found;
+    const playing = sounds.playMenuSound("navigate");
+    expect(harness.sources[0]!.start).toHaveBeenCalledOnce();
+    harness.sources[0]!.onended?.(); await playing;
+    expect(harness.getMenuSounds).toHaveBeenCalledTimes(2);
+  });
+
+  it("publishes only the newest decoded bank and connects the shared gain once", async () => {
+    const harness = audioHarness();
+    const oldDecode = deferred<ReturnType<typeof decodedBuffer>>();
+    const newest = decodedBuffer();
+    harness.getMenuSounds.mockResolvedValueOnce({ ok: true, value: { select: btoa("old"), back: btoa("old") } })
+      .mockResolvedValueOnce({ ok: true, value: { select: btoa("new") } });
+    harness.context.decodeAudioData.mockImplementation(bytes => new TextDecoder().decode(bytes) === "old" ? oldDecode.promise : Promise.resolve(newest));
+    const sounds = await import("../src/audio/menuSounds");
+    sounds.setMenuSoundVolume(.3);
+    const old = sounds.preloadMenuSounds("steam-A");
+    await Promise.resolve();
+    expect(harness.context.decodeAudioData).toHaveBeenCalledTimes(2);
+    sounds.setMenuSoundVolume(.7);
+    const fresh = sounds.preloadMenuSounds("steam-B");
+    await fresh;
+    oldDecode.resolve(decodedBuffer()); await old;
+    expect(sounds.preloadMenuSounds("steam-B")).toBe(fresh);
+    const playing = sounds.playMenuSound("select");
+    expect(harness.sources[0]!.buffer).toBe(newest);
+    harness.sources[0]!.onended?.(); await playing;
+    await sounds.playMenuSound("back");
+    expect(harness.sources).toHaveLength(1);
+    expect(harness.context.createGain).toHaveBeenCalledOnce();
+    expect(harness.gain.connect).toHaveBeenCalledOnce();
+    expect(harness.gain.gain.value).toBe(.7);
+  });
+
+  it("discards a stale IPC result before it starts any decoding", async () => {
+    const harness = audioHarness();
+    const oldResponse = deferred<{ ok: boolean; value: MenuSoundData }>();
+    harness.getMenuSounds.mockReturnValueOnce(oldResponse.promise)
+      .mockResolvedValueOnce({ ok: true, value: { navigate: btoa("fresh") } });
+    const sounds = await import("../src/audio/menuSounds");
+    const old = sounds.preloadMenuSounds("steam-A");
+    await sounds.preloadMenuSounds("steam-B");
+    oldResponse.resolve({ ok: true, value: { back: btoa("obsolete") } });
+    await old;
+    expect(harness.context.decodeAudioData).toHaveBeenCalledOnce();
+    await sounds.playMenuSound("back");
+    expect(harness.sources).toHaveLength(0);
+  });
+
+  it("allows a failed IPC or decode to retry for the same library", async () => {
+    const harness = audioHarness({ select: btoa("valid") });
+    harness.getMenuSounds.mockRejectedValueOnce(new Error("Library unavailable"));
+    harness.context.decodeAudioData.mockRejectedValueOnce(new Error("Incomplete file"));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const sounds = await import("../src/audio/menuSounds");
+    await sounds.preloadMenuSounds("steam-A");
+    await sounds.preloadMenuSounds("steam-A");
+    const completed = sounds.preloadMenuSounds("steam-A");
+    await completed;
+    expect(sounds.preloadMenuSounds("steam-A")).toBe(completed);
+    expect(harness.getMenuSounds).toHaveBeenCalledTimes(3);
+    expect(harness.gain.connect).toHaveBeenCalledOnce();
+    const playing = sounds.playMenuSound("select");
+    expect(harness.sources[0]!.start).toHaveBeenCalledOnce();
+    harness.sources[0]!.onended?.(); await playing;
   });
 });
 

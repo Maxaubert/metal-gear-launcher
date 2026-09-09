@@ -23,7 +23,7 @@ function syntheticSettings() {
   return encrypted;
 }
 
-test("settings save, discard, conflict and keyboard navigation preserve game data", async () => {
+test("settings autosave, queued departure, conflicts and keyboard navigation preserve game data", async () => {
   const root = await mkdtemp(join(tmpdir(), "hub-settings-e2e-"));
   const data = join(root, "hub");
   const steam = join(root, "steam");
@@ -50,6 +50,7 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
   try {
     const page = await app.firstWindow();
     await page.getByTestId("game-screen").waitFor();
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await page.getByTestId("tile-mgs3").click();
     await page.getByTestId("menu-item-options").click();
@@ -64,44 +65,42 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
     await page.getByRole("button", { name: "Language", exact: true }).click();
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toBeVisible();
-    // A second app instance can request another game while these edits are open.
-    // The request must wait for the settings screen's existing save/discard flow.
+    await expect(page.getByRole("button", { name: /^(Back|Save Changes|Reload|Discard Changes)$/ })).toHaveCount(0);
     await app.evaluate(({ BrowserWindow }) => {
       BrowserWindow.getAllWindows()[0]!.webContents.send("hub:selectGame", "mgs2");
     });
     await expect(page.getByTestId("settings-screen")).toHaveAttribute("data-game", "mgs3");
-    await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
+    await expect(page.getByRole("heading", { name: "Options", exact: true })).toBeVisible({ timeout: 15000 });
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog", { name: "Unsaved settings" })).toBeVisible();
-    await page.getByRole("button", { name: "Keep Editing", exact: true }).click();
-    await expect(page.getByTestId("settings-screen")).toHaveAttribute("data-game", "mgs3");
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
-    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByRole("dialog", { name: "Unsaved settings" })).toHaveCount(0);
     const json = JSON.parse(await readFile(join(launcher, "launcher_sv"), "utf8"));
     expect(json.valueList).toEqual(["2", "keep"]);
     expect(await readdir(join(data, "settings-backups", "mgs3"))).toHaveLength(1);
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs3").click();
+    await page.getByTestId("menu-item-options").click();
 
     const audio = page.getByRole("button", { name: /^(Audio|Sound)$/ });
     await audio.click();
     await page.getByRole("button", { name: "Increase Game Volume", exact: true }).click();
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
-    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible({ timeout: 15000 });
     const decoded = decodeUsersv(await readFile(join(launcher, "usersv")));
     expect(decoded.readInt32LE(28)).toBe(9);
     expect(decoded.readInt32LE(416)).toBe(777);
 
-    await page.getByRole("button", { name: "Decrease Game Volume", exact: true }).click();
     await writeFile(join(launcher, "launcher_sv"), JSON.stringify({ ...json, external: true }));
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
+    await page.getByRole("button", { name: "Decrease Game Volume", exact: true }).click();
     await expect(page.getByText(/Settings changed outside the hub/)).toBeVisible();
     expect(decodeUsersv(await readFile(join(launcher, "usersv"))).readInt32LE(28)).toBe(9);
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Use Current Settings", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Use Current Settings", exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
-    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3");
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-mgs2").click();
     await page.getByTestId("menu-item-options").click();
     await page.getByRole("button", { name: "Screen", exact: true }).click();
     const preset = page.getByTestId("setting-HiresoPreset").locator("output");
@@ -117,8 +116,8 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
     // Returning to the raw Original value must not restore remembered Custom movie=1.
     await page.getByRole("button", { name: "Increase Movie", exact: true }).click();
     await expect(movie).toHaveText("Original");
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expect(preset).toHaveText("Original Mode");
+    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(preset).toHaveText("Custom");
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Screen", exact: true }).click();
     for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowDown");
@@ -126,19 +125,12 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
     await page.keyboard.press("ArrowRight");
     await expect(preset).toHaveText("Custom");
     await expect(movie).toHaveText("High Resolution");
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expect(page.getByText("Loading settings...", { exact: true })).toHaveCount(0);
-    await expect(preset).toHaveText("Original Mode");
-    expect(await readFile(join(mgs2Launcher, "usersv"))).toEqual(mgs2Game);
-    expect(await readFile(join(mgs2Launcher, "launcher_sv"), "utf8")).toBe(mgs2Json);
-    // Returning to Original must save the displayed mode while remembering the Custom edit.
-    await page.getByRole("button", { name: "Increase Movie", exact: true }).click();
+    // Returning to Original saves the displayed mode while remembering the Custom edit.
     await expect(preset).toHaveText("Custom");
     await page.getByRole("button", { name: "Increase Resolution Settings", exact: true }).click();
     await expect(preset).toHaveText("Original Mode");
     await expect(movie).toHaveText("Original");
-    await page.getByRole("button", { name: "Save Changes", exact: true }).click();
-    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible({ timeout: 15000 });
     const savedMgs2 = JSON.parse(await readFile(join(mgs2Launcher, "launcher_sv"), "utf8"));
     expect(savedMgs2.valueList[savedMgs2.keyList.indexOf("HiresoPreset")]).toBe("0");
     expect(savedMgs2.valueList[savedMgs2.keyList.indexOf("HiresoMovie")]).toBe("1");
@@ -157,9 +149,13 @@ test("settings save, discard, conflict and keyboard navigation preserve game dat
     await expect(preview).toHaveAccessibleName("Display area right, wallpaper 1");
     await expect(preview.locator(".mg12-screen-preview-wallpaper")).toHaveJSProperty("complete", true);
     await expect(preview.locator(".mg12-screen-preview-wallpaper")).not.toHaveJSProperty("naturalWidth", 0);
-    await page.getByRole("button", { name: "Discard Changes", exact: true }).click();
-    await expect(preview).toHaveAccessibleName("Display area center, wallpaper off");
-    expect(decodeUsersv(await readFile(join(mg12Launcher, "usersv"))).readInt32LE(16)).toBe(0);
+    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible({ timeout: 15000 });
+    await page.getByRole("button", { name: "Restore Defaults", exact: true }).click();
+    await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(preview).toHaveAccessibleName("Display area center, wallpaper 1");
+    const mg12Saved = decodeUsersv(await readFile(join(mg12Launcher, "usersv")));
+    expect(mg12Saved.readInt32LE(16)).toBe(1);
+    expect(mg12Saved.readInt32LE(20)).toBe(0);
   } finally {
     await app.close();
     if (dirname(resolve(root)) !== resolve(tmpdir())) throw new Error("Unexpected test directory");
