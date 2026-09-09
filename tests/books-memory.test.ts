@@ -17,13 +17,18 @@ it("reuses parsed metadata and coalesces concurrent reads while rechecking file 
   await writeFile(file, '{"page":22}'); expect((await remember(file, "book", load)).page).toBe(22); expect(load).toHaveBeenCalledTimes(2);
 });
 
-it("detects same-size edits even when modification time is restored", async () => {
+it("invalidates on changed ctime even when size and modification time are unchanged", async () => {
   const file = join(root, "book.json"); const date = new Date("2020-01-01T00:00:00Z");
   await writeFile(file, '{"page":1}'); await utimes(file, date, date);
   const initial = await stat(file); const remember = createBookMemory();
   const load = vi.fn(async () => JSON.parse(await readFile(file, "utf8")) as { page: number });
   await remember(file, "book", load);
-  await writeFile(file, '{"page":2}'); await utimes(file, date, date);
+  // Windows can give consecutive writes the same timestamp. Establish a distinct
+  // change time before testing the cache's metadata-based invalidation contract.
+  await vi.waitFor(async () => {
+    await writeFile(file, '{"page":2}'); await utimes(file, date, date);
+    expect((await stat(file)).ctimeMs).not.toBe(initial.ctimeMs);
+  }, { interval: 20, timeout: 1000 });
   expect((await stat(file)).mtimeMs).toBe(initial.mtimeMs);
   expect((await remember(file, "book", load)).page).toBe(2); expect(load).toHaveBeenCalledTimes(2);
 });

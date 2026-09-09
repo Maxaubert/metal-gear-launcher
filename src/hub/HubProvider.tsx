@@ -75,6 +75,7 @@ export default function HubProvider() {
   const [bonusMediaOpen, setBonusMediaOpen] = useState(false);
   const { presentation: bonusPresentation, playlist: bonusPlaylist, preload: preloadBonus } = useBonusResources();
   const bonusActionRef = useRef<((action: Action) => void) | null>(null);
+  const missingActionRef = useRef<((action: Action) => void) | null>(null);
   const trophiesActionRef = useRef<((action: Action) => void) | null>(null);
   const [settingsDetail, setSettingsDetail] = useState(false);
   const settingsOpenRef = useRef(false);
@@ -431,6 +432,10 @@ export default function HubProvider() {
     }
 
     if (nav.screen === "hub") {
+      if (currentGame && !currentGame.installed) {
+        missingActionRef.current?.(action);
+        return;
+      }
       if (action === "confirm" && currentGame) {
         void handleMenuChoice(currentGame.pack.menu[nav.item] ?? "start");
         return;
@@ -495,7 +500,9 @@ export default function HubProvider() {
     content = (
       <>
         <div style={{ position: "absolute", inset: 0 }}>
-          <PersistentBackdrop scene={bonusActive ? { kind: "bonus", presentation: bonusPresentation } : { kind: "game", game: displayedGame }} view={settingsOpen || trophiesOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail || trophiesOpen} />
+          <div hidden={!displayedGame.installed && !bonusActive}>
+            <PersistentBackdrop scene={bonusActive ? { kind: "bonus", presentation: bonusPresentation } : { kind: "game", game: displayedGame }} view={settingsOpen || trophiesOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail || trophiesOpen} />
+          </div>
           {bonusOpen ? <BonusContentScreen actionRef={bonusActionRef} lastInputKind={lastInputKind} volume={volume}
             onUnavailable={showUnavailable}
             booksCatalog={booksCatalog} onRefreshBooks={preloadBooks}
@@ -542,7 +549,12 @@ export default function HubProvider() {
               onRetryExtract={() => void handleRetryExtract()}
             />
           ) : (
-            <NotInstalled game={currentGame} onInstall={() => { void playMenuSound("select"); void window.hub.launch(currentGame.pack.id, { install: true }); }} />
+            <NotInstalled game={currentGame} installedCount={games.filter(game => game.installed).length}
+              actionRef={missingActionRef} lastInputKind={lastInputKind}
+              onGameSelection={() => userDispatch("menu")}
+              onLocateSteam={() => void handlePickFolder()}
+              onQuit={() => void handleQuitChoice(0)}
+              onInstall={() => { void playMenuSound("select"); void window.hub.launch(currentGame.pack.id, { install: true }); }} />
           )}
         </div>
         {updateBanner}
