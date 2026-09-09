@@ -65,10 +65,11 @@ test("local filenames preview on focus, save independently, survive restart and 
     await openMusic(page);
     for (const theme of local) await expect(page.getByRole("button", { name: theme.label, exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Album cover", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Original Menu Theme", exact: true })).toHaveCount(0);
 
     // Focus starts the track before confirmation, without a fade-out delay or a saved change.
-    await page.getByRole("button", { name: "Original Menu Theme", exact: true }).hover();
-    await page.keyboard.press("ArrowDown");
+    await page.getByRole("button", { name: second.label, exact: true }).hover();
+    await page.keyboard.press("ArrowUp");
     await expect.poll(() => page.locator("#menu-music").getAttribute("src"), { timeout: 250, intervals: [10] }).toContain(first.id);
     await expectPlaying(page, first.id);
     await expect(page.getByRole("button", { name: "Save Changes", exact: true })).toHaveCount(0);
@@ -175,12 +176,12 @@ test("a corrupt selected custom track can be bypassed and replaced from Menu Mus
     await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs2");
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
     await openMusic(page);
-    await page.getByRole("button", { name: "Original Menu Theme", exact: true }).click();
+    await page.getByRole("button", { name: "Alert", exact: true }).click();
     await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
-    await expectPlaying(page, "mgs2/bgm.wav");
-    expect(JSON.parse(await readFile(join(f.data, "config.json"), "utf8")).menuMusic.mgs2).toBe("mgs2-original");
+    await expectPlaying(page, musicFileId("mgs2", "Alert.wav"));
+    expect(JSON.parse(await readFile(join(f.data, "config.json"), "utf8")).menuMusic.mgs2).toBe(musicFileId("mgs2", "Alert.wav"));
     await expect(page.getByTestId("startup-screen")).toHaveCount(0);
   } finally { await app.close(); await cleanup(f.root); }
 });
