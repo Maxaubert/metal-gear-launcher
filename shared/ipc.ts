@@ -47,6 +47,8 @@ export interface HubApi {
   prepareLibrary(): Promise<Result<PreparationResult>>;
   onPreparationProgress(cb: (progress: PreparationProgress) => void): () => void;
   getBooksCatalog(): Promise<Result<BookEntry[]>>;
+  importBooks(mode: "files" | "folder"): Promise<Result<BookEntry[]>>;
+  removeImportedBook(id: string): Promise<Result<BookEntry[]>>;
   openBook(request: BookRequest): Promise<Result<BookDocument>>;
   getBookPage(request: BookPageRequest): Promise<Result<BookPage>>;
   saveBookProgress(request: BookPageRequest): Promise<Result<void>>;

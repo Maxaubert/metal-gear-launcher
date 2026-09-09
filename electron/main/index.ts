@@ -16,6 +16,7 @@ import { assetsDir, dataDir } from "./paths";
 import { configSchema, readConfig, writeConfig } from "./config";
 import { MUSIC_PROTOCOL } from "../../shared/menuMusic";
 import { ensureMenuMusicFolder, getMenuMusicLibrary, MUSIC_CONTENT_TYPES, resolveMenuMusicFile, validateMenuMusicSelection } from "./music/library";
+import { seedBundledMenuMusic } from "./music/bundled";
 import { findSteamRoot, listLibraries } from "./steam/library";
 import { resolveInstall } from "./steam/resolve";
 import { extractGame, isStale, readManifest, readToolVersions } from "./extract/extractor";
@@ -36,6 +37,7 @@ import { getBonusPresentation } from "./bonus/presentation";
 import { getBonusPlaylist } from "./bonus/playlist";
 import { bookPageRequest, bookRequest } from "@shared/books";
 import { getBooksCatalog, openBook, getBookPage, saveBookProgress } from "./books";
+import { importBookPaths, removeImportedBook } from "./books/imported";
 import { prepareLibrary } from "./preparation";
 
 const execAsync = promisify(exec);
@@ -184,6 +186,8 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
+    const musicReady = seedBundledMenuMusic(dataDir(), join(app.isPackaged ? process.resourcesPath : join(app.getAppPath(), "resources"), "menu-music"))
+      .catch(error => { console.error("Could not prepare bundled menu music", error); });
     protocol.handle("hub-bonus", async request => {
       try {
         if (request.method !== "GET" && request.method !== "HEAD") return new Response(null, { status: 405 });
@@ -212,6 +216,27 @@ if (!gotSingleInstanceLock) {
         return ok(await getBooksCatalog(await findSteamRoot(config.steamPath), dataDir()));
       } catch (error) { return err(asError(error)); }
     });
+    ipcMain.handle("hub:books:import", async (_event, arg) => {
+      try {
+        const mode = z.enum(["files", "folder"]).parse(arg);
+        if (!mainWindow) throw new Error("The launcher window is unavailable");
+        const picked = await dialog.showOpenDialog(mainWindow, {
+          title: mode === "folder" ? "Add Books Folder" : "Add Books",
+          properties: mode === "folder" ? ["openDirectory"] : ["openFile", "multiSelections"],
+          filters: [{ name: "Books and comics", extensions: ["pdf", "cbz", "cbr"] }],
+        });
+        if (!picked.canceled) await importBookPaths(dataDir(), picked.filePaths);
+        const config = await readConfig();
+        return ok(await getBooksCatalog(await findSteamRoot(config.steamPath), dataDir()));
+      } catch (error) { return err(asError(error)); }
+    });
+    ipcMain.handle("hub:books:remove", async (_event, arg) => {
+      try {
+        await removeImportedBook(dataDir(), z.string().uuid().parse(arg));
+        const config = await readConfig();
+        return ok(await getBooksCatalog(await findSteamRoot(config.steamPath), dataDir()));
+      } catch (error) { return err(asError(error)); }
+    });
     ipcMain.handle("hub:books:open", async (_event, arg) => {
       try {
         const request = bookRequest.parse(arg);
@@ -233,6 +258,7 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("hub:bonus:playlist", async (_event, arg) => {
       try {
         z.undefined().parse(arg);
+        await musicReady;
         const config = await readConfig();
         return ok(await getBonusPlaylist(dataDir(), await findSteamRoot(config.steamPath)));
       } catch (error) { return err(asError(error)); }
@@ -373,6 +399,7 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle("hub:music:get", async (_e, arg) => {
+      await musicReady;
       try { return ok(await getMenuMusicLibrary(dataDir(), settingsGameId.parse(arg))); }
       catch (e) { return err(asError(e)); }
     });

@@ -26,6 +26,16 @@
 .books-empty{padding:2vw;margin:0}
 .books-footer{font-size:clamp(14px,1.12vw,36px);gap:1.6vw}
 .books-footer button:hover{background:none}
+.books-import-toolbar{position:absolute;inset:11.5vh 5.5vw auto;display:flex;align-items:center;gap:12px;min-height:48px;font-size:clamp(18px,1.2vw,38px)}
+.books-import-toolbar button,.books-remove{padding:8px 18px;border:1px solid #555;background:#fff;color:#171717;font:inherit;min-height:44px}
+.books-import-toolbar>span{margin-left:auto;color:#4d4b42;white-space:nowrap}
+.books-library .books-library-body{top:calc(11.5vh + max(60px,6.5vh))}
+.books-row-title,.books-details h2,.books-detail-game{overflow-wrap:anywhere}
+.books-row[aria-disabled=true]{color:#68665f;background:#deddd7}
+.books-row[aria-disabled=true][aria-current=true]{background:#eeede8;border-color:#555}
+.books-remove{margin-top:3vh;font-size:clamp(16px,1.1vw,34px);text-align:left}
+.books-library button:focus-visible{outline:3px solid #756626;outline-offset:-4px}
+@media(max-width:800px){.books-import-toolbar{inset-inline:3vw;gap:6px;font-size:16px}.books-import-toolbar button{padding:8px 10px}.books-import-toolbar>span{font-size:14px}.books-library-body{bottom:12vh}.books-footer{flex-wrap:wrap}}
 .book-controls-overlay{position:absolute;z-index:3;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:16px;width:max-content;max-width:calc(100% - 32px);background:rgb(25 25 25/.96);color:#fff;border:1px solid #666;box-shadow:0 3px 12px #0003;padding:6px 10px;font-size:clamp(16px,.9vw,28px)}
 .book-reader-heading{display:flex;align-items:center;gap:10px;padding-inline:6px 12px;border-right:1px solid #777;white-space:nowrap}
 .book-reader-heading h1{margin:0;max-width:13em;overflow:hidden;text-overflow:ellipsis;font-size:inherit;line-height:1.3;font-weight:400}

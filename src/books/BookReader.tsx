@@ -77,7 +77,7 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
   return <main className="bonus-screen books-screen book-reader" data-testid="book-reader" aria-busy={reader.loading}
     data-controls-visible={controls.visible} data-controls-hidden={controls.manuallyHidden} onPointerMove={controls.reveal} onPointerDown={controls.reveal} onWheel={controls.reveal}>
     <div className="book-controls-overlay" data-book-overlay data-testid="book-controls" data-visible={controls.visible} inert={!controls.visible} aria-hidden={!controls.visible} {...controls.overlayEvents}>
-    <header className="book-reader-heading"><h1>{document?.title ?? (request.kind === "master" ? "Master Book" : "Screenplay Book")}</h1><span aria-label={request.language === "en" ? "English" : "Japanese"}>{request.language === "en" ? "EN" : "日本語"}</span></header>
+    <header className="book-reader-heading"><h1>{document?.title ?? (request.importedId ? "Book" : request.kind === "master" ? "Master Book" : "Screenplay Book")}</h1>{!request.importedId && <span aria-label={request.language === "en" ? "English" : "Japanese"}>{request.language === "en" ? "EN" : "日本語"}</span>}</header>
     <nav className="book-toolbar" aria-label="Book controls">
       <button data-testid="book-contents" disabled={!document?.contents.length} aria-expanded={contents} onClick={toggleContents}>Contents</button>
       <div className="book-page-navigation">

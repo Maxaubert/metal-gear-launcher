@@ -5,6 +5,7 @@ export const bookRequest = z.object({
   gameId: settingsGameId,
   kind: z.enum(["master", "screenplay"]),
   language: z.enum(["en", "jp"]),
+  importedId: z.string().uuid().optional(),
 }).strict();
 export const bookPageRequest = bookRequest.extend({ page: z.number().int().min(0).max(10000) }).strict();
 export type BookRequest = z.infer<typeof bookRequest>;
@@ -17,6 +18,9 @@ export interface BookEntry {
   title: string;
   gameTitle: string;
   languages: BookLanguage[];
+  importedId?: string;
+  available?: boolean;
+  format?: "pdf" | "cbz" | "cbr";
 }
 export interface BookDocument extends BookRequest {
   title: string;

@@ -1,7 +1,7 @@
 {
   "name": "metal-gear-launcher",
   "productName": "Metal Gear Launcher",
-  "version": "0.11.7",
+  "version": "0.12.0",
   "description": "Fullscreen launcher for the Metal Gear Solid Master Collection",
   "author": "Max",
   "private": true,
@@ -16,14 +16,17 @@
     "e2e": "npm run build && playwright test",
     "shoot": "npm run build && node scripts/shoot.mjs",
     "fetch-tools": "pwsh -NoProfile -File scripts/fetch-tools.ps1",
-    "dist": "npm run fetch-tools && npm run build && electron-builder --win nsis"
+    "dist": "npm run fetch-tools && npm run build && node scripts/package-launcher.mjs"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.9",
+    "7zip-bin-full": "^26.3.1",
     "cheerio": "^1.2.0",
     "electron-log": "^5.4.0",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "sharp": "^0.34.3",
+    "sharp": "^0.35.4",
     "zod": "^3.25.0"
   },
   "devDependencies": {
@@ -45,7 +48,7 @@
     "vitest": "^3.2.0"
   },
   "allowScripts": {
-    "sharp@0.34.5": true,
+    "sharp@0.35.4": true,
     "esbuild@0.25.12": true,
     "esbuild@0.28.2": true,
     "electron-winstaller@5.4.0": true
