@@ -7,7 +7,9 @@
 - Build / package: `npm run dist`   Artifact: `MetalGearLauncher-Setup-x64-<version>.exe`
 - Known failures to tolerate: none
 - Version source: `package.json`   Release: release.yml on push to main
-- Install locally after merge: run the installer in `dist`; confirm the installed executable's ProductVersion
+- Local test installs must be clean: `pwsh -File scripts/install-clean.ps1` after packaging; confirm ProductVersion.
+- This archives launcher data/profile before resetting them for first-run testing. Never reset Steam/game settings or saves.
+- Leave the final local installation unlaunched and clean after verification, unless Ove asks otherwise.
 - Deploy: installer via GitHub Releases
 - Signing: unsigned
 

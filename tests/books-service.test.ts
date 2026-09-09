@@ -76,6 +76,9 @@ describe("on-demand native book service", () => {
     expect(fixture.calls.length).toBe(before + 1);
     await utimes(fixture.tool, later, later);
     await getBookPage(steam, data, { ...request, page: 0 });
+    expect(fixture.calls.length).toBe(before + 1);
+    await writeFile(fixture.tool, "updated decoder bytes");
+    await getBookPage(steam, data, { ...request, page: 0 });
     expect(fixture.calls.length).toBe(before + 4);
   });
   it("allows native Japanese asset names while rejecting path traversal in metadata", async () => {

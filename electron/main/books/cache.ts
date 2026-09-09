@@ -2,11 +2,14 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join, relative, isAbsolute } from "node:path";
 import { z } from "zod";
+import { memoryStamp } from "./memory";
 
 const resource = z.object({ file: z.string(), hash: z.string().regex(/^[a-f0-9]{64}$/) });
 const manifest = z.object({ version: z.literal(1), files: z.array(resource).min(1) });
 export const digest = (value: string | Buffer): string => createHash("sha256").update(value).digest("hex");
 const pending = new Map<string, Promise<string>>();
+const verified = new Map<string, { manifest: string; files: { file: string; identity: string }[] }>();
+const maxVerified = 2048;
 
 export async function fileIdentity(file: string): Promise<string> {
   const info = await stat(file);
@@ -26,13 +29,28 @@ export async function filesIn(directory: string): Promise<string[]> {
 
 async function valid(directory: string): Promise<boolean> {
   try {
-    const data = manifest.parse(JSON.parse(await readFile(join(directory, "cache.json"), "utf8")));
+    const manifestFile = join(directory, "cache.json");
+    const manifestIdentity = (await memoryStamp(manifestFile)).identity;
+    const remembered = verified.get(directory);
+    if (remembered?.manifest === manifestIdentity) {
+      const current = await Promise.all(remembered.files.map(async entry => (await memoryStamp(join(directory, entry.file))).identity === entry.identity));
+      if (current.every(Boolean)) { verified.delete(directory); verified.set(directory, remembered); return true; }
+    }
+    verified.delete(directory);
+    const data = manifest.parse(JSON.parse(await readFile(manifestFile, "utf8")));
+    const identities: { file: string; identity: string }[] = [];
     for (const entry of data.files) {
       if (isAbsolute(entry.file) || entry.file.split(/[\\/]/).includes("..")) return false;
-      if (digest(await readFile(join(directory, entry.file))) !== entry.hash) return false;
+      const file = join(directory, entry.file);
+      const before = (await memoryStamp(file)).identity;
+      if (digest(await readFile(file)) !== entry.hash || (await memoryStamp(file)).identity !== before) return false;
+      identities.push({ file: entry.file, identity: before });
     }
+    if ((await memoryStamp(manifestFile)).identity !== manifestIdentity) return false;
+    if (verified.size >= maxVerified) verified.delete(verified.keys().next().value!);
+    verified.set(directory, { manifest: manifestIdentity, files: identities });
     return true;
-  } catch { return false; }
+  } catch { verified.delete(directory); return false; }
 }
 
 /** Only a validated, complete temporary extraction can become a persistent entry. */

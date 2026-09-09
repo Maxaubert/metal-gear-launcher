@@ -22,9 +22,8 @@ export type GameSelectionProps = {
  * visual and header block, exactly as `GameScreen` would - with the description and menu swapped
  * for a small "Game Selection" header row and a banner list, one row per game. Moving the cursor
  * swaps the focused entry, so the left zone's art and header change with it. A tile for a game
- * that isn't installed is still selectable - picking one just lands on that game's `NotInstalled`
- * screen - but stays visually marked (dashed border, dimmed cover, greyed label) so the list still
- * shows which games need Steam install/extraction.
+ * that isn't installed stays focusable and visibly marked; selecting it explains the missing
+ * installation without leaving the list.
  */
 export default function GameSelection({ games, bonusPresentation = EMPTY_BONUS_PRESENTATION, focusIndex, lastInputKind, onSelect, onFocusItem }: GameSelectionProps) {
   const bonusFocused = focusIndex === games.length;
@@ -60,6 +59,7 @@ export default function GameSelection({ games, bonusPresentation = EMPTY_BONUS_P
             role="menuitem"
             tabIndex={-1}
             aria-current={index === focusIndex ? "true" : undefined}
+            aria-disabled={!g.installed || undefined}
             data-testid={`tile-${g.pack.id}`}
             data-focused={index === focusIndex ? "true" : undefined}
             className={`tile${index === focusIndex ? " focused" : ""}${g.installed ? "" : " not-installed"}`}
@@ -71,6 +71,7 @@ export default function GameSelection({ games, bonusPresentation = EMPTY_BONUS_P
             <span className="tile-scrim" aria-hidden="true" />
             <span className="tile-bar" aria-hidden="true" />
             <span className="tile-title">{g.pack.shortTitle}</span>
+            {!g.installed && <span className="tile-install-status">Not installed</span>}
             {!g.pack.chapters && <span className="tile-number" style={{ color: g.pack.theme.accent }}>
               {g.pack.number}
             </span>}

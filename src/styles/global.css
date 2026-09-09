@@ -815,21 +815,23 @@ body {
   background: linear-gradient(to right, var(--paper) 0%, color-mix(in srgb, var(--paper) 55%, transparent) 35%, transparent 75%);
 }
 
-/* A game that isn't installed is still a selectable tile (its number lands on that game's
-   `NotInstalled` screen - see GameSelection's own doc-comment), but the list must still tell
-   the player which games still need Steam install/extraction: a dashed outline, dimmed cover
-   art, and a greyed label - independent of whether a tile has any cached cover art yet. */
+/* Missing games remain focusable so confirming can explain the unavailable installation. */
 .tile.not-installed {
   border: 0.08vw dashed color-mix(in srgb, var(--ink) 35%, transparent);
 }
 
 .tile.not-installed .tile-cover {
   opacity: 0.45;
+  filter: grayscale(1);
 }
 
 .tile.not-installed .tile-title {
-  color: color-mix(in srgb, var(--ink) 35%, transparent);
+  color: color-mix(in srgb, var(--ink) 68%, var(--paper));
+  top: 35%;
 }
+
+.tile-install-status{position:absolute;left:1.4vw;bottom:10%;font:400 clamp(16px,1.65vh,28px)/1.2 "Rodin",sans-serif;color:color-mix(in srgb,var(--ink) 80%,var(--paper))}
+.tile.not-installed .tile-number{filter:grayscale(1);opacity:.6}
 
 .tile-title {
   position: absolute;

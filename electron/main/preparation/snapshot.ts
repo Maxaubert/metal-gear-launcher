@@ -3,8 +3,9 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { digest, filesIn } from "../books/cache";
+import { extractorIdentity } from "../extract/identity";
 
-const fileStamp = z.object({ file: z.string(), size: z.number(), modified: z.number() });
+const fileStamp = z.object({ file: z.string(), size: z.number(), modified: z.number(), content: z.string().optional() });
 const snapshotSchema = z.object({ version: z.literal(1), fingerprint: z.string(), sources: z.array(fileStamp), files: z.array(fileStamp), total: z.number().int().nonnegative() });
 export type FileStamp = z.infer<typeof fileStamp>;
 export type PreparationSnapshot = z.infer<typeof snapshotSchema>;
@@ -17,6 +18,11 @@ export async function stampFiles(files: string[]): Promise<FileStamp[]> {
   const result: FileStamp[] = [];
   for (let index = 0; index < ordered.length; index += 64) result.push(...await Promise.all(ordered.slice(index, index + 64).map(stamp)));
   return result;
+}
+export async function stampExtractor(file: string): Promise<FileStamp> {
+  const info = await stamp(file);
+  if (info.size < 0) return { file, size: -1, modified: -1 };
+  return { file, size: info.size, modified: 0, content: await extractorIdentity(file) };
 }
 export function sourceFingerprint(identity: unknown, sources: FileStamp[]): string { return digest(JSON.stringify([1, identity, sources])); }
 const path = (dataDir: string) => join(dataDir, "preparation", "complete.json");
