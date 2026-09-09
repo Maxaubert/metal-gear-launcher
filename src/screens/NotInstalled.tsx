@@ -1,38 +1,76 @@
+import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import type { GameState } from "@shared/ipc";
+import type { Action } from "../input/navigationReducer";
+import type { InputKind } from "../input/useNavigation";
+import { playMenuSound } from "../audio/menuSounds";
+import { ControlHint } from "./FooterHints";
+import neutralWordmark from "../assets/neutral-wordmark.png";
+import "./notInstalled.css";
 
-export type NotInstalledProps = {
+type Props = {
   game: GameState;
+  installedCount: number;
+  actionRef: RefObject<((action: Action) => void) | null>;
+  lastInputKind: InputKind;
+  onGameSelection: () => void;
   onInstall: () => void;
+  onLocateSteam: () => void;
+  onQuit: () => void;
 };
 
-/** Greyed variant of the hub screen for a game that isn't installed: one row, install on Steam. */
-export default function NotInstalled({ game, onInstall }: NotInstalledProps) {
-  return (
-    <div className="screen-root">
-      {/* A separate, absolutely-positioned layer: `.dots` carries its own opacity, which
-          would otherwise wash out the text if applied to the container that holds it. */}
-      <div className="dots" style={{ position: "absolute", inset: 0 }} />
-      <div
-        style={{
-          position: "relative", height: "100%",
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.5rem",
-        }}
-      >
-        {/* Full-contrast text throughout: "greyed" comes from the dashed border and the
-            de-emphasised layout, not from dimming text below the 4.5:1 contrast floor. */}
-        <span style={{ fontSize: "3rem", fontWeight: 700 }}>{game.pack.shortTitle}</span>
-        <span style={{ fontSize: "1.2rem", letterSpacing: "0.1em" }}>{game.pack.title}</span>
-        <span style={{ fontSize: "1rem", border: "1px dashed color-mix(in srgb, var(--ink) 40%, transparent)", padding: "0.5rem 1rem" }}>
-          Not installed
-        </span>
-        <div
-          className="focused"
-          onClick={onInstall}
-          style={{ height: "3rem", minWidth: "16rem", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "1.1rem" }}
-        >
-          Install on Steam
-        </div>
+export default function NotInstalled({ game, installedCount, actionRef, lastInputKind, onGameSelection, onInstall, onLocateSteam, onQuit }: Props) {
+  const empty = installedCount === 0;
+  const [selected, setSelected] = useState(0);
+  const selection = useRef(0);
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  const rows = [
+    { label: "Game Selection", activate: onGameSelection },
+    empty ? { label: "Choose Steam folder", activate: onLocateSteam } : { label: "Install on Steam", activate: onInstall },
+    { label: "Quit Launcher", activate: onQuit },
+  ];
+  function focus(index: number) {
+    if (index === selection.current) return;
+    selection.current = index;
+    void playMenuSound("navigate");
+    setSelected(index);
+  }
+  useLayoutEffect(() => {
+    actionRef.current = action => {
+      if (action === "up" || action === "down") {
+        const index = (selected + (action === "up" ? rows.length - 1 : 1)) % rows.length;
+        focus(index);
+        buttons.current[index]?.focus();
+      } else if (action === "confirm") rows[selected]?.activate();
+      else if (action === "menu" || action === "back") onGameSelection();
+    };
+    return () => { actionRef.current = null; };
+  });
+
+  return <main className="uninstalled-screen" data-testid="not-installed-screen" aria-labelledby="uninstalled-title">
+    <header className="uninstalled-header">METAL GEAR LAUNCHER</header>
+    <div className="uninstalled-layout">
+      <div className="uninstalled-brand">
+        <img src={neutralWordmark} width={2172} height={724} alt="Metal Gear Solid" draggable={false} />
       </div>
+      <section className="uninstalled-content">
+        <h1 id="uninstalled-title">{empty ? "No games installed" : game.pack.shortTitle}</h1>
+        {!empty && <p className="uninstalled-game-title">{game.pack.title}</p>}
+        {!empty && <p className="uninstalled-status">Not installed</p>}
+        <p className="uninstalled-description">{empty
+          ? "Install a supported Metal Gear game through Steam, then reopen the launcher. If your games are already installed, choose your Steam folder."
+          : "This game is not installed. Choose another game from your library, or install this one through Steam."}</p>
+        <nav className="uninstalled-actions" aria-label="Library actions">
+          {rows.map((row, index) => <button type="button" key={row.label}
+            ref={node => { buttons.current[index] = node; }}
+            aria-current={selected === index ? "true" : undefined}
+            onFocus={() => focus(index)} onMouseEnter={() => focus(index)} onClick={row.activate}>{row.label}</button>)}
+        </nav>
+      </section>
     </div>
-  );
+    <footer className="uninstalled-footer">
+      <ControlHint lastInputKind={lastInputKind} keyboard={["↑", "↓"]} gamepad="L" label="Move cursor" />
+      <ControlHint lastInputKind={lastInputKind} keyboard="Enter" gamepad="A" label="Confirm" />
+      <ControlHint lastInputKind={lastInputKind} keyboard="Tab" gamepad="B" label="Game Selection" />
+    </footer>
+  </main>;
 }
