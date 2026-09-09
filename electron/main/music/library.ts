@@ -4,6 +4,7 @@ import { extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { DEFAULT_MENU_MUSIC_FILENAMES, MUSIC_PROTOCOL, menuMusicRequest, type MenuMusicLibrary, type MenuTheme, type MusicGameId } from "../../../shared/menuMusic";
 import { settingsGameId } from "../../../shared/settings";
 import { getNativeSoundtracks, normalizeTrackTitle } from "./nativeSoundtracks";
+import { normalizationForFile, normalizationForInstalled } from "./normalization";
 
 export const MUSIC_CONTENT_TYPES: Record<string, string> = {
   ".flac": "audio/flac", ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".m4a": "audio/mp4",
@@ -100,6 +101,13 @@ export async function getMenuMusicLibrary(root: string, gameId: MusicGameId, ste
       formatAliases: Object.keys(MUSIC_CONTENT_TYPES).map(extension => musicFileId(gameId, `${track.label}${extension}`)),
       url: `${MUSIC_PROTOCOL}://${gameId}/${track.id}?v=${track.revision}` }));
   const themes = uniqueThemes([...personal, ...installed]);
+  // Analyze only the visible source of a deduplicated title. Preparation waits
+  // for these cached measurements, so browsing never has to decode a song first.
+  await Promise.all(themes.map(async theme => {
+    const local = tracks.find(track => track.id === theme.id);
+    theme.normalizationGain = local ? await normalizationForFile(root, local.file)
+      : await normalizationForInstalled(root, theme.url!);
+  }));
   const defaultId = preferred?.id ?? tracks.find(track => track.id === desiredId)?.id
     ?? tracks.find(track => track.label.toLowerCase() === desiredLabel)?.id ?? fallback?.id ?? installed[0]?.id ?? tracks[0]?.id ?? "";
   return { gameId, folderPath: resolve(root, "music", gameId),

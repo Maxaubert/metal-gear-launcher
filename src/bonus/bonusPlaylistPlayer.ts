@@ -1,5 +1,6 @@
 import type { BonusPlaylist, BonusPlaylistTrack } from "../../shared/bonusPlaylist";
 import { musicPlaybackVolume } from "../audio/musicVolume";
+import { createMusicOutput, type MusicOutput } from "../audio/musicOutput";
 
 export interface BonusPlaylistState { currentTrack?: BonusPlaylistTrack; unavailable: boolean }
 
@@ -14,7 +15,8 @@ export class BonusPlaylistPlayer {
   private generation = 0;
   private pending = false;
 
-  constructor(private audio: HTMLAudioElement, private changed: (state: BonusPlaylistState) => void) {
+  constructor(private audio: HTMLAudioElement, private changed: (state: BonusPlaylistState) => void,
+    private output: MusicOutput = createMusicOutput(audio)) {
     audio.loop = false;
     audio.preload = "auto";
     audio.addEventListener("ended", this.ended);
@@ -27,7 +29,12 @@ export class BonusPlaylistPlayer {
     this.playlist = playlist;
     this.failed.clear();
     const preserved = playlist.findIndex(track => track.id === current?.id && track.url === current.url);
-    if (preserved >= 0) { this.index = preserved; this.publish(); return; }
+    if (preserved >= 0) {
+      this.index = preserved;
+      this.output.setNormalization(playlist[preserved]!.normalizationGain);
+      this.publish();
+      return;
+    }
     this.index = 0;
     this.load();
   }
@@ -56,6 +63,7 @@ export class BonusPlaylistPlayer {
     this.audio.pause();
     this.audio.removeAttribute("src");
     this.audio.load();
+    this.output.dispose();
   }
 
   private shouldPlay() { return this.active && !this.suspended && !this.disposed; }
@@ -67,6 +75,7 @@ export class BonusPlaylistPlayer {
     this.pending = false;
     this.audio.pause();
     const track = this.playlist[this.index];
+    this.output.setNormalization(track?.normalizationGain);
     if (track) this.audio.src = track.url;
     else this.audio.removeAttribute("src");
     this.audio.load();
@@ -78,7 +87,9 @@ export class BonusPlaylistPlayer {
     if (!this.shouldPlay() || this.exhausted() || this.pending || !this.audio.paused) return;
     const generation = this.generation;
     this.pending = true;
-    void this.audio.play().then(() => {
+    void this.output.resume().then(() => {
+      if (generation === this.generation && this.shouldPlay()) return this.audio.play();
+    }).then(() => {
       // A pending browser play promise can finish after suspension or disposal.
       if (!this.shouldPlay()) this.audio.pause();
       if (generation === this.generation) this.pending = false;

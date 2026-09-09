@@ -38,7 +38,8 @@ test("initial music applies its boost to saved volume without input and delayed 
       paused: element.paused, ready: element.readyState, volume: element.volume, loop: element.loop,
       source: element.currentSrc,
     }));
-    expect(initial).toMatchObject({ paused: false, ready: 4, volume: 0.4375, loop: true });
+    expect(initial).toMatchObject({ paused: false, ready: 4, loop: true });
+    expect(initial.volume).toBeCloseTo(0.48125);
     expect(initial.source).toContain(musicFileId("mgs1", "Custom Theme.wav"));
 
     // A fresh document with the real play() call held proves readiness gates presentation.

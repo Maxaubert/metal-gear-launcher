@@ -6,6 +6,7 @@ import type { MusicGameId } from "../../../shared/menuMusic";
 import { getMenuMusicLibrary, MUSIC_CONTENT_TYPES } from "../music/library";
 import { allowBonusFile } from "./media";
 import { getNativeSoundtracks, normalizeTrackTitle } from "../music/nativeSoundtracks";
+import { normalizationForInstalled } from "../music/normalization";
 
 // Recognizable main themes and vocal finales, played in this order when available.
 export const BONUS_CLASSICS: readonly [MusicGameId, string][] = [
@@ -53,9 +54,10 @@ async function customPlaylist(dataDir: string): Promise<BonusPlaylist> {
   for (const entry of entries) {
     try {
       const extension = extname(entry.name);
+      const url = await allowBonusFile(join(folder, entry.name), folder, MUSIC_CONTENT_TYPES[extension.toLowerCase()]!);
       result.push({ id: `bonus-file-${createHash("sha256").update(entry.name).digest("hex")}`,
         title: entry.name.slice(0, -extension.length),
-        url: await allowBonusFile(join(folder, entry.name), folder, MUSIC_CONTENT_TYPES[extension.toLowerCase()]!) });
+        url, normalizationGain: await normalizationForInstalled(dataDir, url) });
     } catch { /* A disappearing or unreadable optional file must not block the remaining playlist. */ }
   }
   return result;
@@ -70,7 +72,7 @@ export async function getBonusPlaylist(dataDir: string, steamPath: string | null
   const tracks: (BonusPlaylist[number] & { gameId?: MusicGameId })[] = [];
   for (const [game, title] of BONUS_CLASSICS) {
     const theme = libraries.get(game)?.themes.find(item => item.url && normalized(item.label) === normalized(title));
-    if (theme?.url) tracks.push({ id: theme.id, title: theme.label, url: theme.url, gameId: game });
+    if (theme?.url) tracks.push({ id: theme.id, title: theme.label, url: theme.url, gameId: game, normalizationGain: theme.normalizationGain });
   }
   const installed = (await getNativeSoundtracks(dataDir, steamPath).catch(() => []))
     .map(track => ({ id: track.sourceId, title: track.title, url: track.url, gameId: track.gameId }));
@@ -82,5 +84,9 @@ export async function getBonusPlaylist(dataDir: string, steamPath: string | null
     seen.add(match.url);
     return [match];
   });
-  return (curated.length ? curated : combined).map(({ id, title, url }) => ({ id, title, url }));
+  return Promise.all((curated.length ? curated : combined).map(async track => ({
+    id: track.id, title: track.title, url: track.url,
+    normalizationGain: "normalizationGain" in track && typeof track.normalizationGain === "number"
+      ? track.normalizationGain : await normalizationForInstalled(dataDir, track.url),
+  })));
 }

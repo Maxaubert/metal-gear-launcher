@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { musicPlaybackVolume } from "./musicVolume";
+import { createMusicOutput, type MusicOutput } from "./musicOutput";
 
 const FADE_MS = 300;
 const FADE_STEP_MS = 25;
@@ -51,8 +52,11 @@ function playWhenReady(audio: HTMLAudioElement, url: string, signal: AbortSignal
 type PlaybackState = { url?: string; attempt: number; ready: boolean; error: string };
 
 /** Starts automatically, then fades between games without restarting on menu navigation. */
-export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0, preview = false, suspended = false): { ready: boolean; error: string } {
+export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0, preview = false, suspended = false, normalizationGain = 1): { ready: boolean; error: string } {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const outputRef = useRef<MusicOutput | null>(null);
+  const playingUrlRef = useRef<string | undefined>(undefined);
+  const gainRef = useRef(normalizationGain);
   const volumeRef = useRef(musicPlaybackVolume(volume));
   const previewRef = useRef(preview);
   const suspendedRef = useRef(suspended);
@@ -62,6 +66,11 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
   useEffect(() => {
     previewRef.current = preview;
   }, [preview]);
+
+  useEffect(() => {
+    gainRef.current = normalizationGain;
+    if (playingUrlRef.current === bgmUrl) outputRef.current?.setNormalization(normalizationGain);
+  }, [bgmUrl, normalizationGain]);
 
   useEffect(() => {
     volumeRef.current = musicPlaybackVolume(volume);
@@ -74,6 +83,8 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
     audio.hidden = true;
     audio.loop = true;
     audio.preload = "auto";
+    const output = createMusicOutput(audio);
+    outputRef.current = output;
     audioRef.current = audio;
     document.body.append(audio);
     return () => {
@@ -81,6 +92,8 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
       audio.removeAttribute("src");
       audio.load();
       audio.remove();
+      output.dispose();
+      outputRef.current = null;
       audioRef.current = null;
     };
   }, []);
@@ -94,6 +107,8 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
     const switching = !previewRef.current && Boolean(audio.getAttribute("src")) && !audio.paused;
     const start = async () => {
       audio.pause();
+      playingUrlRef.current = bgmUrl;
+      outputRef.current!.setNormalization(gainRef.current);
       if (!bgmUrl) {
         audio.removeAttribute("src");
         audio.load();
@@ -102,6 +117,8 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
       }
       audio.volume = switching ? 0 : volumeRef.current;
       try {
+        await outputRef.current!.resume();
+        if (cancelled) return;
         const source = new URL(bgmUrl);
         // Chromium can retain a failed media resource even after load(); Retry must
         // request the repaired file again instead of reusing that failed resource.
@@ -128,7 +145,9 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
     const audio = audioRef.current;
     if (!audio) return;
     if (suspended) audio.pause();
-    else if (state.ready && audio.getAttribute("src")) void audio.play().catch(() => {});
+    else if (state.ready && audio.getAttribute("src")) void outputRef.current!.resume().then(() => {
+      if (!suspendedRef.current && audioRef.current === audio) return audio.play();
+    }).catch(() => {});
   }, [suspended, state.ready]);
 
   const current = state.url === bgmUrl && state.attempt === attempt;

@@ -17,11 +17,12 @@ const playlist = ["one", "two", "three"].map(id => ({ id, title: id, url: `hub-m
 function setup() {
   const audio = new FakeAudio();
   const changed = vi.fn();
-  const player = new BonusPlaylistPlayer(audio as unknown as HTMLAudioElement, changed);
+  const output = { setNormalization: vi.fn(), resume: vi.fn(async () => {}), dispose: vi.fn() };
+  const player = new BonusPlaylistPlayer(audio as unknown as HTMLAudioElement, changed, output);
   player.setPlaylist(playlist);
-  return { audio, changed, player };
+  return { audio, changed, player, output };
 }
-const settle = async () => { await Promise.resolve(); await Promise.resolve(); };
+const settle = async () => { for (let index = 0; index < 8; index++) await Promise.resolve(); };
 
 describe("bonus sequential background transport", () => {
   it("advances through the playlist and wraps, rather than repeating the first song", async () => {
@@ -30,7 +31,7 @@ describe("bonus sequential background transport", () => {
     player.setPlayback(true, false, 0.6);
     await settle();
     expect(audio.loop).toBe(false);
-    expect(audio.volume).toBe(0.75);
+    expect(audio.volume).toBeCloseTo(0.825);
     for (const expected of ["two", "three", "one"]) {
       audio.dispatchEvent(new Event("ended"));
       await settle();
@@ -91,6 +92,7 @@ describe("bonus sequential background transport", () => {
     let finish!: () => void;
     audio.play.mockImplementationOnce(() => new Promise<void>(resolve => { finish = () => { audio.paused = false; resolve(); }; }));
     player.setPlayback(true, false, 1);
+    await settle();
     player.setPlayback(true, true, 1);
     finish(); await settle();
     expect(audio.paused).toBe(true);
@@ -113,6 +115,37 @@ describe("bonus sequential background transport", () => {
     player.dispose();
   });
 
+  it("applies each track's normalization before playback and refreshes metadata without restarting", async () => {
+    const { audio, player, output } = setup();
+    const tracks = playlist.map((track, index) => ({ ...track, normalizationGain: [0.5, 1.5, 1][index] }));
+    player.setPlaylist(tracks);
+    audio.play.mockImplementation(async () => {
+      expect(output.setNormalization).toHaveBeenLastCalledWith(tracks.find(track => track.url === audio.src)?.normalizationGain);
+      audio.paused = false;
+    });
+    player.setPlayback(true, false, 0.6); await settle();
+    audio.dispatchEvent(new Event("ended")); await settle();
+    expect(output.setNormalization).toHaveBeenLastCalledWith(1.5);
+    audio.currentTime = 42;
+    player.setPlaylist(tracks.map(track => ({ ...track, normalizationGain: 0.8 })));
+    expect(output.setNormalization).toHaveBeenLastCalledWith(0.8);
+    expect(audio.currentTime).toBe(42);
+    expect(audio.play).toHaveBeenCalledTimes(2);
+    player.dispose();
+    expect(output.dispose).toHaveBeenCalledOnce();
+  });
+
+  it("does not start stale audio while the output context is resuming", async () => {
+    const { audio, player, output } = setup();
+    let resume!: () => void;
+    output.resume.mockImplementationOnce(() => new Promise<void>(resolve => { resume = resolve; }));
+    player.setPlayback(true, false, 0.6);
+    player.setPlayback(true, true, 0.6);
+    resume(); await settle();
+    expect(audio.play).not.toHaveBeenCalled();
+    player.dispose();
+  });
+
   it("keeps mute and applies the music boost when volume changes without restarting playback", async () => {
     const { audio, player } = setup();
     player.setPlayback(true, false, 0.6);
@@ -121,7 +154,7 @@ describe("bonus sequential background transport", () => {
     player.setPlayback(true, false, 0);
     expect(audio.volume).toBe(0);
     player.setPlayback(true, false, 0.4);
-    expect(audio.volume).toBe(0.5);
+    expect(audio.volume).toBeCloseTo(0.55);
     expect(audio.currentTime).toBe(42);
     expect(audio.play).toHaveBeenCalledTimes(1);
     player.dispose();
