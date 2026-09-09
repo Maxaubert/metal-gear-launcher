@@ -9,6 +9,8 @@ const api: HubApi = {
     return () => ipcRenderer.off("hub:preparation:progress", handler);
   },
   getBooksCatalog: () => ipcRenderer.invoke("hub:books:catalog"),
+  importBooks: mode => ipcRenderer.invoke("hub:books:import", mode),
+  removeImportedBook: id => ipcRenderer.invoke("hub:books:remove", id),
   openBook: request => ipcRenderer.invoke("hub:books:open", request),
   getBookPage: request => ipcRenderer.invoke("hub:books:page", request),
   saveBookProgress: request => ipcRenderer.invoke("hub:books:progress", request),

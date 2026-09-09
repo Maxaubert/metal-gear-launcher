@@ -57,8 +57,28 @@ jobs:
 
       - run: npm run build
 
-      - name: Package installer
-        run: npx electron-builder --win nsis --publish never
+      # A clean checkout has no private media. Always retain this smaller installer.
+      - name: Package Lite installer
+        run: node scripts/package-launcher.mjs
+
+      - name: Fetch optional approved music pack
+        id: music
+        shell: pwsh
+        env:
+          MUSIC_PACK_URL: ${{ vars.MENU_MUSIC_PACK_URL }}
+          MUSIC_PACK_SHA256: ${{ vars.MENU_MUSIC_PACK_SHA256 }}
+        run: |
+          if ($env:MUSIC_PACK_URL -or $env:MUSIC_PACK_SHA256) {
+            if (-not $env:MUSIC_PACK_URL -or -not $env:MUSIC_PACK_SHA256) { throw 'Configure both music pack URL and SHA256.' }
+            ./scripts/fetch-menu-music-pack.ps1 -Url $env:MUSIC_PACK_URL -Sha256 $env:MUSIC_PACK_SHA256
+            "ready=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output 'No optional music pack configured. Publishing the Lite installer.'
+          }
+
+      - name: Package Full installer
+        if: steps.music.outputs.ready == 'true'
+        run: node scripts/package-launcher.mjs
 
       - name: Publish release
         shell: pwsh

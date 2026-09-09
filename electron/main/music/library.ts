@@ -63,9 +63,12 @@ export async function getMenuMusicLibrary(root: string, gameId: MusicGameId): Pr
   const tracks = await localTracks(root, gameId);
   const desiredFile = DEFAULT_MENU_MUSIC_FILENAMES[gameId];
   const desiredId = desiredFile ? musicFileId(gameId, desiredFile) : undefined;
+  const desiredLabel = desiredFile?.slice(0, -extname(desiredFile).length).toLowerCase();
   return { gameId, folderPath: resolve(root, "music", gameId),
-    defaultThemeId: tracks.find(track => track.id === desiredId)?.id ?? tracks[0]?.id ?? "",
+    defaultThemeId: tracks.find(track => track.id === desiredId)?.id
+      ?? tracks.find(track => track.label.toLowerCase() === desiredLabel)?.id ?? tracks[0]?.id ?? "",
     themes: tracks.map(track => ({ id: track.id, label: track.label,
+      formatAliases: Object.keys(MUSIC_CONTENT_TYPES).map(extension => musicFileId(gameId, `${track.label}${extension}`)),
       url: `${MUSIC_PROTOCOL}://${gameId}/${track.id}?v=${track.revision}` })) };
 }
 

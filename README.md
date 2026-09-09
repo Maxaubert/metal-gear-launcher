@@ -22,7 +22,7 @@ preview, or install the hub for the real thing.
 
 Download the installer from the
 [latest release](https://github.com/Maxaubert/metal-gear-launcher/releases/latest)
-(`MetalGearLauncher-Setup-x64-<version>.exe`) and run it. The launcher checks GitHub Releases once at
+(`MetalGearLauncher-Lite-Setup-x64-<version>.exe` or `MetalGearLauncher-Full-Setup-x64-<version>.exe`) and run it. Full includes an optional menu-music pack; Lite supports your own music files. Both have the same reader and game features. The launcher checks GitHub Releases once at
 boot and shows a footer prompt when a newer version is out.
 
 Previously named MGS Master Hub. Upgrades retain your settings, music and extracted artwork in
@@ -94,7 +94,7 @@ Master Books and Screenplay Books appear under **Bonus Content → Books** for i
 Choose English or Japanese, browse the contents, zoom and pan, and resume your last page.
 Pages fill the window, with controls overlaid and hidden when idle. Startup prepares all available
 book pages in the local cache so opening books later does not require extraction. No book content
-is bundled. See [book support](docs/books.md).
+is bundled. You can also choose **Add Books** or **Add Folder** to import personal PDF, CBZ and CBR books without copying or converting the originals. Imported books work without Steam games installed. **Refresh** rechecks file availability, and **Remove from Library** removes only the library entry. See [book support](docs/books.md).
 
 ## Menu music
 
@@ -113,7 +113,8 @@ your pending edit and offers recovery instead of overwriting the external change
 hints use keycaps; controller hints retain controller buttons.
 
 When present, these filenames provide the initial defaults. An explicit saved choice takes
-priority; absent files fall back to the extracted original menu theme.
+priority. Defaults match the title in any supported format. If absent, another available track
+is used; an empty folder stays silent. Extracted original menu themes are not restored.
 
 | Game folder | Default filename |
 | --- | --- |
@@ -124,7 +125,9 @@ priority; absent files fall back to the extracted original menu theme.
 | `mgs4` | `Old Snake (Title).flac` |
 | `mgspw` | `Heavens Divide.flac` |
 
-Music files stay on your PC and are not included with the installer.
+Lite includes no menu music. Full includes a supplied music pack and adds its missing tracks
+to your music folders on startup without replacing existing files. Personal files stay on your
+PC. See [music-pack preparation](docs/menu-music-pack.md) for local builds and release setup.
 
 Menu effects are also local. Place WAV files named `navigate`, `select`, `back`, `options`,
 `adjust` and `start` in `%LOCALAPPDATA%\MGSMasterHub\sounds\` (with the `.wav` extension).
@@ -163,11 +166,16 @@ entries so they don't clutter your library alongside it.
 
 ## Legal
 
-No Metal Gear Solid / Konami assets are ever committed to this repository or bundled with the
-installer. The hub only reads menu art and music out of your own legitimately purchased Steam
-install, at runtime, on your own machine. The two extraction tools it bundles
+No Metal Gear Solid / Konami media is committed to this repository. Game artwork, books and bonus
+media are read from local installations, while personal books are imported from local files.
+Full installers can include a separately supplied music pack; distributing that media requires
+appropriate permission from its rights holders. The two extraction tools it bundles
 (AssetStudioModCLI, FreeMote) are MIT-licensed and unaffiliated with Konami; their licenses ship
 alongside them under `resources/tools/LICENSES/`.
+
+The personal comic reader includes 7-Zip. Its LGPL/BSD and unRAR restriction notices ship beside
+the executable. See [7-Zip licensing](https://www.7-zip.org/license.txt) and
+[corresponding source](https://github.com/ip7z/7zip/tree/26.03).
 
 ## Roadmap
 

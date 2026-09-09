@@ -1,4 +1,32 @@
-# Native books
+# Books
+
+## Personal books and comics
+
+**Bonus Content → Books → Add Books** accepts PDF, CBZ and CBR files. **Add Folder** scans
+subfolders for supported files. Books is accessible even when no Steam games are installed.
+Repeated imports of the same path keep one entry and preserve its reading position.
+
+Original files stay in their folders. PDFs retain their original text and bookmarks in the source;
+the reader renders pages as images and exposes PDF bookmarks through Contents when available.
+CBZ and CBR images are read in natural filename order without converting the archive. The same
+full-window reader provides page navigation, zoom, pan, saved position and H to hide controls.
+
+Only requested and nearby pages are rendered. Personal page previews use a disposable disk cache
+limited to 64 pages / 256 MiB, plus the existing bounded decoded-page window. PDF previews are
+rendered up to 3200 pixels on their longest edge. This avoids an expensive whole-book conversion
+at import or startup while preserving the source quality for future reader improvements.
+
+The library and reading positions live in `%LOCALAPPDATA%\MGSMasterHub\personal-books\library.json`.
+Normal upgrades retain this file. The development clean-install script archives and resets it with
+other launcher state. External source files are never touched. If a drive or file is missing, its
+entry stays visible as unavailable; reconnect it and choose Refresh. For a moved file, add its new
+location and remove the old entry. Remove from Library never deletes the original document.
+
+Encrypted archives are unsupported. The importer accepts up to 2000 books, at most 2 GB per file;
+the PDF renderer currently limits PDFs to 512 MB. Unsafe archive paths, excessive entry counts and
+oversized images produce an error rather than writing outside the reader cache.
+
+## Installed game books
 
 **Bonus Content → Books** reads Master Books and Screenplay Books from installed Steam games.
 English and Japanese are supported. Books are not bundled with the launcher and the original
@@ -50,7 +78,7 @@ loaded successfully. The reader offers a contents list, direct page entry, Previ
 zoom, Fit and pointer panning. Pages occupy the full window. Floating controls fade after 2.5
 seconds idle and return on input; hover, focus, contents and errors keep them visible without
 resizing the page. Keyboard and controller hints follow the active input method.
-Use Hide or H to keep the compact controls hidden while reading. H or the small Controls button restores them; pointer movement and page turns do not cancel manual hiding.
+Use Hide or H to keep the compact controls hidden while reading. H restores them; pointer movement and page turns do not cancel manual hiding. No hint remains over the page while controls are hidden.
 An extraction failure has a retry action and does not replace the last successful position.
 
 ## Native formats

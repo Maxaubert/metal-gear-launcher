@@ -9,3 +9,5 @@ e2e/out/
 resources/tools/*
 !resources/tools/.gitkeep
 !resources/tools/LICENSES/
+resources/menu-music/*
+!resources/menu-music/.gitkeep

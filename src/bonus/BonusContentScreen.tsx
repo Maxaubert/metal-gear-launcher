@@ -35,13 +35,13 @@ export default function BonusContentScreen(props: BonusContentScreenProps) {
   }, [attempt]);
   function retry() { setError(""); setLoading(true); setAttempt(value => value + 1); void props.onRefreshBooks?.(); }
   const back = () => setScreen("home");
-  if (screen === "books") return <BooksScreen catalog={props.booksCatalog ?? []} actionRef={props.actionRef} lastInputKind={props.lastInputKind} onClose={back} />;
+  if (screen === "books") return <BooksScreen catalog={props.booksCatalog ?? []} onRefresh={props.onRefreshBooks} actionRef={props.actionRef} lastInputKind={props.lastInputKind} onClose={back} />;
   if (screen === "music" && library) return <SoundtrackScreen {...props} library={library} onClose={back} />;
   if (screen === "videos") return <BonusVideos {...props} library={library ?? emptyLibrary} onClose={back} />;
   return <BonusHome {...props} library={library} loading={loading} error={error} retry={retry} open={setScreen} />;
 }
 
-function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error, retry, open, presentation, booksCatalog, onUnavailable }: BonusContentScreenProps & {
+function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error, retry, open, presentation, onUnavailable }: BonusContentScreenProps & {
   library?: BonusLibrary; loading: boolean; error: string; retry: () => void; open: (screen: "music" | "videos" | "books") => void;
 }) {
   const [focus, setFocus] = useState(0);
@@ -54,7 +54,7 @@ function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error,
     ...Object.fromEntries(Object.entries(library.artwork)
       .filter(([key]) => key.startsWith(`${artVolume}.`)).map(([key, value]) => [key.slice(artVolume.length + 1), value])),
   } : presentation?.artwork;
-  const hasMusic = !!library?.tracks.length; const hasBooks = !!booksCatalog?.length;
+  const hasMusic = !!library?.tracks.length;
   const libraryReady = !loading && !error && !!library;
   const openMedia = (screen: "videos" | "music", title: string) => {
     if (loading) return;
@@ -65,8 +65,7 @@ function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error,
   const rows: { title: string; action: () => void; unavailable?: boolean; busy?: boolean }[] = [{ title: "Game Selection", action: onClose },
     { title: "Videos", action: () => openMedia("videos", "Videos"), busy: loading },
     { title: "Digital Soundtrack", unavailable: libraryReady && !hasMusic, busy: loading, action: () => openMedia("music", "Digital Soundtrack") },
-    { title: "Books", unavailable: !hasBooks, action: () => hasBooks ? open("books")
-      : onUnavailable?.("Books", "No books are installed. Install a supported game through Steam to read its books.") },
+    { title: "Books", action: () => open("books") },
     ...(!loading && (error || !library?.tracks.length && !library?.videos.length) ? [{ title: "Retry", action: retry }] : [])];
   const move = (index: number) => { if (focusRef.current !== index) { void playMenuSound("navigate"); focusRef.current = index; setFocus(index); } };
   const activate = (index: number) => {

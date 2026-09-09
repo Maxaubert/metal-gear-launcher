@@ -2,7 +2,7 @@ import { z } from "zod";
 import { settingsGameId } from "./settings";
 
 export type MusicGameId = z.infer<typeof settingsGameId>;
-export type MenuTheme = { id: string; label: string; assetRole?: "bgm"; url?: string };
+export type MenuTheme = { id: string; label: string; assetRole?: "bgm"; url?: string; formatAliases?: string[] };
 export type MenuMusicLibrary = { gameId: MusicGameId; themes: MenuTheme[]; defaultThemeId: string; folderPath: string };
 export const MUSIC_PROTOCOL = "hub-music";
 export const DEFAULT_MENU_MUSIC_FILENAMES: Partial<Record<MusicGameId, string>> = {
@@ -35,7 +35,8 @@ export function availableMenuThemes(gameId: MusicGameId, _assets: { bgm?: string
 
 export function effectiveMenuTheme(gameId: MusicGameId, assets: { bgm?: string }, selected?: string, library?: MenuMusicLibrary): MenuTheme | undefined {
   const catalog = availableMenuThemes(gameId, assets, library);
-  return catalog.find(item => item.id === selected) ?? catalog.find(item => item.id === library?.defaultThemeId) ?? catalog[0];
+  return catalog.find(item => item.id === selected) ?? catalog.find(item => selected && item.formatAliases?.includes(selected))
+    ?? catalog.find(item => item.id === library?.defaultThemeId) ?? catalog[0];
 }
 
 export function resolveMenuMusic(gameId: MusicGameId, assets: { bgm?: string }, selected?: string, library?: MenuMusicLibrary): string | undefined {

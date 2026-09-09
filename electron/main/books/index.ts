@@ -6,11 +6,12 @@ import { allowBonusFile } from "../bonus/media";
 import { bookTitle, catalog, discoverBooks } from "./discovery";
 import { NativeBooks } from "./native";
 import { nativeContents, pageAssets, readerPages } from "./pages";
+import { getImportedPage, importedCatalog, openImportedBook, saveImportedProgress } from "./imported";
+export { importBookPaths, importedCatalog, removeImportedBook } from "./imported";
 
 export async function getBooksCatalog(steamPath: string | null, dataDir: string): Promise<BookEntry[]> {
-  // Discovery deliberately leaves the cache untouched; this parameter keeps the service API uniform.
-  void dataDir;
-  return catalog(steamPath);
+  const [native, imported] = await Promise.all([catalog(steamPath), importedCatalog(dataDir)]);
+  return [...native, ...imported];
 }
 
 async function openNative(steamPath: string | null, dataDir: string, request: BookRequest) {
@@ -34,12 +35,14 @@ async function progress(dataDir: string, request: BookRequest, count: number): P
 
 export async function openBook(steamPath: string | null, dataDir: string, input: BookRequest): Promise<BookDocument> {
   const request = bookRequest.parse(input);
+  if (request.importedId) return openImportedBook(dataDir, request);
   const { book, pages } = await openNative(steamPath, dataDir, request);
   return { ...request, title: bookTitle(request.kind), pageCount: pages.length, lastPage: await progress(dataDir, request, pages.length), contents: nativeContents(book, pages) };
 }
 
 export async function getBookPage(steamPath: string | null, dataDir: string, input: BookPageRequest): Promise<BookPage> {
   const request = bookPageRequest.parse(input);
+  if (request.importedId) return getImportedPage(dataDir, request);
   const { book, pages, native } = await openNative(steamPath, dataDir, request);
   const row = pages[request.page];
   if (!row) throw new Error("This book page does not exist");
@@ -58,6 +61,7 @@ export async function getBookPage(steamPath: string | null, dataDir: string, inp
 const saves = new Map<string, Promise<void>>();
 export async function saveBookProgress(dataDir: string, input: BookPageRequest): Promise<void> {
   const request = bookPageRequest.parse(input);
+  if (request.importedId) return saveImportedProgress(dataDir, request.importedId, request.page);
   const file = progressFile(dataDir, request);
   const save = (saves.get(file) ?? Promise.resolve()).catch(() => undefined).then(async () => {
     await mkdir(join(dataDir, "book-cache", "progress"), { recursive: true });

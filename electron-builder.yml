@@ -11,9 +11,15 @@ directories:
 files:
   - out/**
   - package.json
+asarUnpack:
+  - node_modules/7zip-bin-full/**
 extraResources:
   - from: resources/tools
     to: tools
+  - from: resources/menu-music
+    to: menu-music
+    filter:
+      - "**/*.mp3"
 win:
   target:
     - target: nsis
