@@ -14,7 +14,12 @@
     "bgEffect": "bgEffect.png",
     "headerYear": "headerYear.png",
     "headerSubtitle": "headerSubtitle.png",
-    "bgm": "bgm.wav"
+    "bgm": "bgm.wav",
+    "fontMedium": "test-font.ttf",
+    "fontBold": "test-font.ttf",
+    "fontUi": "test-font.ttf",
+    "headerMark": "headerMark.png",
+    "backgroundArt": "bgEffect.png"
   },
   "failed": {}
 }

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { loadPacks } from "../shared/packs";
 import { achievementSourceSchema } from "../shared/achievements";
 import { readGogAchievements } from "../electron/main/achievements/gog";
@@ -10,7 +10,10 @@ import { readGogAchievements } from "../electron/main/achievements/gog";
 const directories: string[] = [];
 afterEach(async () => {
   vi.restoreAllMocks();
-  for (const directory of directories.splice(0)) await rm(directory, { recursive: true, force: true });
+  for (const directory of directories.splice(0)) {
+    if (dirname(resolve(directory)) !== resolve(tmpdir())) throw new Error("Unexpected fixture directory");
+    await rm(directory, { recursive: true, force: true, maxRetries: 3 });
+  }
 });
 const pack = (id: string) => loadPacks().find(item => item.id === id)!;
 
@@ -19,36 +22,40 @@ async function fixture(edit?: (db: DatabaseSync) => void): Promise<string> {
   directories.push(directory);
   const path = join(directory, "galaxy.db");
   const db = new DatabaseSync(path);
-  db.exec(`
-    CREATE TABLE Achievements(gameReleaseKey TEXT, apikey TEXT, backendId TEXT, imageUnlockedUrl TEXT, imageLockedUrl TEXT, isVisible INTEGER, rarity REAL, raritySlug TEXT);
-    CREATE TABLE LocalizedAchievements(gameReleaseKey TEXT, apikey TEXT, name TEXT, description TEXT, languageId INTEGER, isLocalized INTEGER);
-    CREATE TABLE UserAchievements(gameReleaseKey TEXT, userId INTEGER, apikey TEXT, unlockTime TEXT, isUnlocked INTEGER);
-    CREATE TABLE GamePieces(releaseKey TEXT, gamePieceTypeId INTEGER, userId INTEGER, value TEXT, languageId INTEGER);
-    CREATE TABLE GamePieceTypes(id INTEGER, type TEXT);
-    CREATE TABLE Products(id INTEGER, name TEXT, parentId INTEGER);
-    CREATE TABLE Languages(id INTEGER, name TEXT, code TEXT);
-    CREATE TABLE Users(id INTEGER);
-    CREATE TABLE UserRecentClientLanguages(languageId INTEGER, userId INTEGER, lastUsed TEXT);
-    CREATE TABLE ProductAuthorizations(secret TEXT);
-    INSERT INTO ProductAuthorizations VALUES ('this table must never be read');
-    INSERT INTO Users VALUES (1);
-    INSERT INTO Languages VALUES (1, 'French', 'fr'), (2, 'English', 'en-US');
-    INSERT INTO GamePieceTypes VALUES (1, 'title'), (2, 'originalTitle');
-    INSERT INTO GamePieces VALUES ('gog_123', 1, 1, '{"title":"METAL GEAR SOLID"}', 2);
-    INSERT INTO Achievements VALUES
-      ('gog_123', 'first', 'a', 'https://images.gog.com/first.png', 'https://images.gog.com/locked.png', 1, 34.88, 'common'),
-      ('gog_123', 'second', 'b', 'https://images.gog.com/second.png', 'https://images.gog.com/locked.png', 0, 44.28, 'common'),
-      ('gog_123', 'unknown', 'c', 'https://unsafe.invalid/icon.png', NULL, 1, NULL, NULL);
-    INSERT INTO LocalizedAchievements VALUES
-      ('gog_123', 'first', 'Premier', 'Texte', 1, 1),
-      ('gog_123', 'first', 'First trophy', 'A description', 2, 1),
-      ('gog_123', 'second', 'Second trophy', 'Hidden description', 2, 1);
-    INSERT INTO UserAchievements VALUES
-      ('gog_123', 1, 'first', '2026-01-01 12:00:00', 1),
-      ('gog_123', 1, 'second', NULL, 0);
-  `);
-  edit?.(db);
-  db.close();
+  try {
+    // Build the disposable cache in one transaction instead of syncing every row to disk.
+    db.exec("BEGIN");
+    db.exec(`
+      CREATE TABLE Achievements(gameReleaseKey TEXT, apikey TEXT, backendId TEXT, imageUnlockedUrl TEXT, imageLockedUrl TEXT, isVisible INTEGER, rarity REAL, raritySlug TEXT);
+      CREATE TABLE LocalizedAchievements(gameReleaseKey TEXT, apikey TEXT, name TEXT, description TEXT, languageId INTEGER, isLocalized INTEGER);
+      CREATE TABLE UserAchievements(gameReleaseKey TEXT, userId INTEGER, apikey TEXT, unlockTime TEXT, isUnlocked INTEGER);
+      CREATE TABLE GamePieces(releaseKey TEXT, gamePieceTypeId INTEGER, userId INTEGER, value TEXT, languageId INTEGER);
+      CREATE TABLE GamePieceTypes(id INTEGER, type TEXT);
+      CREATE TABLE Products(id INTEGER, name TEXT, parentId INTEGER);
+      CREATE TABLE Languages(id INTEGER, name TEXT, code TEXT);
+      CREATE TABLE Users(id INTEGER);
+      CREATE TABLE UserRecentClientLanguages(languageId INTEGER, userId INTEGER, lastUsed TEXT);
+      CREATE TABLE ProductAuthorizations(secret TEXT);
+      INSERT INTO ProductAuthorizations VALUES ('this table must never be read');
+      INSERT INTO Users VALUES (1);
+      INSERT INTO Languages VALUES (1, 'French', 'fr'), (2, 'English', 'en-US');
+      INSERT INTO GamePieceTypes VALUES (1, 'title'), (2, 'originalTitle');
+      INSERT INTO GamePieces VALUES ('gog_123', 1, 1, '{"title":"METAL GEAR SOLID"}', 2);
+      INSERT INTO Achievements VALUES
+        ('gog_123', 'first', 'a', 'https://images.gog.com/first.png', 'https://images.gog.com/locked.png', 1, 34.88, 'common'),
+        ('gog_123', 'second', 'b', 'https://images.gog.com/second.png', 'https://images.gog.com/locked.png', 0, 44.28, 'common'),
+        ('gog_123', 'unknown', 'c', 'https://unsafe.invalid/icon.png', NULL, 1, NULL, NULL);
+      INSERT INTO LocalizedAchievements VALUES
+        ('gog_123', 'first', 'Premier', 'Texte', 1, 1),
+        ('gog_123', 'first', 'First trophy', 'A description', 2, 1),
+        ('gog_123', 'second', 'Second trophy', 'Hidden description', 2, 1);
+      INSERT INTO UserAchievements VALUES
+        ('gog_123', 1, 'first', '2026-01-01 12:00:00', 1),
+        ('gog_123', 1, 'second', NULL, 0);
+    `);
+    edit?.(db);
+    db.exec("COMMIT");
+  } finally { db.close(); }
   return path;
 }
 

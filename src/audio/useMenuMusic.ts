@@ -50,10 +50,12 @@ function playWhenReady(audio: HTMLAudioElement, url: string, signal: AbortSignal
 type PlaybackState = { url?: string; attempt: number; ready: boolean; error: string };
 
 /** Starts automatically, then fades between games without restarting on menu navigation. */
-export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0, preview = false): { ready: boolean; error: string } {
+export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt = 0, preview = false, suspended = false): { ready: boolean; error: string } {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const volumeRef = useRef(volume);
   const previewRef = useRef(preview);
+  const suspendedRef = useRef(suspended);
+  useEffect(() => { suspendedRef.current = suspended; }, [suspended]);
   const [state, setState] = useState<PlaybackState>({ attempt: -1, ready: false, error: "" });
 
   useEffect(() => {
@@ -105,6 +107,7 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
         if (attempt) source.searchParams.set("musicAttempt", String(attempt));
         await playWhenReady(audio, source.href, controller.signal, previewRef.current);
         if (cancelled) return;
+        if (suspendedRef.current) audio.pause();
         if (switching) cancelFade = fade(audio, 0, volumeRef.current, () => { audio.volume = volumeRef.current; });
         setState({ url: bgmUrl, attempt, ready: true, error: "" });
       } catch (error) {
@@ -117,6 +120,13 @@ export function useMenuMusic(bgmUrl: string | undefined, volume: number, attempt
     else void start();
     return () => { cancelled = true; cancelFade(); controller.abort(); };
   }, [bgmUrl, attempt]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (suspended) audio.pause();
+    else if (state.ready && audio.getAttribute("src")) void audio.play().catch(() => {});
+  }, [suspended, state.ready]);
 
   const current = state.url === bgmUrl && state.attempt === attempt;
   return { ready: current && state.ready, error: current ? state.error : "" };
