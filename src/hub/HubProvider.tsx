@@ -7,6 +7,7 @@ import { useMenuMusic } from "../audio/useMenuMusic";
 import { menuSoundSourceKey, playMenuSound, preloadMenuSounds, setMenuSoundVolume } from "../audio/menuSounds";
 import { themeVars } from "../theme/theme";
 import GameScreen, { type MenuKey } from "../screens/GameScreen";
+import QuitDialog from "../screens/QuitDialog";
 import GameSelection from "../screens/GameSelection";
 import FirstRun, { type ExtractProgress } from "../screens/FirstRun";
 import NotInstalled from "../screens/NotInstalled";
@@ -398,6 +399,12 @@ export default function HubProvider() {
       }
       return;
     }
+    if (quitOpen) {
+      if (action === "up" || action === "down") focusQuit(quitItem === 0 ? 1 : 0);
+      else if (action === "confirm") void handleQuitChoice(quitItem);
+      else if (action === "back") void handleQuitChoice(1);
+      return;
+    }
     if (bonusOpen) {
       bonusActionRef.current?.(action);
       return;
@@ -422,13 +429,6 @@ export default function HubProvider() {
       } else if (action === "confirm") {
         rows[firstRunItem]?.onSelect();
       }
-      return;
-    }
-
-    if (quitOpen) {
-      if (action === "up" || action === "down") focusQuit(quitItem === 0 ? 1 : 0);
-      else if (action === "confirm") void handleQuitChoice(quitItem);
-      else if (action === "back") void handleQuitChoice(1);
       return;
     }
 
@@ -504,11 +504,19 @@ export default function HubProvider() {
           <div hidden={!displayedGame.installed && !bonusActive}>
             <PersistentBackdrop scene={bonusActive ? { kind: "bonus", presentation: bonusPresentation } : { kind: "game", game: displayedGame }} view={settingsOpen || trophiesOpen ? "settings" : nav.screen === "selection" ? "selection" : "main"} detail={settingsDetail || trophiesOpen} />
           </div>
-          {bonusOpen ? <BonusContentScreen actionRef={bonusActionRef} lastInputKind={lastInputKind} volume={volume}
+          {bonusOpen ? <><div inert={quitOpen}>
+            <BonusContentScreen actionRef={bonusActionRef} lastInputKind={lastInputKind} volume={volume}
+            onQuit={() => { setQuitItem(0); setQuitOpen(true); }}
             onUnavailable={showUnavailable}
             booksCatalog={booksCatalog} onRefreshBooks={preloadBooks}
             presentation={bonusPresentation} onPlaybackViewChange={setBonusMediaOpen}
-            onClose={() => setBonusOpen(false)} /> : trophiesOpen ? <TrophiesScreen key={currentGame.pack.id} game={currentGame} lastInputKind={lastInputKind}
+            onClose={() => setBonusOpen(false)} />
+            </div>
+            {quitOpen && <div style={themeVars(currentGame.pack.theme)}>
+              <QuitDialog quitItem={quitItem} onQuitSelect={index => void handleQuitChoice(index)}
+                onHoverQuitItem={index => { focusByMouse(index); focusQuit(index); }} />
+            </div>}
+          </> : trophiesOpen ? <TrophiesScreen key={currentGame.pack.id} game={currentGame} lastInputKind={lastInputKind}
             actionRef={trophiesActionRef} onClose={() => setTrophiesOpen(false)} /> : settingsOpen ? (
             <SettingsScreen game={currentGame} actionRef={settingsActionRef} lastInputKind={lastInputKind} settingsCache={settingsCache} onDetailChange={setSettingsDetail}
               musicSelection={musicSelections[currentGame.pack.id]} onMusicSaved={selections => { setMusicSelections(selections); setMutedStartupGame(undefined); }}

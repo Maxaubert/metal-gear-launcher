@@ -18,7 +18,7 @@ export type BonusContentScreenProps = { actionRef: BonusActionRef; lastInputKind
 
 const emptyLibrary: BonusLibrary = { volumes: [], tracks: [], videos: [], artwork: {}, warnings: [] };
 
-export default function BonusContentScreen(props: BonusContentScreenProps) {
+export default function BonusContentScreen(props: BonusContentScreenProps & { onQuit: () => void }) {
   const [library, setLibrary] = useState<BonusLibrary>();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,8 @@ export default function BonusContentScreen(props: BonusContentScreenProps) {
   return <BonusHome {...props} library={library} loading={loading} error={error} retry={retry} open={setScreen} />;
 }
 
-function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error, retry, open, presentation, onUnavailable }: BonusContentScreenProps & {
+function BonusHome({ actionRef, lastInputKind, onClose, onQuit, library, loading, error, retry, open, presentation, onUnavailable }: BonusContentScreenProps & {
+  onQuit: () => void;
   library?: BonusLibrary; loading: boolean; error: string; retry: () => void; open: (screen: "music" | "videos" | "books") => void;
 }) {
   const [focus, setFocus] = useState(0);
@@ -73,13 +74,14 @@ function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error,
     menu.current?.querySelectorAll<HTMLButtonElement>(":scope > button")[index]?.focus({ preventScroll: true });
     void playMenuSound(index === 0 ? "back" : "select"); row.action();
   };
+  const quit = () => { void playMenuSound("back"); onQuit(); };
   useEffect(() => {
     const key = (event: KeyboardEvent) => { if (event.code === "KeyR" && !loading && (error || library?.warnings.length)) { event.preventDefault(); retry(); } };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, [loading, error, library, retry]);
   useBonusActions(actionRef, action => {
-    if (action === "back") activate(0);
+    if (action === "back") quit();
     else if (action === "up" || action === "down") move((focusRef.current + (action === "up" ? -1 : 1) + rows.length) % rows.length);
     else if (action === "confirm") activate(Math.min(focusRef.current, rows.length - 1));
   });
@@ -98,12 +100,12 @@ function BonusHome({ actionRef, lastInputKind, onClose, library, loading, error,
       {!loading && !error && !library?.tracks.length && !library?.videos.length && <p>For videos and soundtrack, install Bonus Content through Steam, then choose Retry.</p>}
       {library?.warnings.length ? <p className="bonus-warning">{library.warnings.join(" ")} <button className="bonus-refresh" disabled={loading} onClick={retry}>Refresh Library (R)</button></p> : null}
     </div>
-    <BonusHints lastInputKind={lastInputKind} onBack={() => activate(0)} />
+    <BonusHints lastInputKind={lastInputKind} onBack={quit} backLabel="Quit" />
   </main>;
 }
 
-export function BonusHints({ lastInputKind, onBack }: { lastInputKind: InputKind; onBack: () => void }) {
+export function BonusHints({ lastInputKind, onBack, backLabel = "Back" }: { lastInputKind: InputKind; onBack: () => void; backLabel?: "Back" | "Quit" }) {
   return <footer className="bonus-hints"><ControlHint lastInputKind={lastInputKind} keyboard={["↑", "↓"]} gamepad="L" label="Move cursor" />
     <ControlHint lastInputKind={lastInputKind} keyboard="Enter" gamepad="A" label="Confirm" />
-    <button className="bonus-hint-button" onClick={onBack} aria-label="Back"><ControlHint lastInputKind={lastInputKind} keyboard="Esc" gamepad="B" label="Back" /></button></footer>;
+    <button className="bonus-hint-button" onClick={onBack} aria-label={backLabel}><ControlHint lastInputKind={lastInputKind} keyboard="Esc" gamepad="B" label={backLabel} /></button></footer>;
 }

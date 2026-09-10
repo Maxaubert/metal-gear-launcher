@@ -4,6 +4,67 @@ import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import type { BonusLibrary } from "../shared/bonus";
 
+test("Escape on bonus home opens quit confirmation without leaving bonus content", async () => {
+  const root = await mkdtemp(join(tmpdir(), "hub-bonus-quit-e2e-"));
+  const data = join(root, "hub");
+  await cp(join(__dirname, "fixtures/assets"), join(data, "assets"), { recursive: true });
+  for (const game of ["mgs2", "mgs3"]) {
+    await mkdir(join(data, "music", game), { recursive: true });
+    await cp(join(data, "assets", game, "bgm.wav"), join(data, "music", game, "Custom Theme.wav"));
+  }
+  const app = await electron.launch({ args: [join(__dirname, "../out/main/index.js"), "--game", "mgs3"],
+    env: { ...process.env, HUB_DATA_DIR: data, HUB_STEAM_ROOT: join(__dirname, "fixtures/steam"), HUB_WINDOWED: "1", HUB_FAKE_LAUNCH: "1" } });
+  try {
+    const page = await app.firstWindow();
+    let quitCalls = 0;
+    app.on("console", message => { if (message.text() === "bonus-quit-requested") quitCalls++; });
+    await app.evaluate(({ ipcMain }) => {
+      ipcMain.removeHandler("hub:quit");
+      ipcMain.handle("hub:quit", () => { console.log("bonus-quit-requested"); return { ok: true, value: undefined }; });
+    });
+    await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 15000 });
+    await expect(page.getByTestId("game-screen")).toHaveAttribute("data-game", "mgs3", { timeout: 15000 });
+    await page.keyboard.press("Tab");
+    await page.getByTestId("tile-bonus").click();
+    const bonus = page.getByTestId("bonus-content");
+    const books = page.getByTestId("bonus-menu-books");
+    const dialog = page.getByRole("dialog", { name: "Quit game" });
+    await expect(bonus).toBeVisible();
+    await books.hover();
+    await expect(books).toHaveClass(/bonus-selected/);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+    await expect(bonus).toBeVisible();
+    await expect(page.getByTestId("game-selection")).toHaveCount(0);
+    await page.keyboard.press("ArrowDown");
+    await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toHaveAttribute("aria-current", "true");
+    await page.keyboard.press("Enter");
+    await expect(dialog).toHaveCount(0);
+    await expect(books).toHaveClass(/bonus-selected/);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(bonus).toBeVisible();
+    await bonus.getByRole("button", { name: "Quit", exact: true }).click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(quitCalls).toBe(0);
+    await page.getByTestId("bonus-back").click();
+    await expect(page.getByTestId("game-selection")).toBeVisible();
+    await page.getByTestId("tile-bonus").click();
+    await page.keyboard.press("Escape");
+    await expect(dialog.getByRole("button", { name: "Quit", exact: true })).toHaveAttribute("aria-current", "true");
+    await page.keyboard.press("Enter");
+    await expect.poll(() => quitCalls).toBe(1);
+  } finally {
+    await app.close();
+    if (dirname(resolve(root)) !== resolve(tmpdir())) throw new Error("Unexpected fixture directory");
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("combined bonus content handles missing installs, both volumes, playback, chapters and returning to game selection", async () => {
   const root = await mkdtemp(join(tmpdir(), "hub-bonus-e2e-"));
   const data = join(root, "hub");
