@@ -1,30 +1,65 @@
-# Metal Gear Launcher
+<div align="center">
+  <img src="resources/icon.png" alt="Metal Gear Launcher" width="128">
 
-A fullscreen launcher for the Metal Gear Solid Master Collection, styled after the collection's
-own in-game menus. It extracts each game's own menu art and music from its install, shows one
-screen per game, and launches the title from there, with a gamepad, keyboard or mouse.
+  # Metal Gear Launcher
 
-## Screenshots
+  Your Metal Gear collection. One place to return to.
 
-No real game art ships in this repository or in any screenshot here (see **Legal** below): the
-hub's own end-to-end tests render the same layout against hand-made placeholder art instead of
-extracted Konami assets. Run `npm run e2e` and check `e2e/out/*.png` for that placeholder
-preview, or install the hub for the real thing.
+  A fullscreen hub for Master Collection Vol.1 and Vol.2.
+
+  [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-b91c1c?style=flat-square)](#requirements)
+  [![Latest release](https://img.shields.io/github/v/release/Maxaubert/metal-gear-launcher?style=flat-square&color=b91c1c)](https://github.com/Maxaubert/metal-gear-launcher/releases/latest)
+  [![CI](https://img.shields.io/github/actions/workflow/status/Maxaubert/metal-gear-launcher/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/Maxaubert/metal-gear-launcher/actions/workflows/ci.yml)
+
+  [Download](https://github.com/Maxaubert/metal-gear-launcher/releases/latest) · [Install](#install) · [Documentation](#documentation) · [Report an issue](https://github.com/Maxaubert/metal-gear-launcher/issues)
+</div>
+
+---
+
+https://github.com/user-attachments/assets/e2a0b1ee-a3a8-4ddf-af15-2da33e72186b
+
+Move between Metal Gear games in menus styled after the Master Collection, with a gamepad,
+keyboard or mouse. Launch a game, adjust its settings, or explore your soundtracks, films and
+books from the same hub.
+
+The walkthrough shows the actual launcher using media from locally installed games.
+The installer does not bundle game soundtrack albums, books or videos; available content is
+read or extracted from your own installations.
+
+## Features
+
+- **One collection, one launcher.** Metal Gear & Metal Gear 2, MGS1, MGS2, MGS3, MGS4 and
+  Peace Walker, with individual menus and animated game selection. Missing games are clearly marked.
+- **Settings where you need them.** Change supported game options and detected community-fix
+  settings from each game's Options menu. Changes save automatically.
+- **Your menu soundtrack.** Preview and choose locally available tracks, or add your own music.
+  Loudness normalization keeps themes at a more consistent level between games.
+- **Both volumes of Bonus Content together.** Play installed Digital Graphic Novels and
+  soundtracks, or browse Master Books and Screenplay Books in a fullscreen reader.
+- **A home for personal books.** Add PDF, CBZ and CBR files, zoom and pan, hide the controls,
+  and return to your last page. Personal imports also work without games installed.
+- **Trophies at a glance.** Browse achievement descriptions, your available unlock states and
+  global completion percentages, with Steam and locally cached GOG Galaxy data.
 
 ## Requirements
 
 - Windows 10 or 11, x64
-- Steam, with MGS Master Collection Vol.1 and/or Vol.2 installed (the hub works with either
-  volume alone; games it can't find in Steam show a "not installed" tile instead of failing)
+- Steam and the Master Collection games you want to launch. Either volume and partial
+  installations work; missing games show as "not installed" instead of failing
 - A gamepad is recommended but not required; keyboard and mouse both work
 
 ## Install
 
-Download the installer from the
-[latest release](https://github.com/Maxaubert/metal-gear-launcher/releases/latest)
-(`MetalGearLauncher-Setup-x64-<version>.exe`) and run it. The installer contains no soundtrack files;
-music is obtained from your local game installations or your own files. The launcher checks GitHub Releases once at
-boot and shows a footer prompt when a newer version is out.
+1. Download `MetalGearLauncher-Setup-x64-<version>.exe` from the
+   [latest release](https://github.com/Maxaubert/metal-gear-launcher/releases/latest).
+   If you downloaded a ZIP, extract the installer first.
+2. Run the installer and use its default folder. This is a standalone application, so it
+   does not need to go inside a game folder or a mod manager.
+3. Open Metal Gear Launcher and let first-run preparation finish. It detects your Steam
+   libraries and prepares the content available in your installed games.
+
+Release builds are currently unsigned, so Windows may show an unrecognized-app warning.
+The launcher checks GitHub Releases once at boot and shows a footer prompt when a newer version is out.
 
 Previously named MGS Master Hub. Upgrades retain your settings, music and extracted artwork in
 the existing `%LOCALAPPDATA%\MGSMasterHub\` data folder.
@@ -32,15 +67,17 @@ the existing `%LOCALAPPDATA%\MGSMasterHub\` data folder.
 ## First run and extraction
 
 On first launch (or after Steam updates a game), the hub asks for your Steam library folder if
-it can't find it automatically, then extracts each installed game's menu art and music into its
-own folder under `%LOCALAPPDATA%\MGSMasterHub\assets\<game>\`. Extraction never writes anywhere
-else, and never touches your game install. Files are cached and re-extraction is skipped unless
-a game updates or the bundled extraction tools change.
+it can't find it automatically, then prepares the available artwork, books and music. Media
+that needs extraction is cached under `%LOCALAPPDATA%\MGSMasterHub\`; supported soundtrack and
+movie files play directly from their installations. Extraction writes only to the hub's data
+and temporary folders, and never changes your game install. Cached files are reused unless a
+game updates or the bundled extraction tools change.
 
 ## Controls
 
-The hub opens on the last game you successfully launched. Browsing other game tabs does not
-change this preference; `--game` still overrides it for a particular launch.
+The hub opens on the last game you successfully launched, or MGS3 on a fresh installation.
+Browsing other game tabs does not change this preference; `--game` still overrides it for a
+particular launch.
 
 | Input | Action |
 |---|---|
@@ -174,10 +211,16 @@ entries so they don't clutter your library alongside it.
 
 ## Legal
 
-No Metal Gear Solid / Konami media is committed to this repository. Game artwork, books and bonus
-media are read from local installations, while personal books are imported from local files.
-Installers contain no soundtrack music or personal books. AssetStudioModCLI and FreeMote are
-MIT-licensed extraction tools; their licenses ship under `resources/tools/LICENSES/`.
+This is an unofficial fan-made launcher, unaffiliated with Konami. Metal Gear and the original
+game media belong to their respective rights holders. The product demonstration shows the
+launcher running with media from local installations; it is not a bundle of those game assets.
+Game artwork, books and bonus media are read or extracted locally, while personal books are
+imported from local files. Installers contain no soundtrack music or personal books.
+
+AssetStudioModCLI and FreeMote provide extraction support. FreeMote, by Ulysses Wu, is licensed
+under **CC BY-NC-SA 4.0**, with additional component notices in its
+[included license](resources/tools/LICENSES/FreeMote.LICENSE.txt). Third-party components retain
+their own licenses; see the notices included with each tool.
 The pinned [vgmstream r2117](https://github.com/vgmstream/vgmstream/releases/tag/r2117) runtime
 decodes local game audio. Its copyright notice ships alongside the executable, with codec
 library notices and source links in `resources/tools/vgmstream/LICENSES/`.
@@ -189,10 +232,17 @@ the executable. See [7-Zip licensing](https://www.7-zip.org/license.txt) and
 
 ## Roadmap
 
-- Per-game settings screen (Konami launcher options and community fix-mod settings), see
-  `docs/superpowers/specs/2026-09-06-mgs-master-hub-design.md` section 4.5
 - MGS4 Database content and additional manuals
 - More launch options (borderless, monitor selection) surfaced from the hub itself
+
+## Documentation
+
+| Guide | Covers |
+| --- | --- |
+| [Books](docs/books.md) | Installed books, personal imports and reader controls |
+| [Menu music](docs/menu-music-pack.md) | Local music files, conversion and packaging |
+| [Achievements](docs/achievements.md) | Steam and GOG sources, account data and limitations |
+| [Playnite](docs/playnite.md) | One launcher tile or a separate entry for each game |
 
 ## Development
 
