@@ -4,6 +4,7 @@ import type { Pack } from "@shared/packs";
 import type { InputKind } from "../input/useNavigation";
 import { themeVars, layoutVars } from "../theme/theme";
 import FooterHints from "./FooterHints";
+import QuitDialog from "./QuitDialog";
 
 export type MenuKey = Pack["menu"][number];
 
@@ -128,27 +129,7 @@ export default function GameScreen({
         </div>
       )}
 
-      {quitOpen && (
-        <div className="overlay">
-          <div className="overlay-panel" role="dialog" aria-modal="true" aria-label="Quit game">
-            {(["Quit", "Cancel"] as const).map((label, index) => (
-              <div
-                key={label}
-                role="button"
-                tabIndex={-1}
-                aria-current={quitItem === index ? "true" : undefined}
-                className={quitItem === index ? "focused" : undefined}
-                onClick={() => onQuitSelect(index)}
-                onPointerMove={(event) => { if (event.pointerType !== "touch") onHoverQuitItem(index); }}
-                onFocus={() => onHoverQuitItem(index)}
-                style={{ height: "3rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--ink)", cursor: "pointer" }}
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {quitOpen && <QuitDialog quitItem={quitItem} onQuitSelect={onQuitSelect} onHoverQuitItem={onHoverQuitItem} />}
     </div>
   );
 }

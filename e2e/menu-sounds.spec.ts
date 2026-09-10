@@ -141,7 +141,7 @@ test("menu sounds follow semantic actions once, with no passive or ineffective-i
         await page.keyboard.press("Enter");
         await expectSounds(["select"]);
         await expect(page.getByTestId("bonus-content")).toBeVisible();
-        await page.keyboard.press("Escape");
+        await page.getByTestId("bonus-back").click();
         await expectSounds(["back"]);
         await page.keyboard.press("ArrowRight");
         await expectSounds(["navigate"]);
