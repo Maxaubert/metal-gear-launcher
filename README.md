@@ -16,7 +16,7 @@
 
 ---
 
-https://github.com/user-attachments/assets/0970022a-ffdd-4828-96a0-49b630cde6e8
+https://github.com/user-attachments/assets/e2a0b1ee-a3a8-4ddf-af15-2da33e72186b
 
 Move between Metal Gear games in menus styled after the Master Collection, with a gamepad,
 keyboard or mouse. Launch a game, adjust its settings, or explore your soundtracks, films and
