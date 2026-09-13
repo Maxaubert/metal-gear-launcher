@@ -108,12 +108,15 @@ The MGS4 Database is a separate Unreal IoStore application and is not included i
 Other regional manuals have not been fully inventoried. Previously extracted research files
 under the separate `books` directory are not required by the application.
 
-## Clean local installation checks
+## Local installation checks
 
-After packaging, run `pwsh -File scripts/install-clean.ps1` for local first-run testing.
-It archives `%LOCALAPPDATA%\MGSMasterHub` and `%APPDATA%\MGS Master Hub` under
+After packaging, run `pwsh -File scripts/install.ps1` for routine local upgrades. This retains
+the personal library, reading positions and prepared media. Use `scripts/install-clean.ps1`
+only for an explicitly requested clean first-run test.
+The clean-install helper archives `%LOCALAPPDATA%\MGSMasterHub` and `%APPDATA%\MGS Master Hub` under
 `%LOCALAPPDATA%\MetalGearLauncher-install-backups`, then installs without existing settings,
-reading history, extracted files, imported music or Chromium state. The archived files remain
+reading history, extracted files or Chromium state. Imported music and custom sounds are
+restored; the archived files remain
 available for recovery. Steam installations, game settings and saves are untouched.
 The next launch discovers and prepares the installed library as it would for a new user.
 This is a local testing helper; normal release installers continue to preserve user data.
