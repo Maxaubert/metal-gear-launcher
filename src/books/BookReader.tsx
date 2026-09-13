@@ -11,6 +11,7 @@ import { useBookControls } from "./useBookControls";
 export default function BookReader({ request, actionRef, lastInputKind, onClose }: Omit<BooksScreenProps, "catalog"> & { request: BookRequest }) {
   const reader = useBookReader(request);
   const [zoom, setZoom] = useState(1);
+  const [blackBackground, setBlackBackground] = useState(false);
   const [contents, setContents] = useState(false);
   const [contentFocus, setContentFocus] = useState(0);
   const [pageInput, setPageInput] = useState<string | null>(null);
@@ -46,7 +47,13 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
   useEffect(() => { contentsList.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest" }); }, [contents, contentFocus]);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement) return;
+      const target = event.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLElement && target.isContentEditable) return;
+      if (event.code === "KeyB" && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (!event.repeat) setBlackBackground(value => !value);
+        return;
+      }
       const actions: Record<string, () => void> = { Equal: () => current.current.changeZoom(.25), NumpadAdd: () => current.current.changeZoom(.25), Minus: () => current.current.changeZoom(-.25), NumpadSubtract: () => current.current.changeZoom(-.25), Digit0: () => setZoom(1), KeyC: () => current.current.toggleContents() };
       const action = actions[event.code];
       if (action) { event.preventDefault(); event.stopImmediatePropagation(); action(); }
@@ -75,6 +82,7 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
     else if (action === "confirm") { if (reader.error) reader.retry(); else setZoom(value => value === 1 ? 1.75 : 1); }
   });
   return <main className="bonus-screen books-screen book-reader" data-testid="book-reader" aria-busy={reader.loading}
+    data-black-background={blackBackground}
     data-controls-visible={controls.visible} data-controls-hidden={controls.manuallyHidden} onPointerMove={controls.reveal} onPointerDown={controls.reveal} onWheel={controls.reveal}>
     <div className="book-controls-overlay" data-book-overlay data-testid="book-controls" data-visible={controls.visible} inert={!controls.visible} aria-hidden={!controls.visible} {...controls.overlayEvents}>
     <header className="book-reader-heading"><h1>{document?.title ?? (request.importedId ? "Book" : request.kind === "master" ? "Master Book" : "Screenplay Book")}</h1>{!request.importedId && <span aria-label={request.language === "en" ? "English" : "Japanese"}>{request.language === "en" ? "EN" : "日本語"}</span>}</header>
@@ -88,6 +96,7 @@ export default function BookReader({ request, actionRef, lastInputKind, onClose 
         <button data-testid="book-next" className="book-page-arrow" aria-label="Next page" title="Next page (Page Down)" disabled={!document || reader.pageIndex >= document.pageCount - 1} onClick={() => changePage(reader.pageIndex + 1)}><PageArrow /></button>
       </div>
       <div className="book-zoom-controls"><button data-testid="book-zoom-out" aria-label="Zoom out" disabled={zoom === 1} onClick={() => changeZoom(-.25)}>−</button><span aria-live="polite">{Math.round(zoom * 100)}%</span><button data-testid="book-zoom-in" aria-label="Zoom in" disabled={zoom === 3} onClick={() => changeZoom(.25)}>+</button><button data-testid="book-fit" onClick={() => setZoom(1)}>Fit</button></div>
+      <button data-testid="book-background" className="book-visibility-toggle" onClick={() => setBlackBackground(value => !value)} aria-label="Black background" aria-pressed={blackBackground} aria-keyshortcuts="B" title="Toggle black background (B)">Backdrop <kbd>B</kbd></button>
       <button data-testid="book-hide-controls" className="book-visibility-toggle" onClick={controls.hide} aria-label="Hide controls" aria-keyshortcuts="H">Hide <kbd>H</kbd></button>
     </nav>
     </div>

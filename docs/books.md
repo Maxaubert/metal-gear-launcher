@@ -1,5 +1,10 @@
 # Books
 
+In the reader, press **B** (or choose **Backdrop**) to toggle solid black space around the
+page. Page artwork and PDF content keep their original colors and proportions. **H** still
+hides all controls independently. The launcher has no native application menu, so **Alt**
+does not reveal a menu bar.
+
 ## Personal books and comics
 
 **Bonus Content → Books → Add Books** accepts PDF, CBZ and CBR files. **Add Folder** scans
