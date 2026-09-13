@@ -39,6 +39,9 @@ test('books are discovered before opening, load pages on demand, navigate, recov
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.reload();
     await expect(page.getByTestId('startup-screen')).toHaveCount(0, { timeout: 20000 });
+    expect(await app.evaluate(({ Menu }) => Menu.getApplicationMenu())).toBeNull();
+    await page.keyboard.press('Alt');
+    expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.isMenuBarVisible())).toBe(false);
     const state = () => app.evaluate(() => (globalThis as unknown as { bookTestState: { catalog: number; opened: string[]; pages: string[]; progress: Record<string, number> } }).bookTestState);
     expect((await state()).catalog).toBeGreaterThan(0);
     expect((await state()).opened).toEqual([]);
@@ -53,6 +56,18 @@ test('books are discovered before opening, load pages on demand, navigate, recov
     await expect.poll(async () => (await state()).progress['mgs1-master-en']).toBe(0);
     const bookBounds = await page.getByTestId('book-page').boundingBox();
     expect(bookBounds).toEqual({ x: 0, y: 0, width: 1920, height: 1080 });
+    const coverSource = await page.locator('.book-spread').getAttribute('src');
+    await page.keyboard.press('KeyB');
+    await expect(page.getByTestId('book-background')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.book-image-canvas')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+    expect(await page.getByTestId('book-page').boundingBox()).toEqual(bookBounds);
+    expect(await page.locator('.book-spread').getAttribute('src')).toBe(coverSource);
+    await page.getByRole('spinbutton', { name: 'Page number' }).focus();
+    await page.keyboard.press('KeyB');
+    await expect(page.getByTestId('book-background')).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('spinbutton', { name: 'Page number' }).blur();
+    await page.keyboard.press('Alt+KeyB');
+    await expect(page.getByTestId('book-background')).toHaveAttribute('aria-pressed', 'true');
     await page.mouse.move(960, 540);
     await expect(page.getByTestId('book-reader')).toHaveAttribute('data-controls-visible', 'false', { timeout: 5000 });
     expect(await page.getByTestId('book-page').boundingBox()).toEqual(bookBounds);
@@ -77,6 +92,11 @@ test('books are discovered before opening, load pages on demand, navigate, recov
     await expect(page.getByTestId('book-show-controls')).toHaveCount(0);
     await expect(page.getByTestId('book-controls')).toHaveCSS('opacity', '0');
     await expect(page.locator('.book-controls-footer')).toHaveCSS('opacity', '0');
+    await page.keyboard.press('KeyB');
+    await expect(page.locator('.book-image-canvas')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await page.keyboard.press('KeyB');
+    await expect(page.locator('.book-image-canvas')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+    await expect(page.getByTestId('book-reader')).toHaveAttribute('data-controls-visible', 'false');
     await page.screenshot({ path: 'e2e/out/books-hidden-controls.png' });
     expect(await page.evaluate(() => Boolean(document.activeElement?.closest('[data-book-overlay]')))).toBe(false);
     await page.mouse.move(100, 100); await page.mouse.move(1200, 650);
@@ -104,6 +124,7 @@ test('books are discovered before opening, load pages on demand, navigate, recov
     expect(await page.getByTestId('book-page').boundingBox()).toEqual(bookBounds);
     await page.getByTestId('book-next').click();
     await expect.poll(async () => (await state()).progress['mgs1-master-en']).toBe(1);
+    await expect(page.locator('.book-image-canvas')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
     await page.getByTestId('book-zoom-in').click();
     await page.getByTestId('book-fit').click();
     await page.getByTestId('book-next').click();

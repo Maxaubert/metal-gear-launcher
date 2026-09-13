@@ -72,6 +72,9 @@ that needs extraction is cached under `%LOCALAPPDATA%\MGSMasterHub\`; supported 
 movie files play directly from their installations. Extraction writes only to the hub's data
 and temporary folders, and never changes your game install. Cached files are reused unless a
 game updates or the bundled extraction tools change.
+Startup also measures music loudness once, keeping those measurements across reinstalls of
+the same decoder. The progress bar completes only after library preparation, menu resources
+and music playback are ready.
 
 ## Controls
 
@@ -117,16 +120,17 @@ The first startup prepares installed content behind a progress screen before ope
 Completed files are reused after interruption; failures offer Retry. New or changed installations
 are prepared on the next startup. Small menu and sleeve images use the local cache; movies and tracks
 play directly from the Steam library without being copied. No bonus media ships with the launcher.
-Bonus Content has its own artwork and transition in Game Selection. Its menus play a sequential
+Bonus Content has its own artwork and transition in Game Selection. Its menus play a shuffled
 playlist of classic themes and vocal finales found in your local game music folders, including
 Snake Eater, The Best Is Yet to Come, Old Snake and Heavens Divide. Unavailable songs are skipped.
 The vocal selections follow [Konami's series compilation](https://www.konami.com/mg/mgs5/tpp/jp/goods/item_vtac.html).
 The playlist combines your local classics with available tracks from installed games and bonus soundtracks.
-The playlist pauses for soundtrack playback and movies, then resumes from the same position.
+The playlist shuffles once per launcher session. Leaving and returning preserves its order and
+playback position. It pauses for soundtrack playback and movies, then resumes from the same position.
 
 To replace the playlist, add audio files to `%LOCALAPPDATA%\MGSMasterHub\music\bonus\` and restart
-the launcher. Files play in filename order (numeric prefixes are supported), with extensions
-hidden from titles. The last song returns to the first; individual songs do not loop.
+the launcher. Filenames provide the song titles, with extensions hidden. The last song returns
+to the first in that session's shuffled order; individual songs do not loop.
 
 Master Books and Screenplay Books appear under **Bonus Content → Books** for installed games.
 Choose English or Japanese, browse the contents, zoom and pan, and resume your last page.

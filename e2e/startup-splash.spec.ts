@@ -121,6 +121,17 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
     await expect(page.getByTestId("game-screen")).toBeVisible({ timeout: 15000 });
     await expect(page.getByTestId("startup-screen")).toHaveCount(0, { timeout: 10000 });
     await observeSplash(page);
+    // An installed library reports a nonzero completed total on warm startup.
+    // That must not fill the overall bar while the remaining audio is blocked.
+    await app.evaluate(({ ipcMain, BrowserWindow }) => {
+      ipcMain.removeHandler("hub:preparation:run");
+      ipcMain.handle("hub:preparation:run", () => {
+        BrowserWindow.getAllWindows()[0]!.webContents.send("hub:preparation:progress", {
+          phase: "ready", completed: 100, total: 100, label: "Your library is ready", failures: [],
+        });
+        return { ok: true, value: { ready: true, warm: true, completed: 100, total: 100, failures: [] } };
+      });
+    });
     await page.addInitScript(() => {
       const play = HTMLMediaElement.prototype.play;
       HTMLMediaElement.prototype.play = function () {
@@ -133,7 +144,7 @@ test("splash waits for slow audio readiness and respects reduced motion", async 
     const splash = page.getByTestId("startup-screen");
     await expect(splash).toBeVisible();
     await expect(splash.getByRole("heading", { name: "METAL GEAR LAUNCHER", exact: true })).toBeVisible();
-    await expect(splash.getByRole("status")).toHaveText("Preparing your games");
+    await expect(splash.getByRole("status")).toHaveText("Starting menu music");
     const logo = splash.locator(".startup-logo");
     await expect(logo).toBeVisible();
     await expect(logo).toHaveAttribute("alt", "Metal Gear Solid");

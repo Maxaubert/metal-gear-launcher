@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, shell } from "electron";
 import { exec, spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { mkdir, stat, writeFile } from "node:fs/promises";
@@ -80,6 +80,8 @@ function asError(e: unknown): string {
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): BrowserWindow {
+  // Auto-hide alone lets Alt reveal Electron's default application menu.
+  Menu.setApplicationMenu(null);
   // HUB_SHOOT (Task 14 step 9): a fixed 4K window instead of real fullscreen, so
   // `capturePage()` produces a stable, reproducible size independent of the display driving
   // this machine.

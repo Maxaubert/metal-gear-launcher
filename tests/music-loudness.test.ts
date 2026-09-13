@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("electron", () => ({ app: { isPackaged: false } }));
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createMusicLoudnessAnalyzer } from "../electron/main/music/loudness";
@@ -67,6 +67,33 @@ it("coalesces concurrent analysis, persists measurements, and invalidates change
   expect(JSON.parse(await readFile(join(root, "music-loudness", records[0]!), "utf8"))).toEqual(result);
   await Promise.all(records.map(name => writeFile(join(root, "music-loudness", name), "corrupt")));
   expect(await analyze(root, file)).toEqual(result); expect(decode).toHaveBeenCalledTimes(3);
+});
+it("reuses measurements across decoder reinstalls but invalidates changed decoder bytes and versions", async () => {
+  const result = { lufs: -19.6, peak: 0.4 }; const decode = vi.fn(async () => result);
+  const deps = { decode, decoder: () => decoder };
+  const version = join(root, "VERSION"); await writeFile(version, "v1");
+  expect(await createMusicLoudnessAnalyzer(deps)(root, file)).toEqual(result);
+  const original = await stat(decoder);
+  const later = new Date(original.mtimeMs + 60000);
+  await utimes(decoder, later, later); await utimes(version, later, later);
+  expect(await createMusicLoudnessAnalyzer(deps)(root, file)).toEqual(result);
+  expect(decode).toHaveBeenCalledTimes(1);
+  // A changed binary with the same length and restored timestamp still needs analysis.
+  await writeFile(decoder, "changed"); await utimes(decoder, later, later);
+  expect(await createMusicLoudnessAnalyzer(deps)(root, file)).toEqual(result);
+  expect(decode).toHaveBeenCalledTimes(2);
+  await writeFile(version, "v2"); await utimes(version, later, later);
+  expect(await createMusicLoudnessAnalyzer(deps)(root, file)).toEqual(result);
+  expect(decode).toHaveBeenCalledTimes(3);
+});
+it("does not cache measurements when the decoder changes during analysis", async () => {
+  const result = { lufs: -19.6, peak: 0.4 };
+  const decode = vi.fn(async () => result);
+  decode.mockImplementationOnce(async () => { await writeFile(decoder, "changed"); return result; });
+  const analyze = createMusicLoudnessAnalyzer({ decode, decoder: () => decoder });
+  expect(await analyze(root, file)).toBeUndefined();
+  expect(await analyze(root, file)).toEqual(result);
+  expect(decode).toHaveBeenCalledTimes(2);
 });
 it("limits concurrent decoding to two and safely handles invalid audio, failures, and mid-analysis edits", async () => {
   let active = 0; let highest = 0;

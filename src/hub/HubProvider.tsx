@@ -52,6 +52,7 @@ export default function HubProvider() {
     if (libraryPreparation.hub) setHubState(presentationState(libraryPreparation.hub));
   }, [libraryPreparation.hub]);
   const [preparedState, setPreparedState] = useState<HubState | null>(null);
+  const [startupWork, setStartupWork] = useState<{ hub: HubState; total: number; pending: string[] } | null>(null);
   const [startedState, setStartedState] = useState<HubState | null>(null);
   const [musicAttempt, setMusicAttempt] = useState(0);
   const [preparationError, setStartupError] = useState("");
@@ -213,6 +214,17 @@ export default function HubProvider() {
   const startupError = libraryPreparation.error || preparationError || (!ready ? music.error : "");
   const canReveal = Boolean(hubState && libraryPreparation.ready && !startupError && soundsReady && (needsFirstRun || ready));
   const startup = useStartupPresentation(canReveal);
+  const work = startupWork?.hub === hubState ? startupWork : null;
+  const preparation = libraryPreparation.progress;
+  // Extraction is only part of startup. Reserve the last stages for menu resources
+  // and audible playback, including the warm-cache path that skips extraction.
+  const resourceProgress = !hubState || !configLoaded ? 0 : !libraryPreparation.ready
+    ? 10 + (preparation?.total ? Math.min(1, preparation.completed / preparation.total) * 60 : 0)
+    : preparedState !== hubState ? 70 + (work ? (work.total - work.pending.length) / work.total * 25 : 0)
+    : 95;
+  const startupProgress = startup.progress === 100 ? 100 : Math.min(startup.progress, Math.floor(resourceProgress));
+  const startupDetail = !hubState || !configLoaded ? "Finding your games"
+    : !libraryPreparation.ready ? undefined : work?.pending[0] ?? (!music.ready ? "Starting menu music" : "Preparing your games");
   useBonusPlaylist({ playlist: bonusPlaylist, active: bonusAudioActive, suspended: bonusMediaOpen || startup.visible, volume });
   // Keep a completed startup latched while later tracks buffer or fail. This conditional
   // state adjustment finishes before React commits the newly visible menu.
@@ -227,20 +239,23 @@ export default function HubProvider() {
   useEffect(() => {
     if (!hubState || needsFirstRun || !configLoaded || !libraryPreparation.ready) return;
     let cancelled = false;
-    void Promise.all([
-      settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id)),
-      preloadPresentation(hubState.games),
-      preloadMenuSounds(menuSoundSourceKey(hubState)),
-      preloadBonus(),
-      preloadBooks(),
-      Promise.all(hubState.games.map(async game => {
+    const tasks: Array<[string, () => Promise<unknown>]> = [
+      ["Loading game settings", () => settingsCache.preload(hubState.games.filter(game => game.installed).map(game => game.pack.id))],
+      ["Loading menu artwork and fonts", () => preloadPresentation(hubState.games)],
+      ["Loading menu sounds", () => preloadMenuSounds(menuSoundSourceKey(hubState))],
+      ["Preparing the Bonus Content playlist", preloadBonus],
+      ["Finding your books", preloadBooks],
+      ...hubState.games.map(game => [`Preparing music for ${game.pack.title}`, async () => {
         const result = await window.hub.getMenuMusic(game.pack.id);
         if (!result.ok) throw new Error(result.error);
-        return result.value;
-      })).then(libraries => {
-        if (!cancelled) setMusicLibraries(Object.fromEntries(libraries.map(library => [library.gameId, library])));
-      }),
-    ]).then(() => {
+        if (!cancelled) setMusicLibraries(previous => ({ ...previous, [game.pack.id]: result.value }));
+      }] as [string, () => Promise<unknown>]),
+    ];
+    setStartupWork({ hub: hubState, total: tasks.length, pending: tasks.map(([label]) => label) });
+    void Promise.all(tasks.map(async ([label, run]) => {
+      await run();
+      if (!cancelled) setStartupWork(previous => previous && ({ ...previous, pending: previous.pending.filter(item => item !== label) }));
+    })).then(() => {
       if (cancelled) return;
       setPreparedState(hubState);
     }).catch(error => { if (!cancelled) setStartupError(error instanceof Error ? error.message : String(error)); });
@@ -570,6 +585,7 @@ export default function HubProvider() {
     {unavailable && <UnavailableDialog {...unavailable} onClose={closeUnavailable} />}
     {startup.visible && <StartupSplash error={startupError} actions={startupActions} selectedAction={startupItem}
       preparation={libraryPreparation.progress}
-      exiting={startup.exiting} progress={startup.progress} buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />}
+      detail={startupDetail}
+      exiting={startup.exiting} progress={startupProgress} buttonRefs={startupButtons} onFocusAction={setStartupItem} onRecover={recoverStartup} />}
   </>;
 }

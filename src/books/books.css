@@ -63,6 +63,10 @@
 .book-content-area{position:absolute;inset:0;background:#a8a8a4;overflow:hidden}
 .book-viewport{position:absolute;inset:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#70673a #c9c8c1;overscroll-behavior:contain;outline-offset:-3px}
 .book-image-canvas{position:relative;min-width:100%;min-height:100%;overflow:hidden;background:#fff}
+.book-reader[data-black-background=true] .book-content-area,.book-reader[data-black-background=true] .book-image-canvas{background:#000}
+.book-reader[data-black-background=true] .book-status{background:#000;color:#fff}
+.book-reader[data-black-background=true] .book-status button{color:#111}
+.book-reader .book-toolbar button[aria-pressed=true]{background:#45443b;border-color:#aaa}
 .book-spread{width:100%;height:100%;display:block;object-fit:contain;user-select:none}
 .book-art-spread{position:absolute;inset:0;display:flex;justify-content:center;width:100%;height:100%}
 .book-art-spread>*{width:50%;height:100%;object-fit:contain}

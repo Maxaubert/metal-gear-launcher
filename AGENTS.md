@@ -7,10 +7,10 @@
 - Build / package: `npm run dist`   Artifact: `MetalGearLauncher-Setup-x64-<version>.exe`. Music comes from local game installations or user files, never the installer.
 - Known failures to tolerate: none
 - Version source: `package.json`   Release: release.yml on push to main
-- Local test installs must be clean: `pwsh -File scripts/install-clean.ps1` after packaging; confirm ProductVersion.
-- This archives launcher data/profile and resets configuration and extracted caches for first-run testing. Imported music and custom sounds are preserved; they are user files, not caches. Never reset Steam/game settings or saves.
-- The clean-install script stages media and dispatches outside packaged terminals to avoid MSIX AppData virtualization. Verify installed-app files from that ordinary user context, not only the terminal's AppData view.
-- Leave the final local installation unlaunched and clean after verification, unless Ove asks otherwise.
+- Routine local installs: `pwsh -File scripts/install.ps1` after packaging; confirm ProductVersion. Preserve settings, personal books, music and all extraction caches so upgrades reuse prepared content.
+- Use `scripts/install-clean.ps1` only when Ove explicitly requests a clean/first-run test. Never reset launcher data during routine installs, or Steam/game settings and saves at any time.
+- Install helpers dispatch outside packaged terminals to avoid MSIX AppData virtualization. Verify installed-app files from that ordinary user context, not only the terminal's AppData view.
+- Leave the final local installation unlaunched after verification, unless Ove asks otherwise.
 - Deploy: installer via GitHub Releases
 - Signing: unsigned
 
