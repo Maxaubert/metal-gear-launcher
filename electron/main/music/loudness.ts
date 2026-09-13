@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { decoderIdentity } from "../extract/identity";
 import { LoudnessWavReader, type MusicLoudness } from "./loudnessDsp";
 
 export type { MusicLoudness } from "./loudnessDsp";
@@ -61,8 +62,9 @@ export function createMusicLoudnessAnalyzer(deps: Dependencies = { decoder: deco
       const info = await stat(source);
       if (!info.isFile() || info.size < 44 || info.size > MAX_INPUT_BYTES) return undefined;
       const decoder = deps.decoder();
-      const decoderInfo = await stat(decoder);
-      const identity = JSON.stringify([ANALYZER_VERSION, source, info.size, info.mtimeMs, decoderInfo.size, decoderInfo.mtimeMs]);
+      const decoderVersion = await decoderIdentity(decoder);
+      // Legacy timestamp keys cannot prove decoder compatibility after reinstall.
+      const identity = JSON.stringify([ANALYZER_VERSION, source, info.size, info.mtimeMs, decoderVersion]);
       const key = createHash("sha256").update(identity).digest("hex");
       const folder = join(dataDir, "music-loudness");
       const cache = join(folder, `${key}.json`);
@@ -80,6 +82,7 @@ export function createMusicLoudnessAnalyzer(deps: Dependencies = { decoder: deco
           if (!valid(result)) return undefined;
           const after = await stat(source);
           if (after.size !== info.size || after.mtimeMs !== info.mtimeMs) return undefined;
+          if (await decoderIdentity(decoder) !== decoderVersion) return undefined;
           await mkdir(folder, { recursive: true });
           const temporary = join(folder, `${key}.${randomUUID()}.tmp`);
           try {

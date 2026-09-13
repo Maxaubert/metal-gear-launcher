@@ -100,7 +100,6 @@
 .startup-status:has(.startup-preparation-details) .startup-loading-rail{width:min(48vw,1200px);height:max(6px,.55vh)}
 .startup-preparation-item{color:#333;overflow-wrap:anywhere}
 .startup-preparation-count{margin-top:1.2vh!important;font-variant-numeric:tabular-nums}
-.startup-preparation-count strong{margin-left:1.4em;color:#bb0014}
 .startup-preparation-note{margin:2.5vh auto 0!important;max-width:54ch;color:#555;font-size:clamp(16px,1.7vh,36px)}
 .startup-preparation-failure{margin-top:1.5vh!important;color:#9c0011}
 @keyframes library-scanning{0%,100%{translate:-100% 0}50%{translate:285% 0}}

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BonusPlaylistPlayer } from "../src/bonus/bonusPlaylistPlayer";
 
 class FakeAudio extends EventTarget {
@@ -24,7 +24,79 @@ function setup() {
 }
 const settle = async () => { for (let index = 0; index < 8; index++) await Promise.resolve(); };
 
-describe("bonus sequential background transport", () => {
+describe("bonus shuffled background transport", () => {
+  beforeEach(() => { vi.spyOn(Math, "random").mockReturnValue(0.99); });
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it("shuffles once per transport and plays every song without duplicates before repeating the cycle", async () => {
+    vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.99);
+    const first = setup();
+    expect(first.audio.src).toBe(playlist[2]!.url);
+    expect(playlist.map(track => track.id)).toEqual(["one", "two", "three"]);
+    first.player.setPlayback(true, false, 1);
+    await settle();
+    const played = [first.audio.src];
+    for (const expected of ["two", "one", "three", "two", "one"]) {
+      first.audio.dispatchEvent(new Event("ended"));
+      await settle();
+      expect(first.audio.src).toBe(`hub-music://${expected}`);
+      played.push(first.audio.src);
+    }
+    expect(new Set(played.slice(0, 3))).toEqual(new Set(playlist.map(track => track.url)));
+    expect(played.slice(3)).toEqual(played.slice(0, 3));
+    first.player.dispose();
+    const second = setup();
+    expect(second.audio.src).toBe(playlist[0]!.url);
+    expect(Math.random).toHaveBeenCalledTimes(4);
+    second.player.dispose();
+  });
+
+  it("preserves the shuffled order, track and position across navigation and playlist refreshes", async () => {
+    vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.99);
+    const { audio, player } = setup();
+    player.setPlayback(true, false, 1);
+    await settle();
+    audio.currentTime = 87;
+    player.setPlayback(false, false, 1);
+    player.setPlaylist([...playlist]);
+    player.setPlaylist(playlist.map(track => ({ ...track, normalizationGain: 0.8 })));
+    player.setPlayback(true, false, 1);
+    await settle();
+    expect(audio.src).toBe(playlist[2]!.url);
+    expect(audio.currentTime).toBe(87);
+    expect(audio.load).toHaveBeenCalledOnce();
+    expect(Math.random).toHaveBeenCalledTimes(2);
+    audio.dispatchEvent(new Event("ended"));
+    await settle();
+    expect(audio.src).toBe(playlist[1]!.url);
+    player.dispose();
+  });
+
+  it("waits for the first nonempty playlist to shuffle and preserves the order across library changes", async () => {
+    vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.99);
+    const audio = new FakeAudio();
+    const output = { setNormalization: vi.fn(), resume: vi.fn(async () => {}), dispose: vi.fn() };
+    const player = new BonusPlaylistPlayer(audio as unknown as HTMLAudioElement, vi.fn(), output);
+    player.setPlaylist([]);
+    expect(Math.random).not.toHaveBeenCalled();
+    player.setPlaylist(playlist);
+    expect(audio.src).toBe(playlist[2]!.url);
+    player.setPlaylist([]);
+    player.setPlaylist(playlist.slice(0, 2));
+    expect(audio.src).toBe(playlist[1]!.url);
+    player.setPlaylist(playlist);
+    player.setPlayback(true, false, 1);
+    await settle();
+    audio.dispatchEvent(new Event("ended"));
+    await settle();
+    expect(audio.src).toBe(playlist[0]!.url);
+    audio.dispatchEvent(new Event("ended"));
+    await settle();
+    expect(audio.src).toBe(playlist[2]!.url);
+    expect(Math.random).toHaveBeenCalledTimes(2);
+    player.dispose();
+  });
+
   it("advances through the playlist and wraps, rather than repeating the first song", async () => {
     const { audio, player } = setup();
     expect(audio.play).not.toHaveBeenCalled();

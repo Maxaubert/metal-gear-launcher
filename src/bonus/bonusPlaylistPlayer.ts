@@ -7,6 +7,8 @@ export interface BonusPlaylistState { currentTrack?: BonusPlaylistTrack; unavail
 /** One persistent transport shared by bonus selection, menus and paused media playback. */
 export class BonusPlaylistPlayer {
   private playlist: BonusPlaylist = [];
+  private playlistKey = "[]";
+  private shuffleOrder = new Map<string, number>();
   private index = 0;
   private failed = new Set<string>();
   private active = false;
@@ -24,14 +26,26 @@ export class BonusPlaylistPlayer {
   }
 
   setPlaylist(playlist: BonusPlaylist) {
-    if (JSON.stringify(playlist) === JSON.stringify(this.playlist)) return;
+    const key = JSON.stringify(playlist);
+    if (key === this.playlistKey) return;
+    this.playlistKey = key;
     const current = this.playlist[this.index];
-    this.playlist = playlist;
+    this.playlist = [...playlist];
+    if (!this.shuffleOrder.size) {
+      for (let index = this.playlist.length - 1; index > 0; index--) {
+        const other = Math.floor(Math.random() * (index + 1));
+        [this.playlist[index], this.playlist[other]] = [this.playlist[other]!, this.playlist[index]!];
+      }
+    }
+    for (const track of this.playlist) {
+      if (!this.shuffleOrder.has(track.id)) this.shuffleOrder.set(track.id, this.shuffleOrder.size);
+    }
+    this.playlist.sort((left, right) => this.shuffleOrder.get(left.id)! - this.shuffleOrder.get(right.id)!);
     this.failed.clear();
-    const preserved = playlist.findIndex(track => track.id === current?.id && track.url === current.url);
+    const preserved = this.playlist.findIndex(track => track.id === current?.id && track.url === current.url);
     if (preserved >= 0) {
       this.index = preserved;
-      this.output.setNormalization(playlist[preserved]!.normalizationGain);
+      this.output.setNormalization(this.playlist[preserved]!.normalizationGain);
       this.publish();
       return;
     }
